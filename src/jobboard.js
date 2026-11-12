@@ -36,14 +36,16 @@ const Jobs=(()=>{
     if(type==="World Crisis"&&size==="Small")size="Standard";
     const loc=type==="World Crisis"?wpick(T.locations.names.slice(3).map((n,i)=>[n,T.locations.weights[tier][i+3]||1])):wpick(T.locations.names.map((n,i)=>[n,T.locations.weights[tier][i]]));
     const p=rollPatron(),world=rollWorld(r,loc);
-    return {id:uid(),rank:r,type,size,location:loc,world,patron:p,
-      objective:fillTpl(pickFresh(T.objectives[type],"obj:"+type),world.genre?genreData(world.genre):T.locales[loc]),incentive:rollIncentive(r,size,p),gold:rollGold(r,size,p),
+    let gold=rollGold(r,size,p);const bounty=(type==="Hunt"||type==="Extermination")&&C.guild.uniques.some(u=>u.name==="Wanted Board");
+    if(bounty)gold=Math.round(gold*1.2/5)*5;
+    return {id:uid(),bounty,rank:r,type,size,location:loc,world,patron:p,
+      objective:fillTpl(pickFresh(T.objectives[type],"obj:"+type),world.genre?genreData(world.genre):T.locales[loc]),incentive:rollIncentive(r,size,p),gold,
       complication:Math.random()*100<S.jobComp?pickFresh(T.complications,"jcomp"):null,
       contribution:Math.round((r+1)*(T.sizes.contribution[size]||1)),kept:false,final:false,worldBlock:null,expanded:null};
   }
   function rerollField(h,f){
     if(f==="world"){h.world=rollWorld(h.rank,h.location);h.worldBlock=null;h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h))}
-    if(f==="patron"){h.patron=rollPatron();h.incentive=rollIncentive(h.rank,h.size,h.patron);h.gold=rollGold(h.rank,h.size,h.patron)}
+    if(f==="patron"){h.patron=rollPatron();h.incentive=rollIncentive(h.rank,h.size,h.patron);h.gold=rollGold(h.rank,h.size,h.patron);if(h.bounty)h.gold=Math.round(h.gold*1.2/5)*5}
     if(f==="objective")h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h));
     if(f==="incentive")h.incentive=rollIncentive(h.rank,h.size,h.patron);
     if(f==="complication")h.complication=pickFresh(T.complications,"jcomp");
@@ -95,7 +97,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");
     const b=budget(h),t=tierOf(h.rank),x=h.expanded,wb=h.worldBlock;
     d.innerHTML=`<h3>${esc(hookTitle(h))}</h3>
-    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.final?'<span class="badge leaf">Final</span>':""}</div>
+    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
     ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}

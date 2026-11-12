@@ -1,6 +1,6 @@
-/* Guild Upgrade default tables (content v2) */
+/* Guild Upgrade default tables (content v3) */
 const DEFAULT_UPG_TABLES={
- "version": 2,
+ "version": 3,
  "goldBaseByLevel": [
   0,
   30,
@@ -581,18 +581,18 @@ const DEFAULT_UPG_TABLES={
    "flavor": "A network of gossips, barkeeps, and one very nosy owl.",
    "levels": [
     {
-     "name": "Ears",
+     "name": "Word on the Street",
      "tier": 0,
      "jobs": 0.5,
      "days": 0,
-     "perk": "+1 extra hook on each Job Board roll."
+     "perk": "Before accepting a job, the party learns one true detail about the patron or the location."
     },
     {
-     "name": "Whisper Network",
+     "name": "Commissions",
      "tier": 1,
      "jobs": 2,
      "days": 3,
-     "perk": "Reroll one Job Board hook per downtime."
+     "perk": "Once per downtime, the players request a job type or world; the DM includes a fitting hook on the next board."
     },
     {
      "name": "Spymaster",
@@ -1293,7 +1293,7 @@ const DEFAULT_UPG_TABLES={
      "cat": "Facilities",
      "jobs": 1,
      "days": 3,
-     "perk": "The guild hears of city emergencies first: +1 hook on Council-assigned rolls."
+     "perk": "First responders: Council-assigned jobs pay a bigger guild fee (+50%) and, once Contribution Points exist, extra contribution."
     },
     {
      "name": "Sturdy Stables",
@@ -1362,7 +1362,7 @@ const DEFAULT_UPG_TABLES={
      "cat": "Services",
      "jobs": 1,
      "days": 1,
-     "perk": "+1 hook from coastal and seafaring worlds on each Job Board roll."
+     "perk": "Harbor connections: coastal and seafaring jobs give an incentive one rarity step better, and travel there is free."
     },
     {
      "name": "Bottled Ship",
@@ -1415,7 +1415,7 @@ const DEFAULT_UPG_TABLES={
      "cat": "Facilities",
      "jobs": 1,
      "days": 2,
-     "perk": "+1 Hunt or Extermination hook on each Job Board roll."
+     "perk": "Bounty contracts: Hunt and Extermination jobs pay +20% gold, plus a trophy bonus for proof of the kill."
     }
    ],
    "Post-apocalyptic": [
