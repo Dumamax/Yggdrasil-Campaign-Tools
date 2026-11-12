@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yggdrasil Guild Hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+/*STYLES*/
+</style>
+</head>
+<body>
+<header>
+  <h1>⟡ Yggdrasil Guild Hall</h1>
+  <span class="sub">The DM's prep and table tools.</span>
+  <div class="hdr-right">
+    <span class="aimode" id="aiMode"></span>
+    <button class="btn" id="tmToggle">Table Mode</button>
+    <button class="btn primary" id="saveCamp">Save Campaign</button>
+    <button class="btn" id="loadCamp">Load Campaign</button>
+    <input type="file" id="fileIn" accept=".json,application/json" hidden>
+  </div>
+</header>
+<div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
+<nav id="mainNav">
+  <button data-tab="jobs">Job Board</button>
+  <button data-tab="shop">Guild Upgrades</button>
+  <button data-tab="roster">Roster</button>
+  <button data-tab="table">At the Table</button>
+  <button data-tab="print">Print</button>
+  <button data-tab="settings">Settings &amp; Tables</button>
+</nav>
+<main>
+  <section id="tab-jobs">
+    <div class="controls">
+      <label>Guild tier <select id="tierSel"></select></label>
+      <label>Party level <input id="pl" type="number" min="1" max="20"></label>
+      <label>Party size <input id="ps" type="number" min="1" max="8"></label>
+      <button class="btn primary" id="rollBtn">Roll the Board</button>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">DM view</button><button class="btn" id="vNotice">Notice view</button></div>
+    </div>
+    <div id="jobBoard" class="board"></div>
+    <p class="hint" id="jobAI"></p>
+    <p class="hint">Keep the hooks you like; mark them Final to send their Quest Notices to Print and to the At the Table view. "Paid → treasury" adds the guild fee.</p>
+  </section>
+
+  <section id="tab-shop" hidden>
+    <div class="controls">
+      <label>Treasury (gp) <input id="treasury" type="number" min="0" placeholder="—"></label>
+      <button class="btn primary dmonly" id="rollOffers">Roll Peddlers</button>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDMs">DM view</button><button class="btn" id="vShop">Shop view</button></div>
+    </div>
+    <div class="seg cats" id="cats"><button class="btn" data-c="All">All</button><button class="btn" data-c="Facilities">Facilities</button><button class="btn" data-c="Services">Services</button><button class="btn" data-c="Staff">Staff</button><button class="btn" data-c="Offers">Peddlers</button></div>
+    <div id="shop"></div>
+  </section>
+
+  <section id="tab-roster" hidden>
+    <div class="controls">
+      <button class="btn primary" id="addMember">＋ Add member</button>
+      <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
+      <button class="btn" id="copyRoster">Copy roster</button>
+    </div>
+    <div id="editorHost"></div>
+    <div id="roster" class="board"></div>
+    <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
+  </section>
+
+  <section id="tab-table" hidden>
+    <div id="tableView" class="tm-grid"></div>
+  </section>
+
+  <section id="tab-print" hidden>
+    <div class="controls">
+      <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
+      <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
+      <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
+      <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
+      <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+      <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+      <button class="btn primary" id="printGo">Print</button>
+    </div>
+    <div class="preview" id="preview"></div>
+  </section>
+
+  <section id="tab-settings" hidden>
+    <div class="settings">
+      <div class="panel">
+        <h2>Campaign file</h2>
+        <p class="hint">The campaign file is the source of truth: jobs, upgrades, treasury, roster, write-ups, and any custom tables. The page also keeps a working copy in this browser, but save a file after each prep session and keep the files somewhere safe (Drive, Dropbox, USB).</p>
+        <p class="row" id="lastSaved"></p>
+        <div class="actions"><button class="btn primary" onclick="saveCampaign()">Save Campaign</button><button class="btn" onclick="$('#fileIn').click()">Load Campaign</button><button class="btn danger" id="newCamp">Start a new campaign</button></div>
+        <h2 style="margin-top:14px">Import pasted data</h2>
+        <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
+        <textarea class="json" id="importJson" style="min-height:90px"></textarea>
+        <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Claude</h2>
+        <p class="row" id="aiStatus"></p>
+        <div class="controls" style="margin:0;background:none;border:0;padding:0">
+          <label>API key <input id="apiKey" type="password" autocomplete="off" style="width:280px"></label>
+          <button class="btn primary" id="saveKey">Save key</button><button class="btn" id="testKey">Test</button><button class="btn danger" id="forgetKey">Forget key</button>
+          <label>Model <select id="modelSel"><option value="claude-haiku-5-5">Haiku (cheapest)</option><option value="claude-sonnet-5-5">Sonnet (default)</option><option value="claude-opus-5-5">Opus (richest)</option><option value="custom">Other…</option></select></label>
+          <label>&nbsp;<input id="modelCustom" placeholder="model id" hidden></label>
+        </div>
+        <p class="hint">The key stays in this browser only; it's never written into the campaign file or this page. Use a dedicated key with a monthly spend limit set in the Claude Console.</p>
+      </div>
+      <div class="panel">
+        <h2>Tiers &amp; economy</h2>
+        <table class="map" id="mapTbl"></table>
+        <div class="controls" id="numSettings" style="margin:10px 0 0;background:none;border:0;padding:0">
+          <label>Job complication % <input data-s="jobComp" type="number" min="0" max="100"></label>
+          <label>Hooks per roll (min) <input data-s="hMin" type="number" min="1" max="12"></label>
+          <label>Hooks per roll (max) <input data-s="hMax" type="number" min="1" max="12"></label>
+          <label>Guild fee % <input data-s="feePct" type="number" min="0" max="100"></label>
+          <label>Peddlers per roll <input data-s="offerCount" type="number" min="1" max="8"></label>
+          <label>Build complication % <input data-s="buildComp" type="number" min="0" max="100"></label>
+          <label>Revival gp / level <input data-s="revive" type="number" min="0"></label>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Tables (JSON)</h2>
+        <div class="actions"><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <textarea class="json" id="tblJson" spellcheck="false"></textarea>
+        <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
+        <p class="hint">Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+<script>
+/*SCRIPTS*/
+</script>
+</body>
+</html>

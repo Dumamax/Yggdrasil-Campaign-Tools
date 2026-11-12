@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yggdrasil Guild Hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1d1a16; --panel:#27231d; --panel2:#302a22; --line:#4a4033; --ink:#efe6d4; --mute:#b5a88f;
+  --gold:#d6a84a; --leaf:#7fa86a; --red:#c4624f; --blue:#7a9cc6;
+  --iron:#8d8f93; --bronze:#b07a43; --silver:#c9ccd2; --goldt:#e0b84f; --plat:#a8e0e0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -20%,#3a3226 0,#1d1a16 60%);color:var(--ink);font:17px/1.45 "Crimson Pro",Georgia,serif;min-height:100vh}
+header{padding:18px 22px 6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font:700 26px "Cinzel",serif;margin:0;color:var(--gold);letter-spacing:.04em}
+header .sub{color:var(--mute);font-style:italic}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:8px 22px;border-bottom:1px solid var(--line)}
+nav button,.btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font:600 15px "Crimson Pro",serif;cursor:pointer}
+nav button.on{background:var(--gold);color:#221a0e;border-color:var(--gold)}
+.btn:hover,nav button:hover{border-color:var(--gold)}
+.btn.primary{background:var(--leaf);color:#14200f;border-color:var(--leaf)}
+.btn.small{padding:2px 8px;font-size:14px}
+.btn.on{background:var(--gold);color:#221a0e}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.45;cursor:default}
+main{padding:16px 22px 40px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:2px}
+label.inline{flex-direction:row;align-items:center;gap:6px;font-size:15px;color:var(--ink)}
+select,input,textarea{background:#1a1712;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 7px;font:16px "Crimson Pro",serif}
+input[type=number]{width:80px}
+.seg{display:flex;flex-wrap:wrap}
+.seg button{border-radius:0;margin-left:-1px}
+.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+.cats{margin:0 0 14px}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;position:relative}
+.card.owned{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.card h3{margin:0;font:700 17px "Cinzel",serif;color:var(--gold)}
+.card .flav{font-style:italic;color:var(--mute);font-size:15px}
+.badges{display:flex;flex-wrap:wrap;gap:5px}
+.badge{font-size:12.5px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.badge.gold{color:var(--gold);border-color:var(--gold)}
+.badge.leaf{color:var(--leaf);border-color:var(--leaf)}
+.t0{color:var(--iron);border-color:var(--iron)}.t1{color:var(--bronze);border-color:var(--bronze)}.t2{color:var(--silver);border-color:var(--silver)}.t3{color:var(--goldt);border-color:var(--goldt)}.t4{color:var(--plat);border-color:var(--plat)}
+.lv{display:grid;grid-template-columns:28px 1fr auto;gap:2px 8px;padding:6px 8px;border-radius:6px;background:#1f1c17;font-size:15px;align-items:start}
+.lv .n{font:700 14px "Cinzel",serif;color:var(--mute)}
+.lv .nm{font-weight:600}
+.lv .cost{text-align:right;white-space:nowrap;color:var(--gold);font-weight:600}
+.lv .perk{grid-column:2/4;color:var(--ink)}
+.lv .meta{grid-column:2/4;font-size:13px;color:var(--mute)}
+.lv.owned{background:#26301f}
+.lv.owned .n{color:var(--leaf)}
+.lv.next{outline:1px solid var(--gold)}
+.lv.dim{opacity:.42}
+details.addons{font-size:15px;background:#1f1c17;border-radius:6px;padding:4px 8px}
+details.addons summary{cursor:pointer;color:var(--mute)}
+details.addons ul{margin:4px 0;padding-left:18px}
+.addon-owned{color:var(--leaf)}
+.row{font-size:15.5px}.row b{color:var(--mute);font-weight:600}
+.dm{background:#2f1f1b;border-left:3px solid var(--red);padding:4px 8px;border-radius:4px;font-size:15px}
+.dm b{color:var(--red)}
+.op{background:#1d2228;border-left:3px solid var(--blue);padding:4px 8px;border-radius:4px;font-size:15px}
+.op b{color:var(--blue)}
+.actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center}
+.expanded{border-top:1px dashed var(--line);margin-top:4px;padding-top:6px;font-size:15.5px}
+.expanded h4{margin:6px 0 3px;font:600 14px "Cinzel",serif;color:var(--leaf);letter-spacing:.03em}
+.expanded ul{margin:2px 0;padding-left:20px}
+.muted{color:var(--mute)}
+.section-h{font:700 18px "Cinzel",serif;color:var(--gold);margin:18px 0 8px;letter-spacing:.03em}
+.section-h:first-child{margin-top:0}
+.spin{display:inline-block;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.offer{border-style:dashed}
+.offer.sold{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:13.5px;background:#1f1c17;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.chip b{color:var(--gold);font-weight:600}
+.editor{background:var(--panel);border:1px solid var(--gold);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:grid;gap:10px}
+.editor .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.skillrow{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.skillrow input{flex:1}
+.sync{font-size:14px;color:var(--mute)}
+.sync.ok{color:var(--leaf)}
+/* settings */
+.settings{display:grid;gap:16px;max-width:1000px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.panel h2{font:700 17px "Cinzel",serif;color:var(--gold);margin:0 0 8px}
+table.map{border-collapse:collapse}
+table.map td,table.map th{padding:3px 8px;text-align:left}
+table.map th{color:var(--mute);font-weight:600;font-size:14px}
+textarea.json{width:100%;min-height:360px;font:13px ui-monospace,Menlo,monospace}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--leaf);color:#13200e;padding:6px 14px;border-radius:6px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.hint{font-size:14px;color:var(--mute);margin:4px 0 0}
+.preview{background:#f3ead6;border-radius:8px;padding:10px;overflow:auto}
+
+.worldblock{font-size:14.5px;background:#1f1c17;border-radius:6px;padding:6px 8px;color:var(--mute)}
+.reroll{cursor:pointer;color:var(--mute);font-size:13px;margin-left:4px;user-select:none}
+.reroll:hover{color:var(--gold)}
+.card.kept{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.card.final{border-color:var(--leaf);box-shadow:0 0 0 1px var(--leaf) inset}
+.expanded ol{margin:2px 0;padding-left:20px}
+.hdr-right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.banner{display:none;background:#3a2a14;border-bottom:1px solid var(--gold);color:var(--gold);padding:6px 22px;font-size:15px;align-items:center;gap:10px;flex-wrap:wrap}
+.banner.show{display:flex}
+.paste{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.paste textarea{min-height:90px;font:13px ui-monospace,Menlo,monospace}
+.tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+table.ref{border-collapse:collapse;width:100%;font-size:15px}
+table.ref td{padding:3px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+table.ref td:last-child{text-align:right;color:var(--gold);white-space:nowrap}
+.aimode{font-size:13px;padding:1px 8px;border-radius:20px;border:1px solid var(--line);color:var(--mute)}
+.aimode.on{color:var(--leaf);border-color:var(--leaf)}
+#printArea{display:none}
+@media print{
+  body.printing>*:not(#printArea){display:none!important}
+  body.printing #printArea{display:block}
+  body.printing{background:#fff}
+}
+
+.notice{position:relative;background:
+  radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
+  radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),
+  linear-gradient(135deg,#ead9b0,#d9c08a 55%,#cfb178);
+  color:#3a2a16;padding:30px 26px 26px;border-radius:3px;font-family:"IM Fell English",serif;
+  box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 0 40px rgba(110,70,20,.35);transform:rotate(var(--rot,0deg))}
+.notice::before{content:"";position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e6e6e6,#6b6b6b 60%,#333);box-shadow:0 2px 3px rgba(0,0,0,.6)}
+.notice .nhead{text-align:center;font-family:"IM Fell English SC",serif;font-size:15px;letter-spacing:.25em;color:#6b4a22}
+.notice .ntitle{text-align:center;font-family:"IM Fell English SC",serif;font-size:28px;line-height:1.1;margin:4px 0 10px;color:#2a1c0c}
+.notice .nbody{font-size:17.5px;line-height:1.4}
+.notice .nrule{border:0;border-top:1px solid rgba(80,50,20,.45);margin:12px 0}
+.notice .nfoot{display:flex;justify-content:space-between;gap:10px;font-size:15.5px}
+.notice .nreward{font-family:"IM Fell English SC",serif;font-size:18px;color:#5a1e10}
+.notice .stamp{position:absolute;right:16px;bottom:52px;width:74px;height:74px;border-radius:50%;border:3px double rgba(150,30,20,.7);color:rgba(150,30,20,.8);display:flex;align-items:center;justify-content:center;text-align:center;font:700 12px "Cinzel",serif;transform:rotate(-14deg);line-height:1.05;padding:6px}
+.notice .sig{font-style:italic;text-align:right;margin-top:6px}
+.notice-wrap{display:flex;flex-direction:column;gap:6px}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>⟡ Yggdrasil Guild Hall</h1>
+  <span class="sub">The DM's prep and table tools.</span>
+  <div class="hdr-right">
+    <span class="aimode" id="aiMode"></span>
+    <button class="btn" id="tmToggle">Table Mode</button>
+    <button class="btn primary" id="saveCamp">Save Campaign</button>
+    <button class="btn" id="loadCamp">Load Campaign</button>
+    <input type="file" id="fileIn" accept=".json,application/json" hidden>
+  </div>
+</header>
+<div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
+<nav id="mainNav">
+  <button data-tab="jobs">Job Board</button>
+  <button data-tab="shop">Guild Upgrades</button>
+  <button data-tab="roster">Roster</button>
+  <button data-tab="table">At the Table</button>
+  <button data-tab="print">Print</button>
+  <button data-tab="settings">Settings &amp; Tables</button>
+</nav>
+<main>
+  <section id="tab-jobs">
+    <div class="controls">
+      <label>Guild tier <select id="tierSel"></select></label>
+      <label>Party level <input id="pl" type="number" min="1" max="20"></label>
+      <label>Party size <input id="ps" type="number" min="1" max="8"></label>
+      <button class="btn primary" id="rollBtn">Roll the Board</button>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">DM view</button><button class="btn" id="vNotice">Notice view</button></div>
+    </div>
+    <div id="jobBoard" class="board"></div>
+    <p class="hint" id="jobAI"></p>
+    <p class="hint">Keep the hooks you like; mark them Final to send their Quest Notices to Print and to the At the Table view. "Paid → treasury" adds the guild fee.</p>
+  </section>
+
+  <section id="tab-shop" hidden>
+    <div class="controls">
+      <label>Treasury (gp) <input id="treasury" type="number" min="0" placeholder="—"></label>
+      <button class="btn primary dmonly" id="rollOffers">Roll Peddlers</button>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDMs">DM view</button><button class="btn" id="vShop">Shop view</button></div>
+    </div>
+    <div class="seg cats" id="cats"><button class="btn" data-c="All">All</button><button class="btn" data-c="Facilities">Facilities</button><button class="btn" data-c="Services">Services</button><button class="btn" data-c="Staff">Staff</button><button class="btn" data-c="Offers">Peddlers</button></div>
+    <div id="shop"></div>
+  </section>
+
+  <section id="tab-roster" hidden>
+    <div class="controls">
+      <button class="btn primary" id="addMember">＋ Add member</button>
+      <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
+      <button class="btn" id="copyRoster">Copy roster</button>
+    </div>
+    <div id="editorHost"></div>
+    <div id="roster" class="board"></div>
+    <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
+  </section>
+
+  <section id="tab-table" hidden>
+    <div id="tableView" class="tm-grid"></div>
+  </section>
+
+  <section id="tab-print" hidden>
+    <div class="controls">
+      <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
+      <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
+      <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
+      <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
+      <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+      <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+      <button class="btn primary" id="printGo">Print</button>
+    </div>
+    <div class="preview" id="preview"></div>
+  </section>
+
+  <section id="tab-settings" hidden>
+    <div class="settings">
+      <div class="panel">
+        <h2>Campaign file</h2>
+        <p class="hint">The campaign file is the source of truth: jobs, upgrades, treasury, roster, write-ups, and any custom tables. The page also keeps a working copy in this browser, but save a file after each prep session and keep the files somewhere safe (Drive, Dropbox, USB).</p>
+        <p class="row" id="lastSaved"></p>
+        <div class="actions"><button class="btn primary" onclick="saveCampaign()">Save Campaign</button><button class="btn" onclick="$('#fileIn').click()">Load Campaign</button><button class="btn danger" id="newCamp">Start a new campaign</button></div>
+        <h2 style="margin-top:14px">Import pasted data</h2>
+        <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
+        <textarea class="json" id="importJson" style="min-height:90px"></textarea>
+        <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Claude</h2>
+        <p class="row" id="aiStatus"></p>
+        <div class="controls" style="margin:0;background:none;border:0;padding:0">
+          <label>API key <input id="apiKey" type="password" autocomplete="off" style="width:280px"></label>
+          <button class="btn primary" id="saveKey">Save key</button><button class="btn" id="testKey">Test</button><button class="btn danger" id="forgetKey">Forget key</button>
+          <label>Model <select id="modelSel"><option value="claude-haiku-5-5">Haiku (cheapest)</option><option value="claude-sonnet-5-5">Sonnet (default)</option><option value="claude-opus-5-5">Opus (richest)</option><option value="custom">Other…</option></select></label>
+          <label>&nbsp;<input id="modelCustom" placeholder="model id" hidden></label>
+        </div>
+        <p class="hint">The key stays in this browser only; it's never written into the campaign file or this page. Use a dedicated key with a monthly spend limit set in the Claude Console.</p>
+      </div>
+      <div class="panel">
+        <h2>Tiers &amp; economy</h2>
+        <table class="map" id="mapTbl"></table>
+        <div class="controls" id="numSettings" style="margin:10px 0 0;background:none;border:0;padding:0">
+          <label>Job complication % <input data-s="jobComp" type="number" min="0" max="100"></label>
+          <label>Hooks per roll (min) <input data-s="hMin" type="number" min="1" max="12"></label>
+          <label>Hooks per roll (max) <input data-s="hMax" type="number" min="1" max="12"></label>
+          <label>Guild fee % <input data-s="feePct" type="number" min="0" max="100"></label>
+          <label>Peddlers per roll <input data-s="offerCount" type="number" min="1" max="8"></label>
+          <label>Build complication % <input data-s="buildComp" type="number" min="0" max="100"></label>
+          <label>Revival gp / level <input data-s="revive" type="number" min="0"></label>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Tables (JSON)</h2>
+        <div class="actions"><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <textarea class="json" id="tblJson" spellcheck="false"></textarea>
+        <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
+        <p class="hint">Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ================= CORE: helpers, campaign state, files, AI, print ================= */
+const APP_ID="yggdrasil-guild-hall", SCHEMA=1;
+const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+function wpick(entries){const tot=entries.reduce((s,e)=>s+Math.max(0,e[1]),0);let r=Math.random()*tot;for(const [k,w] of entries){r-=Math.max(0,w);if(r<0)return k}return entries[entries.length-1][0]}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cap=s=>String(s).charAt(0).toUpperCase()+String(s).slice(1);
+const fmt=n=>Number(n||0).toLocaleString();
+const uid=()=>Math.random().toString(36).slice(2,10);
+const clone=o=>JSON.parse(JSON.stringify(o));
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2000)}
+async function copyText(t){try{await navigator.clipboard.writeText(t);toast("Copied")}catch(e){toast("Copy blocked: select and copy manually")}}
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+const FRAMED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+
+/* ---------- campaign state (the thing that gets saved to file) ---------- */
+const DEFAULT_SETTINGS={tierRank:0,partyLevel:3,partySize:4,
+  mapping:{Iron:[3,5],Bronze:[6,8],Silver:[9,12],Gold:[13,16],Platinum:[17,20]},
+  jobComp:30,hMin:6,hMax:8,feePct:25,offerCount:3,buildComp:10,revive:50};
+function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:clone(DEFAULT_SETTINGS),
+  tables:{jobs:null,upgrades:null,prices:null},jobs:[],
+  guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
+  roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
+  expanded:{}}}
+function normalize(c){const n=newCampaign();const o=Object.assign(n,c||{});
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null},o.tables||{});
+  o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
+  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};return o}
+let C=normalize(lsGet("ygh.campaign",null));
+let S=C.settings;
+let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false}},lsGet("ygh.ui",{}));
+let dirty=lsGet("ygh.dirty",false);
+function saveUI(){lsSet("ygh.ui",UI)}
+function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
+function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);App.reloadAll()}
+
+/* tiers */
+const tierOf=r=>Math.floor(r/3);
+const subOf=r=>3-(r%3);
+const rankName=r=>`${TIERS[tierOf(r)]} ${subOf(r)}`;
+function recLevel(r){const [a,b]=S.mapping[TIERS[tierOf(r)]];return Math.round(a+(b-a)*(r%3)/2)}
+function tierMidLevel(t){const [a,b]=S.mapping[TIERS[t]]||[3,5];return Math.max(1,Math.min(20,Math.round((a+b)/2)))}
+
+/* ---------- files ---------- */
+let downloads=null;
+async function saveFile(filename,data,mime){
+  if(FRAMED){
+    if(!downloads){copyText(data);toast("Download isn't available here, so the file contents were copied instead");return false}
+    try{await downloads.save({filename,data});return true}catch(e){toast("Download declined or failed");return false}
+  }
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:mime||"application/json"}));a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
+}
+function stamp(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`}
+async function saveCampaign(){
+  C.savedAt=new Date().toISOString();
+  const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,JSON.stringify(C,null,1));
+  if(ok){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast("Campaign saved to file")}
+}
+function loadCampaignFile(file){
+  const r=new FileReader();
+  r.onload=()=>{try{importData(JSON.parse(r.result))}catch(e){toast("That file isn't valid JSON")}};
+  r.readAsText(file);
+}
+function importData(d){
+  if(d&&d.app===APP_ID){replaceCampaign(d);dirty=false;lsSet("ygh.dirty",false);banner();toast("Campaign loaded");return}
+  if(d&&d.source==="job-board"){ // export from the old standalone Job Board
+    const have=new Set(C.jobs.map(h=>h.id));(d.hooks||[]).forEach(h=>{if(!have.has(h.id))C.jobs.push(h)});
+    if(d.settings){["tierRank","partyLevel","partySize","mapping","hMin","hMax"].forEach(k=>{if(d.settings[k]!=null)S[k]=d.settings[k]});if(d.settings.compChance!=null)S.jobComp=d.settings.compChance}
+    if(d.tables&&JSON.stringify(d.tables)!==JSON.stringify(DEFAULT_JOB_TABLES))C.tables.jobs=d.tables;
+    commit();App.reloadAll();toast(`Imported ${(d.hooks||[]).length} Job Board hooks`);return}
+  if(d&&(d.guild||d.roster)){ // export from the old Upgrade Chart
+    if(d.guild)C.guild=Object.assign(C.guild,d.guild);
+    if(Array.isArray(d.roster)){const ids=new Set(C.roster.map(m=>m.id));d.roster.forEach(m=>{if(!ids.has(m.id))C.roster.push(m)})}
+    commit();App.reloadAll();toast("Imported Upgrade Chart data");return}
+  toast("Didn't recognize that file");
+}
+function banner(){
+  const b=$("#banner");if(!b)return;
+  b.classList.toggle("show",dirty);
+  $("#bannerText").textContent=C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+}
+window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
+
+/* ---------- AI: Claude-in-artifact, API key, or copy/paste ---------- */
+const AI={
+  sample:null,
+  key(){return lsGet("ygh.apikey","")},
+  mode(){return this.sample?"claude":this.key()?"api":"none"},
+  label(){return {claude:"Claude: built in",api:"Claude: API key",none:"Claude: copy/paste"}[this.mode()]},
+  parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
+  async json(prompt){
+    if(this.sample)return await this.sample.json(prompt,{modelTier:"default"});
+    const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:prompt}]})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data?.error?.message||`API error ${res.status}`);
+    return this.parse((data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""));
+  }
+};
+/* run(): try AI; on no AI or failure, apply the fallback and keep the prompt so the DM can copy/paste it */
+async function aiRun({prompt,fallback,apply,btn}){
+  if(btn){btn.innerHTML='<span class="spin">✦</span> Writing…';btn.disabled=true}
+  try{const r=await AI.json(prompt);apply(Object.assign({ai:true},r))}
+  catch(e){apply(Object.assign(fallback,{prompt,note:e.noai?"Basic card from the tables. Copy the Claude prompt, run it in Claude, and paste the result to upgrade it.":`Claude couldn't write this one (${e.message}). Basic card filled in; you can copy the prompt and paste a result.`}))}
+}
+/* small paste box used by cards; calls onApply(obj) */
+function pasteBox(onApply){
+  const d=document.createElement("div");d.className="paste";
+  d.innerHTML=`<textarea placeholder="Paste Claude's JSON reply here"></textarea><div class="actions"><button class="btn small primary">Apply</button><button class="btn small">Cancel</button></div>`;
+  const [ok,cancel]=d.querySelectorAll("button");
+  ok.onclick=()=>{try{onApply(Object.assign({ai:true},AI.parse(d.querySelector("textarea").value)))}catch(e){toast("Couldn't read that: "+e.message)}};
+  cancel.onclick=()=>d.remove();
+  return d;
+}
+function aiButtons(x,onApply){ // returns element with Copy prompt / Paste result when x has a prompt
+  const w=document.createElement("span");if(!x||!x.prompt)return w;
+  w.innerHTML=`<button class="btn small">Copy Claude prompt</button> <button class="btn small">Paste result</button>`;
+  const [cp,ps]=w.querySelectorAll("button");
+  cp.onclick=()=>copyText(x.prompt);
+  ps.onclick=()=>{const card=w.closest(".card");if(card.querySelector(".paste"))return;card.appendChild(pasteBox(onApply))};
+  return w;
+}
+
+/* ---------- printing ---------- */
+const FONT_LINK=`<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">`;
+async function printHTML(title,body,css){
+  if(FRAMED){ // sandboxed (artifact): browser print is blocked, so hand over a print-ready file
+    const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${FONT_LINK}<style>body{margin:18px;background:#fff}@page{margin:12mm}${css}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>print(),600)<\/script></body></html>`;
+    if(await saveFile(title.toLowerCase().replace(/[^a-z0-9]+/g,"-")+".html",doc,"text/html"))toast("Saved a printable page: open it to print");
+    return;
+  }
+  const pa=$("#printArea");pa.innerHTML=`<style>${css}</style>${body}`;
+  document.body.classList.add("printing");
+  const done=()=>{document.body.classList.remove("printing");pa.innerHTML="";window.removeEventListener("afterprint",done)};
+  window.addEventListener("afterprint",done);
+  setTimeout(()=>{window.print();setTimeout(done,1500)},150);
+}
+
+/* Job Board default tables (from Job Board v1) */
+const DEFAULT_JOB_TABLES = {
+  version:2,
+  tiers:["Iron","Bronze","Silver","Gold","Platinum"],
+  jobTypes:{ // weights per tier [Iron,Bronze,Silver,Gold,Platinum]
+    "Fetch":[20,14,8,5,3],"Extermination":[18,14,10,8,6],"Escort":[14,12,10,8,6],
+    "Investigation":[12,14,14,12,10],"Hunt":[12,14,14,14,12],"Rescue":[10,10,12,12,12],
+    "Diplomacy":[6,8,12,14,14],"Heist":[4,8,10,12,12],"World Crisis":[1,3,6,10,15]
+  },
+  sizes:{ // [Small,Standard,Major] per tier
+    weights:[[50,40,10],[35,45,20],[30,45,25],[25,45,30],[20,45,35]],
+    names:["Small","Standard","Major"],
+    blurb:{"Small":"one session, ~1 fight","Standard":"1–2 sessions","Major":"multi-session arc"},
+    goldMult:{"Small":0.5,"Standard":1,"Major":2.5},
+    contribution:{"Small":1,"Standard":3,"Major":8}
+  },
+  locations:{ // per tier
+    names:["The City (base bazaar)","Inside the Tree","The Trunk","A nearby world","A distant world","A strange, far-flung world"],
+    weights:[[25,20,8,40,7,0],[15,15,10,42,16,2],[8,10,10,40,27,5],[5,8,10,30,32,15],[3,5,10,20,37,25]]
+  },
+  fantasyShare:{iron:0.8,platinum:0.6},
+  /* Each genre/locale has its own places, quirks (grounded-but-wacky), and fill overrides so jobs fit the world. */
+  genres:{
+    fantasy:{
+      "High fantasy":{w:40,places:["a river kingdom","an elven forest-realm","a mountain dwarfhold","a sprawling wizard-republic","a kingdom of floating isles"],
+        quirks:["the royal wizards tax every spell cast inside city walls","knighthood is granted by a talking sword that is very picky","river spirits demand a loaf of bread at every bridge","dragons are a protected species, to everyone's annoyance","the king's heralds sing every proclamation, badly","griffon-post beats the roads, but the griffons just unionized"],
+        fill:{spot:["a ruined elven shrine","the king's old hunting lodge","a goblin-infested mine","a wizard's abandoned tower"],beast:["owlbear","wyvern","young green dragon","feral griffon"],pests:["goblins","kobolds","giant spiders"],item:["a knight's lost signet","a runaway spellbook","an enchanted harp"],person:["a squire on his first errand","an elven envoy","a hedge-wizard's apprentice"]}},
+      "Low fantasy / medieval":{w:15,places:["a mud-and-timber valley","a feuding border march","a market town","a fen of stilt villages"],
+        quirks:["the local lord owns every road and charges by the hoof","the harvest festival is mandatory, and the fines are steep","everyone blames witches, and one of them actually is one","the miller is the richest man in three valleys and acts like it","nobody trusts coin, so goats change hands instead"],
+        fill:{spot:["the lord's tithe barn","a bog-side shrine","the old mill","a bandit-held toll bridge"],beast:["dire wolf","boar of unusual size","bog troll"],pests:["bandits","giant rats","wolves"],item:["the village tithe chest","a holy relic (probably a pig bone)","the lord's seal"],person:["the miller's daughter","a traveling friar","the reeve"]}},
+      "Dark fantasy / grimdark":{w:10,places:["a cathedral city under martial law","a land of endless dusk","a war-scarred duchy","a vampire-tithed province"],
+        quirks:["the church sells indulgences against monster attacks","curfew bells ring at dusk and nobody asks about latecomers","graves are padlocked by law","the nobles drink something red at every banquet and call it wine","the sun hasn't fully risen in a generation, so lanterns are taxed"],
+        fill:{spot:["a padlocked graveyard","the inquisition's cellars","a plague-sealed district","a burned chapel"],beast:["ghoul pack leader","wight","vampire spawn","wraith"],pests:["ghouls","zombies","cultists"],item:["a saint's finger-bone","a forbidden prayer book","the inquisitor's ledger"],person:["a condemned heretic","a gravedigger's son","a disgraced paladin"]}},
+      "Fey / whimsical":{w:8,places:["a realm ruled by rival seasonal courts","a mushroom-cap country","a storybook kingdom","a candy-glass archipelago"],
+        quirks:["the seasons change whenever the rival courts lose a bet","promises are legally binding, even in jest","names are currency, so everyone uses fake ones","the mushrooms vote, and they're stubbornly conservative","time runs differently on either side of every hedge"],
+        fill:{spot:["the Summer Court's hedge-maze","a mushroom ring","a pond that reflects tomorrow","the Winter Queen's ice garden"],beast:["displacer beast","will-o'-wisp","green hag"],pests:["pixies (very rude)","quicklings","twig blights"],item:["a bottled laugh","a borrowed name","the Autumn Prince's crown"],person:["a changeling child","a satyr bard","a mortal who ate fey food"]}},
+      "Swashbuckling / nautical":{w:6,places:["an island chain of pirate republics","a sky-sea of airship ports","a coral-city archipelago"],
+        quirks:["every captain is technically a pirate, it just depends on the paperwork","the sea demands a song as toll at the reef gates","ports elect harbormasters by drinking contest","the tides follow a sleeping sea serpent's breathing","maps are illegal, so navigators memorize everything"],
+        fill:{spot:["a smuggler's sea cave","a sunken galleon","a reef-ringed island","the free port's harbor"],beast:["giant octopus","sea hag","merrow chieftain","plesiosaurus"],pests:["sahuagin raiders","pirates","giant crabs"],item:["a letter of marque","a cursed compass","a chest of salt-crusted gold"],person:["a shipwrecked noble","a cabin boy who saw too much","a retired privateer"]}}
+    },
+    other:{
+      "Steampunk / gaslamp":{w:6,places:["a brass canal city","a smog-wrapped industrial empire","a clockwork guild-state"],
+        quirks:["clockwork constables ticket anyone loitering near machinery","every guild holds a patent on something you need","the smog is so thick that streets are named by smell","airship mail is reliable except on Tuesdays (union rules)","the city's great engine must be wound by hand each dawn"],
+        fill:{spot:["a boiler works","the airship docks","a sealed patent-office vault","the canal locks"],beast:["rogue iron golem","clockwork spider","escaped lab chimera"],pests:["haywire modrons","brass-plated sewer rats","mechanical vermin"],item:["a stolen blueprint","a prototype aether-cell","an inventor's diary"],person:["an eccentric inventor","a chimney-sweep child","a factory whistleblower"]}},
+      "Frontier / weird west":{w:4,places:["a mana-rush frontier town","a railroad-cut badland","a mesa country of ghost towns"],
+        quirks:["mana-rich ore turned every prospector into a hedge-wizard","the railroad company owns the sheriff","duels are legal, but the paperwork is brutal","the dead don't always stay buried in the badlands","water is worth more than gold out here"],
+        fill:{spot:["a played-out mana mine","the rail camp","a ghost-town saloon","a mesa-top shrine"],beast:["bulette","giant eagle (thunderbird)","ankheg"],pests:["claim jumpers","giant scorpions","outlaws"],item:["a mining claim deed","a payroll strongbox","a medicine bundle"],person:["a rail surveyor","a frontier marshal","a prospector's widow"]}},
+      "Post-apocalyptic":{w:4,places:["the ruins of a world that already died once","a fungal wasteland","a drowned-coast salvage town"],
+        quirks:["the old world's machines still run, but nobody knows what for","clean water is the only currency anyone trusts","settlements trade by radio, mostly in riddles","the ash storms keep a schedule, sort of","scavengers revere the old world's vending machines"],
+        fill:{spot:["a collapsed transit tunnel","a scrap-walled settlement","an old-world bunker","the ash dunes"],beast:["mutated owlbear","gorgon","purple worm"],pests:["raiders","ghouls","giant mutant insects"],item:["a working water purifier","an old-world keycard","a cache of seed stock"],person:["a scavenger kid","a settlement doctor","a bunker-born archivist"]}},
+      "Planar / elemental":{w:3,places:["a world made of slow fire","a sky of drifting earth-motes","an ocean with no surface"],
+        quirks:["fire elementals run the bureaucracy, and it shows","gravity is a suggestion near the motes","everyone carries a warding charm or ends up as weather","the lava rivers are polite but strict about trespassing","efreeti merchants haggle as a form of greeting"],
+        fill:{spot:["the brass bazaar","an earth-mote quarry","an elemental vortex","a salamander forge"],beast:["fire elemental","xorn","air elemental","salamander"],pests:["magmins","mephits","striking azers"],item:["a bottled efreeti contract","a cooled ember of the world's core","a mote anchor"],person:["a genasi diplomat","a lost azer smith","a djinni's stranded servant"]}},
+      "Modern":{w:2,places:["a rainy commuter city","a sleepy suburb","a megacity where magic is illegal"],
+        quirks:["magic is real but everyone pretends it's an app","the subway runs one extra station that isn't on any map","half the city council are vampires, and everyone knows","coffee shops double as wizard libraries","phones work, but only if you're polite to them"],
+        fill:{spot:["a closed subway station","a corporate tower's sublevel","an antique shop","a parking garage at 3am"],beast:["doppelganger","werewolf","gargoyle"],pests:["imps in the walls","goblins in the vents","a nest of shadows"],item:["a cursed smartphone","a stolen briefcase","a vintage tarot deck"],person:["an influencer","a night-shift nurse","a librarian who knows too much"]}},
+      "Cyberpunk / sci-fi":{w:2,places:["a neon arcology","a generation starship","a terraformed moon colony"],
+        quirks:["memories trade on the open market","the megacorps sponsor the weather","citizens' lifespans run on subscription","the arcology's AI has opinions about adventurers","street magic is outlawed, so it's everywhere"],
+        fill:{spot:["a data vault","the undercity markets","an orbital elevator","a derelict cargo hold"],beast:["rogue war-construct","helmed horror (security drone)","mind flayer in a corporate suit"],pests:["gangers","malfunctioning drones","nanite swarms"],item:["a data chip","an experimental cyberarm","a corporate prototype"],person:["a runaway clone","a hacker","a corporate defector"]}}
+    }
+  },
+  locales:{
+    "The City (base bazaar)":{quirks:["stall rents rise and fall with the Tree's moods","merchants from a hundred worlds argue over whose coins are real (the CCV settles it)","street signs translate themselves, unreliably","a new species arrives every week and someone has to explain sidewalks"],
+      fill:{spot:["the bazaar's night market","a warehouse by the root docks","a back-alley spice vault"],pests:["giant rats","pickpocket imps","escaped market beasts"],person:["a stall-keeper from another world","a lost tourist","a bazaar courier"]}},
+    "Inside the Tree":{quirks:["the carved halls rearrange slightly each season","sap leaks count as a civic emergency","the Tree hums when guilds argue","the Iron Quarter's lifts are pulled by very tired beetles"],
+      fill:{spot:["a sap-flooded gallery","the Iron Quarter's lift shafts","a sealed heartwood chamber","the undercellars of the Iron Quarter"],pests:["bark beetles the size of dogs","sap slimes","giant rats"],person:["an Iron Quarter landlord","a guild apprentice","a Council courier"]}},
+    "The Trunk":{quirks:["paths shift when no one is watching","chalk waymarks sometimes rewrite themselves","echoes of other worlds leak through the bark"],
+      fill:{spot:["a forgotten trunk waystation","a crossroads of three branches","a knot-hollow off the main path"],pests:["trunk-mites","lost wanderers turned feral","gray oozes"],person:["a stranded traveler","a waystation keeper","a mapmaker"]}}
+  },
+  worldBlock:{
+    magic:["Magic is a myth here","Magic is rare and feared","Magic is uncommon but known","Magic is everyday","Magic is everywhere, even the dirt hums"],
+    factions:["a tax-collecting priesthood","a guild of smugglers","a reclusive mages' circle","a peasant militia","a merchant cartel","an old noble house","a cult of the Tree","a mercenary company","a bureaucracy that runs on paperwork","a resistance movement"],
+    threats:["a creeping rot in the local branch","a necromancer gathering the restless dead","a monster awakened by mining","a tyrant with an artifact","a rival guild cutting corners","a planar rift leaking strangeness","famine and the bandits it breeds","a dragon claiming tribute","a severed root starving the land","a plague of wrongness nobody can name"]
+  },
+  patrons:{
+    "Local commoner":{w:24,wealth:0.6,archetypes:{
+      "Farmer":["favor","food"],"Innkeeper":["favor","food"],"Fisher":["favor","wondrous"],"Baker":["food","favor"],"Street urchin crew":["favor","info"],"Retired adventurer":["weapon","armor"]}},
+    "Merchant":{w:24,wealth:1.0,archetypes:{
+      "Alchemist":["potion"],"Blacksmith":["weapon","armor"],"Bookseller":["scroll"],"Caravan master":["favor","wondrous"],"Jeweler":["wondrous"],"Herbalist":["potion"],"Curio dealer":["wondrous","scroll"]}},
+    "Noble":{w:12,wealth:1.4,archetypes:{
+      "Minor lord":["weapon","favor"],"Exiled heir":["favor","wondrous"],"Dowager":["wondrous","favor"],"Ambitious magistrate":["favor","info"]}},
+    "Guild":{w:16,wealth:1.1,archetypes:{
+      "Mages' guild":["scroll","wondrous"],"Healers' hall":["potion","favor"],"Thieves' guild":["info","wondrous"],"Higher-tier guild (outsourcing)":["weapon","armor","favor"],"Cartographers' guild":["info","wondrous"]}},
+    "Council":{w:10,wealth:1.2,archetypes:{
+      "Iron seat clerk":["favor","info"],"Council archivist":["scroll","info"],"Tier-mandated order":["favor","wondrous"]}},
+    "Otherworldly being":{w:14,wealth:1.3,archetypes:{
+      "Fey courtier":["wondrous","favor"],"Lost celestial":["potion","favor"],"Talking tree":["wondrous","potion"],"Bored dragon":["wondrous","weapon"],"Ghost with unfinished business":["info","wondrous"]}}
+  },
+  patronNames:["Odessa Brindle","Fennick Laux","Mother Quill","Sir Pellam Vane","Grubb","Ilsabet Marrow","Tamsin Rook","Old Hobb","Vasha Dunmere","Corwin Teague","Pip Larkspur","Hesper Thrane","Barnaby Coil","Yselde of the Hollow","Marrow-and-Ash","Jory Fenwick","Lady Ottoline Crest","Kettle","Brother Amsel","Nim Whistledown"],
+  patronQuirks:["talks to their hat","overpays and then regrets it","insists on a signed contract in triplicate","is clearly lying about one detail","weeps easily","is suspicious of anyone taller than them","only speaks in questions","brings snacks to every meeting","keeps checking over their shoulder","is far too cheerful about the danger","is related to someone important (and mentions it)","cannot remember the party's names"],
+  objectives:{
+    "Fetch":["retrieve {item} from {spot}","deliver {item} to {spot} before it spoils","gather {count} {ingredient} from {spot}"],
+    "Extermination":["clear {pests} out of {spot}","stop whatever keeps eating the {livestock}","drive {pests} away from {spot} for good"],
+    "Escort":["escort {person} safely through {spot}","guard a shipment of {item} bound for {spot}"],
+    "Investigation":["find out why {mystery}","track down whoever has been {crime}"],
+    "Hunt":["hunt the {beast} stalking {spot}","bring back proof that the {beast} is dead"],
+    "Rescue":["rescue {person}, taken to {spot}","find {person}, last seen near {spot}"],
+    "Diplomacy":["broker peace between {faction} and {faction2}","deliver terms to {faction} without starting a war"],
+    "Heist":["recover {item}, now held in {spot}","quietly swap {item} for a fake at {spot}"],
+    "World Crisis":["stop the {doom} consuming this world's branch","find the source of the {doom} spreading up the roots"]
+  },
+  fill:{
+    item:["a sealed lockbox","grandmother's recipe book","a cracked crystal egg","a bag of very angry seeds","the deed to a windmill","a tuning fork that hums alone","a jar of bottled starlight","a stolen family portrait"],
+    spot:["the old mill","a flooded crypt","the undercellars of the Iron Quarter","a hollow in the Tree's bark","an abandoned watchtower","the bog road","a sunken library","the bandits' quarry camp","a root-tunnel nobody maps"],
+    count:["a dozen","three bushels of","twenty","a cartload of"],
+    ingredient:["glowcaps","frost-thistle","sap blisters","owlbear feathers","giggling moss"],
+    pests:["giant rats","stirges","a goblin squat","overgrown beetles","kobold tunnelers","sentient weeds"],
+    livestock:["sheep","prize hogs","chickens","messenger pigeons"],
+    person:["a nervous scholar","the mayor's nephew","a retired priest","a pregnant merchant","a stubborn goat-herder","a lost child","a minor celebrity bard"],
+    mystery:["the well water tastes of copper","the town clock runs backward","people forget their names at dusk","the harvest rots overnight","the dogs won't stop howling at the Tree"],
+    crime:["stealing gravestones","forging guild seals","poisoning the cisterns","kidnapping cats","selling fake planar maps"],
+    beast:["owlbear","dire wolf pack leader","wyvern","basilisk","hill troll","manticore","bulette"],
+    faction:["the river barons","the mushroom folk","a dwarven clan","the toll-keepers","the hill tribes","a rival guild"],
+    faction2:["their estranged cousins","the city watch","a druid circle","the mill owners","a fey court"],
+    doom:["rot","blight","necrotic bloom","silence","crystal plague","root-severing"]
+  },
+  complications:["The patron is lying about what the job really is.","A rival guild has taken the same job.","There's a hard time limit nobody mentioned.","The target is sympathetic, maybe even right.","The reward is in a currency the CCV hates (it complains).","Someone important is secretly the culprit.","The weather (or the world) turns against them.","An innocent is caught in the middle.","The job is bait for a trap aimed at the guild.","A second patron offers more to do the opposite.","Local law forbids exactly what the job requires.","The 'monster' is guarding something worse.","The patron dies, disappears, or changes their mind mid-job.","Something follows them back to the Tree."],
+  goldBaseByLevel:[0,30,60,100,150,250,350,500,650,850,1100,1500,2000,2600,3300,4200,5300,6800,8500,10500,13000],
+  rarityByTier:[["common","uncommon"],["uncommon"],["uncommon","rare"],["rare","very rare"],["very rare","legendary"]],
+  items:{
+    potion:{"common":["Potion of Healing","Potion of Climbing"],"uncommon":["Potion of Greater Healing","Potion of Water Breathing","Potion of Fire Breath","Potion of Resistance"],"rare":["Potion of Superior Healing","Potion of Heroism","Potion of Invisibility"],"very rare":["Potion of Supreme Healing","Potion of Flying","Potion of Speed"],"legendary":["Potion of Storm Giant Strength"]},
+    scroll:{"common":["Spell Scroll (cantrip or 1st level)"],"uncommon":["Spell Scroll (2nd–3rd level)"],"rare":["Spell Scroll (4th–5th level)"],"very rare":["Spell Scroll (6th–8th level)"],"legendary":["Spell Scroll (9th level)"]},
+    weapon:{"common":["Silvered weapon","Weapon with a harmless magical quirk"],"uncommon":["+1 Weapon","Weapon of Warning","Moon Sickle"],"rare":["+2 Weapon","Flame Tongue","Dragon Slayer"],"very rare":["+3 Weapon","Oathbow","Dancing Sword"],"legendary":["Vorpal Sword","Holy Avenger"]},
+    armor:{"common":["Armor of Gleaming","Cast-Off Armor"],"uncommon":["+1 Shield","Mithral Armor","Adamantine Armor"],"rare":["+1 Armor","Armor of Resistance","+2 Shield"],"very rare":["+2 Armor","Animated Shield"],"legendary":["+3 Armor","Armor of Invulnerability"]},
+    wondrous:{"common":["Cloak of Many Fashions","Pot of Awakening","Charlatan's Die","Candle of the Deep"],"uncommon":["Bag of Holding","Cloak of Protection","Goggles of Night","Driftglobe"],"rare":["Cloak of Displacement","Necklace of Fireballs","Ring of Protection"],"very rare":["Cloak of Arachnida","Manual of Bodily Health"],"legendary":["Cloak of Invisibility","Ring of Three Wishes"]},
+    favor:{"common":["A small favor owed"],"uncommon":["A standing discount with the patron"],"rare":["Introductions to powerful people"],"very rare":["A powerful ally's debt"],"legendary":["A boon from a mighty being"]},
+    food:{"common":["Free meals for a week"],"uncommon":["A month of free lodging and meals"],"rare":["A feast in the guild's honor"],"very rare":["A standing table at a famous house"],"legendary":["A legendary banquet (heroes' boon)"]},
+    info:{"common":["A useful rumor"],"uncommon":["A map or secret route"],"rare":["Blackmail on a rival"],"very rare":["The location of a lost relic"],"legendary":["A truth about the First"]}
+  },
+  xpBudget:[[0,0,0],[50,75,100],[100,150,200],[150,225,400],[250,375,500],[500,750,1100],[600,1000,1400],[750,1300,1700],[1000,1700,2100],[1300,2000,2600],[1600,2300,3100],[1900,2900,4100],[2200,3700,4700],[2600,4200,5400],[2900,4900,6200],[3300,5400,7800],[3800,6100,9800],[4500,7200,11700],[5000,8700,14200],[5500,10700,17200],[6400,13200,22000]],
+  fightPlan:{"Small":"1 fight (Moderate)","Standard":"1–2 fights (e.g. one High, or Moderate + Low across a rest)","Major":"Per session: 1–2 fights, respecting ~1 per short rest / 2 per long rest"}
+};
+
+/* Guild Upgrade default tables */
+const DEFAULT_UPG_TABLES = {
+  version: 1,
+  goldBaseByLevel:[0,30,60,100,150,250,350,500,650,850,1100,1500,2000,2600,3300,4200,5300,6800,8500,10500,13000],
+  perkLabels:{P:"Passive",A:"Active",B:"Boon",C:"Crafting"},
+  grades:{
+    Novice:{output:1,cap:"common",tier:0,jobs:0.5},
+    Skilled:{output:2,cap:"common",tier:0,jobs:2},
+    Expert:{output:3,cap:"uncommon",tier:2,jobs:1.5},
+    Master:{output:4,cap:"rare",tier:3,jobs:2}
+  },
+  catalog:[
+    {id:"common-room",cat:"Facilities",name:"Common Room",types:"PB",flavor:"Where the guild eats, argues, and pretends Mordecai's chair isn't sacred.",
+     levels:[
+      {name:"Hearth Hall",tier:0,jobs:1,days:2,perk:"Free Modest lifestyle between jobs. Patrons and NPCs can find the guild here."},
+      {name:"Taproom",tier:1,jobs:2,days:6,perk:"Free Comfortable lifestyle, plus 1 free rumor each downtime."},
+      {name:"Great Hall",tier:3,jobs:2,days:14,perk:"After a send-off feast, every PC starts the next adventure with Heroic Inspiration."}],
+     addons:[{name:"Notice Board Nook",gp:5,perk:"A proper place to pin Job Board hooks."},{name:"Mordecai's Armchair",gp:15,perk:"He's marginally less grumpy. Marginally."},{name:"Bard's Corner",gp:30,perk:"Visiting performers: +1 rumor per downtime."},{name:"Trophy Wall",gp:40,perk:"One trophy per finished job. Once per tier, an impressed patron ups their incentive one rarity step."}]},
+    {id:"kitchen",cat:"Facilities",name:"Kitchen",types:"AB",op:{skills:["Cook's Utensils"],makes:["hearty meals","hearty meals","hearty meals"]},flavor:"Something is always simmering. Nobody asks what.",
+     levels:[
+      {name:"Hearth Kitchen",tier:0,jobs:1,days:2,perk:"Free meals. The operator packs hearty meals: eaten on a short rest, a PC regains 1d4 extra HP."},
+      {name:"Galley",tier:1,jobs:2,days:5,perk:"Hearty meals restore 2d4 extra HP, and travel rations are always covered."},
+      {name:"Feast Kitchen",tier:3,jobs:1.5,days:12,perk:"Before an adventure, a feast grants each PC temp HP equal to 2 × their level."}],
+     addons:[{name:"Spice Rack",gp:10,perk:"Guests remember the food. Flavor."},{name:"Cold Cellar",gp:25,perk:"Food never spoils; rations last twice as long."},{name:"Brewing Corner",gp:40,perk:"Guild ale: sells for 2d10 gp per downtime."}]},
+    {id:"training-yard",cat:"Facilities",name:"Training Yard",types:"PB",flavor:"Packed dirt between two roots, scarred by every weapon in the multiverse.",
+     levels:[
+      {name:"Sparring Ring",tier:0,jobs:1.5,days:2,perk:"Downtime training (tools, languages) takes half the time."},
+      {name:"Drill Grounds",tier:2,jobs:1,days:7,perk:"Retraining a feat, fighting style, skill, or spell costs no gold and takes half the time."},
+      {name:"Proving Hall",tier:3,jobs:2.5,days:15,perk:"Once per adventure, each PC can reroll one failed attack roll or saving throw."}],
+     addons:[{name:"Target Dummies",gp:10,perk:"Painted to look like rival guild members."},{name:"Climbing Wall",gp:20,perk:"Bark handholds; contests for bragging rights."},{name:"Archery Lane",gp:25,perk:"Ranged practice; weekly guild contests."}]},
+    {id:"alchemy",cat:"Facilities",name:"Alchemist's Workshop",types:"AC",op:{skills:["Alchemist's Supplies"],makes:["Potions of Healing (half cost)","Greater Healing / uncommon potions & oils (half cost)","Superior Healing / rare potions (half cost)"]},flavor:"Copper, glass, and the faint smell of singed eyebrows.",
+     levels:[
+      {name:"Alchemist's Table",tier:0,jobs:2,days:1,perk:"The operator brews Potions of Healing at half cost."},
+      {name:"Laboratory",tier:2,jobs:1.5,days:7,perk:"Adds Greater Healing and uncommon potions and oils (Expert+)."},
+      {name:"Root Laboratory",tier:3,jobs:3,days:15,perk:"Adds Superior Healing and rare potions (Master). Output +1."}],
+     addons:[{name:"Fume Hood",gp:15,perk:"No more singed eyebrows."},{name:"Ingredient Shelves",gp:25,perk:"+1 Potion of Healing per downtime."},{name:"Distillery Coil",gp:40,perk:"Antitoxin and alchemist's fire at half cost."}]},
+    {id:"forge",cat:"Facilities",name:"Forge",types:"AC",op:{skills:["Smith's Tools"],makes:["mundane arms & ammo (half cost)","silvered/adamantine work, uncommon arms","rare arms, +1/+2 weapons & armor (discounted)"]},flavor:"A bellows that breathes with the Tree's sap-warmth.",
+     levels:[
+      {name:"Anvil & Bellows",tier:0,jobs:2.5,days:2,perk:"Free repairs; mundane weapons, armor, and ammo at half cost."},
+      {name:"Smithy",tier:2,jobs:2,days:8,perk:"Silvered and adamantine conversions at half cost; uncommon arms (Expert+)."},
+      {name:"Heartwood Forge",tier:3,jobs:3.5,days:18,perk:"Rare arms and +1/+2 weapons and armor (Master), at a discount."}],
+     addons:[{name:"Quench Barrel",gp:10,perk:"Hisses dramatically. Flavor."},{name:"Ammo Mold",gp:25,perk:"20 free arrows, bolts, or bullets per downtime."},{name:"Whetstone Wheel",gp:30,perk:"Each PC's first weapon hit of an adventure deals +1d4."}]},
+    {id:"library",cat:"Facilities",name:"Library",types:"AP",op:{skills:["Arcana","History"],makes:["clues about the next job's world","clues + free identification","clues + Root Archive answers"]},flavor:"Shelves grown, not built. Some books are from worlds that no longer exist.",
+     levels:[
+      {name:"Reading Nook",tier:0,jobs:1,days:1,perk:"The operator turns up clues about the next job's world (1 per output)."},
+      {name:"Archive",tier:1,jobs:2.5,days:6,perk:"Free item identification; spell scrolls copied at half cost."},
+      {name:"Root Archive",tier:3,jobs:2,days:15,perk:"Once per adventure, ask the Tree one question (Commune-style; cryptic unless a Master operates)."}],
+     addons:[{name:"Reading Lamps",gp:5,perk:"Warm light. Mordecai complains about the oil."},{name:"Map Table",gp:20,perk:"Advantage on the first navigation check of each job."},{name:"Scrying Lens",gp:50,perk:"Glimpse the next job's location before setting out."}]},
+    {id:"chapel",cat:"Facilities",name:"Root Chapel",types:"PB",op:{skills:["Medicine","Religion"],makes:["healing between jobs","cures for curses and disease","blessings for the road"]},flavor:"A hollow where the sap runs gold. People come back from the dead here, mostly intact.",
+     levels:[
+      {name:"Shrine",tier:0,jobs:2,days:2,perk:"Revival fee −25%. Lesser Restoration between adventures is free."},
+      {name:"Chapel",tier:2,jobs:1.5,days:8,perk:"Revival fee −50%. Curses and diseases removed for free (needs an operator)."},
+      {name:"Sanctum of Sap",tier:3,jobs:2.5,days:16,perk:"Revival fee −75% with no lingering penalty. Each PC starts the adventure with one Bless-style d4."}],
+     addons:[{name:"Votive Candles",gp:5,perk:"Flavor. They never quite go out."},{name:"Memorial Bough",gp:20,perk:"Names of the fallen, carved in living wood."},{name:"Healing Spring",gp:35,perk:"Free healer's kits for the guild."}]},
+    {id:"vault",cat:"Facilities",name:"Vault",types:"P",flavor:"Behind a door that only opens if you ask it nicely.",
+     levels:[
+      {name:"Strongroom",tier:0,jobs:1,days:2,perk:"Safe storage; no fees on CCV conversions."},
+      {name:"Treasury",tier:1,jobs:2,days:6,perk:"The guild's credit is good: buy now, pay after the next job."},
+      {name:"Pocket Vault",tier:3,jobs:2,days:12,perk:"Once per adventure, pull one stored item straight into your hand."}],
+     addons:[{name:"Member Lockboxes",gp:10,perk:"One per member. Mordecai keeps the master key. Probably."},{name:"Coin-Sorter Imp",gp:30,perk:"Counts the treasury exactly. Talks the whole time."}]},
+    {id:"greenhouse",cat:"Facilities",name:"Greenhouse",types:"AC",op:{skills:["Herbalism Kit","Nature"],makes:["healer's kits & herbs","spell components (50 gp each)","rare reagents"]},flavor:"Seeds smuggled home from a dozen worlds, all arguing over the sunlight.",
+     levels:[
+      {name:"Herb Beds",tier:0,jobs:1,days:1,perk:"Free healer's kits; herbalism costs halved."},
+      {name:"Conservatory",tier:1,jobs:3,days:6,perk:"Grows spell components worth 50 gp per output each downtime, plus antitoxins."},
+      {name:"Grafted Bough",tier:3,jobs:2,days:14,perk:"A cutting from another world's Tree: one rare reagent (halves a rare potion's cost) or a Goodberry batch per adventure."}],
+     addons:[{name:"Mushroom Bed",gp:10,perk:"Edible. Mostly."},{name:"Talking Flytrap",gp:15,perk:"Excellent guard. Terrible conversationalist."},{name:"Sunlamp Crystal",gp:25,perk:"Plants from dark worlds thrive too."}]},
+    {id:"couriers",cat:"Services",name:"Courier Sprites",types:"PA",flavor:"Tiny, fast, and unionized.",
+     levels:[
+      {name:"City Runs",tier:0,jobs:0.5,days:0,perk:"Messages delivered anywhere in the city the same day."},
+      {name:"Branch Runs",tier:1,jobs:3,days:3,perk:"Messages cross branches to known worlds (once per adventure, Sending-style)."},
+      {name:"Field Drops",tier:3,jobs:2,days:10,perk:"Once per adventure, a sprite delivers a small item or potion to the party mid-job."}]},
+    {id:"rumors",cat:"Services",name:"Rumor Mill",types:"P",flavor:"A network of gossips, barkeeps, and one very nosy owl.",
+     levels:[
+      {name:"Ears",tier:0,jobs:0.5,days:0,perk:"+1 extra hook on each Job Board roll."},
+      {name:"Whisper Network",tier:1,jobs:2,days:3,perk:"Reroll one Job Board hook per downtime."},
+      {name:"Spymaster",tier:3,jobs:1.5,days:8,perk:"Learn one job's complication before accepting it."}]},
+    {id:"fence",cat:"Services",name:"Fence & Broker",types:"PC",flavor:"Doesn't ask questions. Asks for a cut.",
+     levels:[
+      {name:"Loot Buyer",tier:0,jobs:1,days:1,perk:"Sell mundane loot at full price."},
+      {name:"Broker",tier:1,jobs:4,days:4,perk:"Sell magic items at fair value; buy common items on request."},
+      {name:"Procurer",tier:3,jobs:3,days:10,perk:"Source a specific uncommon or rare item within one adventure."}]},
+    {id:"cartographer",cat:"Services",name:"Cartographer's Contract",types:"P",flavor:"Maps of places that refuse to stay put.",
+     levels:[
+      {name:"Local Charts",tier:0,jobs:1,days:1,perk:"Maps of the city and nearby worlds; advantage on navigation there."},
+      {name:"Branch Atlas",tier:2,jobs:1.5,days:5,perk:"Travel time to known worlds is halved."},
+      {name:"Branch Keys",tier:3,jobs:3.5,days:12,perk:"One single-use Branch Key per adventure: return to the hall from anywhere."}]},
+    {id:"supply",cat:"Services",name:"Supply Contract",types:"P",flavor:"A standing order with the bazaar's least-terrible quartermaster.",
+     levels:[
+      {name:"Account",tier:0,jobs:1.5,days:1,perk:"Mundane gear −20%."},
+      {name:"Preferred Account",tier:1,jobs:3.5,days:4,perk:"−30%, plus common consumables on account."},
+      {name:"Outfitter",tier:3,jobs:2.5,days:10,perk:"−40%, plus a free basic restock (rations, ammo, kits) before each adventure."}]},
+    {id:"trunk-guides",cat:"Services",name:"Trunk Guides",types:"P",flavor:"Folk who know the Trunk's shortcuts, and which ones bite.",
+     levels:[
+      {name:"Pathfinder",tier:0,jobs:2,days:1,perk:"The party never gets lost in the Trunk."},
+      {name:"Escort",tier:2,jobs:2,days:6,perk:"A guide joins travel legs as a non-combat NPC."},
+      {name:"Private Branch Gate",tier:4,jobs:1.5,days:18,perk:"A gate in the hall opening to any world the guild has visited."}]},
+    {id:"steward",cat:"Staff",name:"Steward",types:"P",skills:["Guild Administration"],flavor:"Runs the hall so Mordecai doesn't have to. Mordecai disapproves anyway.",
+     levels:[{name:"Skilled Steward",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Build times −10%."},{name:"Expert Steward",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Build times −25%."},{name:"Master Steward",grade:"Master",tier:3,jobs:2,days:3,perk:"Build times −50%."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead: cheap, eager, occasionally helpful."}]},
+    {id:"quartermaster",cat:"Staff",name:"Quartermaster",types:"P",skills:["Persuasion"],flavor:"Haggles like it's a blood sport.",
+     levels:[{name:"Skilled Quartermaster",grade:"Skilled",tier:0,jobs:2,days:0,perk:"An extra −5% on Supply Contract purchases."},{name:"Expert Quartermaster",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"An extra −10%."},{name:"Master Quartermaster",grade:"Master",tier:3,jobs:2,days:3,perk:"An extra −15%, and rare stock shows up first."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]},
+    {id:"cook",cat:"Staff",name:"Cook",types:"A",skills:["Cook's Utensils"],flavor:"Operates the Kitchen.",
+     levels:[{name:"Skilled Cook",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Runs the Kitchen at Skilled output."},{name:"Expert Cook",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Expert output."},{name:"Master Cook",grade:"Master",tier:3,jobs:2,days:3,perk:"Master output; feasts also grant advantage on the first Constitution save of the adventure."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]},
+    {id:"healer",cat:"Staff",name:"Healer",types:"A",skills:["Medicine"],flavor:"Operates the Root Chapel.",
+     levels:[{name:"Skilled Healer",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Operates the Root Chapel."},{name:"Expert Healer",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Expert output."},{name:"Master Healer",grade:"Master",tier:3,jobs:2,days:3,perk:"One free Revivify per tier-up."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]},
+    {id:"scholar",cat:"Staff",name:"Scholar",types:"A",skills:["Arcana","History"],flavor:"Operates the Library.",
+     levels:[{name:"Skilled Scholar",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Operates the Library."},{name:"Expert Scholar",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Expert output."},{name:"Master Scholar",grade:"Master",tier:3,jobs:2,days:3,perk:"Root Archive answers come clearly."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]},
+    {id:"smith",cat:"Staff",name:"Smith",types:"AC",skills:["Smith's Tools"],flavor:"Operates the Forge.",
+     levels:[{name:"Skilled Smith",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Operates the Forge."},{name:"Expert Smith",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Uncommon arms."},{name:"Master Smith",grade:"Master",tier:3,jobs:2,days:3,perk:"Rare arms; output +1."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]},
+    {id:"alchemist",cat:"Staff",name:"Alchemist",types:"AC",skills:["Alchemist's Supplies"],flavor:"Operates the Alchemist's Workshop.",
+     levels:[{name:"Skilled Alchemist",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Operates the Workshop."},{name:"Expert Alchemist",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Uncommon potions and oils."},{name:"Master Alchemist",grade:"Master",tier:3,jobs:2,days:3,perk:"Rare potions; output +1."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]},
+    {id:"gardener",cat:"Staff",name:"Gardener",types:"A",skills:["Herbalism Kit","Nature"],flavor:"Operates the Greenhouse.",
+     levels:[{name:"Skilled Gardener",grade:"Skilled",tier:0,jobs:2,days:0,perk:"Operates the Greenhouse."},{name:"Expert Gardener",grade:"Expert",tier:2,jobs:1.5,days:1,perk:"Expert output."},{name:"Master Gardener",grade:"Master",tier:3,jobs:2,days:3,perk:"Grafted Bough yields twice per adventure."}],
+     addons:[{name:"Novice apprentice",gp:20,perk:"A Novice instead."}]}
+  ],
+  offers:{
+    typeWeightsByTier:{Iron:{unique:45,deal:40,hire:15},Bronze:{unique:55,deal:30,hire:15},Silver:{unique:60,deal:25,hire:15},Gold:{unique:65,deal:15,hire:20},Platinum:{unique:65,deal:10,hire:25}},
+    discounts:[15,20,25,30,40],
+    dealReasons:["a rival guild's leftover materials","a bankrupt builder clearing stock","a branch-merchant who owes Mordecai a favor","off-season rates in the carpenters' quarter","a contractor who wants the guild's name on their portfolio","materials 'found' after a Trunk storm"],
+    vendors:{
+      Any:["a traveling contractor with a cart of oddities","a branch-merchant passing through the bazaar","a retired adventurer selling off their old hall"],
+      "High fantasy":["a dwarven building clan","an elven artisan on pilgrimage"],
+      "Low fantasy / medieval":["a guild of village masons","a wandering carpenter-monk"],
+      "Dark fantasy / grimdark":["a gaunt undertaker-architect","a cult that swears it's reformed"],
+      "Fey / whimsical":["a fey tinker who trades in favors","a pixie building crew (paid in honey)"],
+      "Swashbuckling / nautical":["a retired shipwright","a pirate quartermaster with 'surplus'"],
+      "Steampunk / gaslamp":["a clockwork contractor","a gaslamp engineering firm"],
+      "Frontier / weird west":["a snake-oil salesman (mostly honest)","a frontier homesteader's co-op"],
+      "Post-apocalyptic":["a scrapper caravan","a vault-dweller trading tech for food"],
+      "Planar / elemental":["a djinn with a sideline in renovations","an elemental binding guild"],
+      "Modern":["a confused contractor from a world with power tools","a corporate facilities rep"],
+      "Cyberpunk / sci-fi":["a chrome-armed fixer","a decommissioned maintenance android"]
+    },
+    unique:{
+      Any:[
+        {name:"Talking Portrait of a Previous Tenant",cat:"Facilities",jobs:0.5,days:0,perk:"Knows the hall's secrets; once per tier, reveals one useful one."},
+        {name:"Bottomless Bathtub",cat:"Facilities",jobs:1,days:2,perk:"A long soak removes one level of exhaustion between adventures."},
+        {name:"Hall of Echoes",cat:"Facilities",jobs:1.5,days:4,perk:"Speak a member's name and they hear you, anywhere in the city."},
+        {name:"Lost-and-Found Closet",cat:"Facilities",jobs:1,days:1,perk:"Once per downtime, roll on a trinket table: something from another world turns up."},
+        {name:"Guild Familiar",cat:"Staff",jobs:1,days:0,perk:"A sardonic cat (or similar) that delivers messages around the hall and spies on visitors."},
+        {name:"Heirloom Banner",cat:"Facilities",jobs:1.5,days:2,perk:"Carried on a job, once per adventure allies who can see it gain advantage on one save against fear."}],
+      "High fantasy":[
+        {name:"Griffon Roost",cat:"Facilities",jobs:2.5,days:6,perk:"Once per adventure, a griffon carries a message, a small item, or one creature home."},
+        {name:"Dwarven Rune-Anvil",cat:"Facilities",jobs:2,days:5,perk:"Forge add-on: one weapon per downtime gains a minor property (glows, never rusts, or counts as magical)."}],
+      "Low fantasy / medieval":[
+        {name:"Tithe-Barn Granary",cat:"Facilities",jobs:1.5,days:4,perk:"Free rations for the guild; sell surplus for 1d6 × 10 gp per downtime."},
+        {name:"Bell Tower",cat:"Facilities",jobs:1,days:3,perk:"The guild hears of city emergencies first: +1 hook on Council-assigned rolls."}],
+      "Dark fantasy / grimdark":[
+        {name:"Ossuary Bell",cat:"Facilities",jobs:1.5,days:3,perk:"Rings when a member dies inside the Tree. Revival fee −10% (stacks with the Chapel)."},
+        {name:"Plague Doctor's Cabinet",cat:"Services",jobs:1.5,days:2,perk:"Free antitoxins; diseases and poisons treated between jobs."}],
+      "Fey / whimsical":[
+        {name:"Door That Knows",cat:"Facilities",jobs:1,days:1,perk:"Opens to whichever room you actually need. Flavor, mostly."},
+        {name:"Fairy Ring Lawn",cat:"Facilities",jobs:2,days:5,perk:"After a night of revelry, each PC can reroll one Charisma check during the next adventure."}],
+      "Swashbuckling / nautical":[
+        {name:"Smuggler's Hold",cat:"Facilities",jobs:1.5,days:4,perk:"Hidden compartments; loot sold through the guild fetches +10%."},
+        {name:"Crow's Nest Spyglass",cat:"Services",jobs:1,days:1,perk:"+1 hook from coastal and seafaring worlds on each Job Board roll."}],
+      "Steampunk / gaslamp":[
+        {name:"Pneumatic Tube Network",cat:"Services",jobs:1.5,days:4,perk:"Instant messages within the hall and to three city addresses."},
+        {name:"Clockwork Porter",cat:"Staff",jobs:2,days:0,perk:"Hauls 300 lb of gear to and from any branch."}],
+      "Frontier / weird west":[
+        {name:"Hitching Post of Far Trails",cat:"Facilities",jobs:2,days:4,perk:"Stabled mounts wait for the party at any branch exit."},
+        {name:"Snake-Oil Still",cat:"Facilities",jobs:1,days:2,perk:"Tonics grant 1d4 temp HP. 1 in 6 has a harmless side effect."}],
+      "Post-apocalyptic":[
+        {name:"Scrap Workshop",cat:"Facilities",jobs:1.5,days:3,perk:"Jury-rig and repair anything; free improvised gear."},
+        {name:"Sealed Pantry",cat:"Facilities",jobs:1,days:2,perk:"Food never spoils; the Kitchen's hearty meals count double."}],
+      "Planar / elemental":[
+        {name:"Bottled Elemental Hearth",cat:"Facilities",jobs:2.5,days:5,perk:"A bound fire elemental heats the hall; Forge and Kitchen build times −25%."},
+        {name:"Gate-Shard Window",cat:"Facilities",jobs:2,days:4,perk:"Peer into one known world per downtime: one clue."}],
+      "Modern":[
+        {name:"Bottomless Coffee Machine",cat:"Facilities",jobs:1,days:1,perk:"Once per adventure, one PC can reroll an initiative roll."},
+        {name:"Electric Lighting",cat:"Facilities",jobs:1,days:2,perk:"The hall never goes dark; Library research is faster."}],
+      "Cyberpunk / sci-fi":[
+        {name:"Holo-Training Sim",cat:"Facilities",jobs:2.5,days:6,perk:"Training Yard add-on: once per adventure, advantage on one check against a creature type you've simmed."},
+        {name:"Med-Pod",cat:"Facilities",jobs:3,days:6,perk:"Root Chapel add-on: revival fee −10%; no lingering penalty."}]
+    },
+    hires:[
+      {role:"Cook",arch:"retired dragon-hunter",skills:["Cook's Utensils"],grade:"Expert",quirk:"keeps a scale from every dragon they've cooked"},
+      {role:"Scholar",arch:"clockwork scribe",skills:["History","Calligrapher's Supplies"],grade:"Expert",quirk:"files everything, including people"},
+      {role:"Alchemist",arch:"exiled fey alchemist",skills:["Alchemist's Supplies"],grade:"Master",quirk:"answers questions with riddles"},
+      {role:"Smith",arch:"quiet gnome smith",skills:["Smith's Tools","Tinker's Tools"],grade:"Expert",quirk:"hums one song, endlessly"},
+      {role:"Scholar",arch:"ghost librarian",skills:["Arcana","History"],grade:"Master",quirk:"can't leave the Library; very strict about returns"},
+      {role:"Healer",arch:"disgraced court healer",skills:["Medicine"],grade:"Expert",quirk:"won't say whose court"},
+      {role:"Quartermaster",arch:"sky-pirate quartermaster",skills:["Persuasion"],grade:"Expert",quirk:"counts everything twice"},
+      {role:"Gardener",arch:"mushroom-folk gardener",skills:["Herbalism Kit","Nature"],grade:"Skilled",quirk:"communicates in spores when upset"},
+      {role:"Steward",arch:"former noble's majordomo",skills:["Guild Administration"],grade:"Expert",quirk:"constantly corrects Mordecai's posture"}
+    ]
+  },
+  names:{first:["Bram","Ottilie","Fennick","Saro","Mags","Ilwen","Corvo","Dabble","Hesk","Prudence","Tamsin","Juniper","Grizzle","Wren","Osric","Lune","Pip","Varga","Thistle","Ambrose"],
+         last:["Copperkettle","Underbough","Ashgrove","Mossfoot","Quill","Ironroot","Hearthwell","Larkspur","Saltmarsh","Thornbury","Vane","Burrow"]},
+  complications:["A rival guild bids on the same materials, and the price climbs 10% unless the party intervenes.","The builders hit a pocket of something living inside the Tree. Build delayed 1d4 days.","It works, with one odd side effect (it hums, glows, or attracts squirrels).","A Council inspector wants paperwork nobody filed.","The contractor is secretly using the job to smuggle something.","The Tree reshapes the room overnight: better than planned, but different.","A materials shipment goes missing in the Trunk.","Mordecai 'improves' the plans without telling anyone."]
+};
+/* Price reference (PHB/DMG baseline), editable */
+const DEFAULT_PRICES={rule:"1 gp ≈ one day of modest living. Copper and silver are everyday money; gold is for gear, services, and big purchases.",rows:[["Mug of ale / loaf of bread","4 cp / 2 cp"],["Inn, one night (modest / comfortable)","5 sp / 8 sp"],["Meals, one day (modest / comfortable)","3 sp / 5 sp"],["Lifestyle per day (poor / modest / comfortable / wealthy)","2 sp / 1 gp / 2 gp / 4 gp"],["Unskilled / skilled hireling, per day","2 sp / 2 gp"],["Messenger / coach / ship passage","2 cp/mi / 3 cp/mi / 1 sp/mi"],["Torch / rope / rations (per day)","1 cp / 1 gp / 5 sp"],["Backpack / healer's kit / tool kit","2 gp / 5 gp / 5–50 gp"],["Dagger / longsword / shortbow","2 / 15 / 25 gp"],["Chain mail / plate armor","75 / 1,500 gp"],["Riding horse / cart","75 / 15 gp"],["Potion of Healing","50 gp"],["Spellcasting service (cantrip / 1st / 2nd / 3rd)","30 / 50 / 200 / 300 gp"],["Spellcasting service (4th–5th / 6th–8th / 9th)","2,000 / 20,000 / 100,000 gp"],["Magic items (common / uncommon / rare / very rare / legendary)","100 / 400 / 4,000 / 40,000 / 200,000 gp"]]};
+
+/* ================= JOB BOARD ================= */
+const NOTICE_CSS=".notice{position:relative;background:\n  radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),\n  radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),\n  linear-gradient(135deg,#ead9b0,#d9c08a 55%,#cfb178);\n  color:#3a2a16;padding:30px 26px 26px;border-radius:3px;font-family:\"IM Fell English\",serif;\n  box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 0 40px rgba(110,70,20,.35);transform:rotate(var(--rot,0deg))}\n.notice::before{content:\"\";position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e6e6e6,#6b6b6b 60%,#333);box-shadow:0 2px 3px rgba(0,0,0,.6)}\n.notice .nhead{text-align:center;font-family:\"IM Fell English SC\",serif;font-size:15px;letter-spacing:.25em;color:#6b4a22}\n.notice .ntitle{text-align:center;font-family:\"IM Fell English SC\",serif;font-size:28px;line-height:1.1;margin:4px 0 10px;color:#2a1c0c}\n.notice .nbody{font-size:17.5px;line-height:1.4}\n.notice .nrule{border:0;border-top:1px solid rgba(80,50,20,.45);margin:12px 0}\n.notice .nfoot{display:flex;justify-content:space-between;gap:10px;font-size:15.5px}\n.notice .nreward{font-family:\"IM Fell English SC\",serif;font-size:18px;color:#5a1e10}\n.notice .stamp{position:absolute;right:16px;bottom:52px;width:74px;height:74px;border-radius:50%;border:3px double rgba(150,30,20,.7);color:rgba(150,30,20,.8);display:flex;align-items:center;justify-content:center;text-align:center;font:700 12px \"Cinzel\",serif;transform:rotate(-14deg);line-height:1.05;padding:6px}\n.notice .sig{font-style:italic;text-align:right;margin-top:6px}\n.notice-wrap{display:flex;flex-direction:column;gap:6px}\n";
+const Jobs=(()=>{
+  let T=DEFAULT_JOB_TABLES;
+  function reloadTables(){T=C.tables.jobs||DEFAULT_JOB_TABLES}
+  const fillTpl=(s,ctx)=>s.replace(/\{(\w+)\}/g,(_,k)=>{const loc=ctx&&ctx.fill&&ctx.fill[k];return pick(loc&&Math.random()<0.8?loc:(T.fill[k]||["?"]))});
+  const genreData=g=>T.genres.fantasy[g]||T.genres.other[g];
+  const ctxOf=h=>h.world.genre?genreData(h.world.genre):(T.locales[h.location]||{});
+  function rollRank(){const d=wpick([[0,60],[1,25],[2,15]]);return Math.max(0,S.tierRank-d)}
+  function rollGenre(r){const f=T.fantasyShare.iron+(T.fantasyShare.platinum-T.fantasyShare.iron)*(r/14);
+    const grp=Math.random()<f?T.genres.fantasy:T.genres.other;return wpick(Object.entries(grp).map(([k,v])=>[k,v.w]))}
+  function rollWorld(r,loc){const lc=T.locales[loc];
+    if(lc)return {genre:null,line:`${loc==="The Trunk"?"The trunk between worlds":"Home ground"}, where ${pick(lc.quirks)}`};
+    const g=rollGenre(r),gd=genreData(g);return {genre:g,line:`${cap(pick(gd.places))}, where ${pick(gd.quirks)}`}}
+  function rollPatron(){const cat=wpick(Object.entries(T.patrons).map(([k,v])=>[k,v.w]));const arch=pick(Object.keys(T.patrons[cat].archetypes));
+    return {cat,arch,name:pick(T.patronNames),quirk:pick(T.patronQuirks)}}
+  function rollIncentive(r,size,p){const ladder=["common","uncommon","rare","very rare","legendary"];
+    let rar=ladder.indexOf(pick(T.rarityByTier[tierOf(r)]));if(size==="Small")rar--;if(size==="Major")rar++;rar=Math.max(0,Math.min(4,rar));
+    const kind=pick(T.patrons[p.cat].archetypes[p.arch]);const item=pick((T.items[kind]||T.items.favor)[ladder[rar]]);return {kind,rarity:ladder[rar],item}}
+  function rollGold(r,size,p){const base=T.goldBaseByLevel[recLevel(r)]||100;
+    const g=base*(T.sizes.goldMult[size]||1)*(T.patrons[p.cat].wealth||1)*(0.75+Math.random()*0.5);return g<20?Math.round(g):Math.round(g/5)*5}
+  const guildFee=h=>Math.round(h.gold*S.feePct/100);
+  function newHook(r){
+    r=r??rollRank();const tier=tierOf(r);
+    let type=wpick(Object.entries(T.jobTypes).map(([k,w])=>[k,w[tier]]));
+    let size=wpick(T.sizes.names.map((n,i)=>[n,T.sizes.weights[tier][i]]));
+    if(type==="World Crisis"&&size==="Small")size="Standard";
+    const loc=type==="World Crisis"?wpick(T.locations.names.slice(3).map((n,i)=>[n,T.locations.weights[tier][i+3]||1])):wpick(T.locations.names.map((n,i)=>[n,T.locations.weights[tier][i]]));
+    const p=rollPatron(),world=rollWorld(r,loc);
+    return {id:uid(),rank:r,type,size,location:loc,world,patron:p,
+      objective:fillTpl(pick(T.objectives[type]),world.genre?genreData(world.genre):T.locales[loc]),incentive:rollIncentive(r,size,p),gold:rollGold(r,size,p),
+      complication:Math.random()*100<S.jobComp?pick(T.complications):null,
+      contribution:Math.round((r+1)*(T.sizes.contribution[size]||1)),kept:false,final:false,worldBlock:null,expanded:null};
+  }
+  function rerollField(h,f){
+    if(f==="world"){h.world=rollWorld(h.rank,h.location);h.worldBlock=null;h.objective=fillTpl(pick(T.objectives[h.type]),ctxOf(h))}
+    if(f==="patron"){h.patron=rollPatron();h.incentive=rollIncentive(h.rank,h.size,h.patron);h.gold=rollGold(h.rank,h.size,h.patron)}
+    if(f==="objective")h.objective=fillTpl(pick(T.objectives[h.type]),ctxOf(h));
+    if(f==="incentive")h.incentive=rollIncentive(h.rank,h.size,h.patron);
+    if(f==="complication")h.complication=pick(T.complications);
+    h.expanded=null;
+  }
+  const rollWorldBlock=()=>({magic:pick(T.worldBlock.magic),faction:pick(T.worldBlock.factions),threat:pick(T.worldBlock.threats)});
+  function rollBoard(){const kept=C.jobs.filter(h=>h.kept||h.final);
+    const n=Math.max(S.hMin,Math.min(S.hMax,S.hMin+rnd(S.hMax-S.hMin+1)));
+    const fresh=[];for(let i=kept.length;i<n;i++)fresh.push(newHook());C.jobs=[...kept,...fresh];commit();render()}
+  function budget(h){const lvl=Math.max(1,Math.min(20,S.partyLevel)),b=T.xpBudget[lvl];
+    return {low:b[0]*S.partySize,mod:b[1]*S.partySize,high:b[2]*S.partySize,plan:T.fightPlan[h.size]}}
+
+  /* expand */
+  const hookTitle=h=>h.expanded?.title||`${h.type}: ${h.patron.arch}`;
+  const hookSummary=h=>`${hookTitle(h)} [${rankName(h.rank)}, ${h.size}]. Patron: ${h.patron.name}, ${h.patron.arch} (${h.patron.cat}), who ${h.patron.quirk}. Wants the party to ${h.objective}. Location: ${h.location}${h.world.genre?` (${h.world.genre})`:""}: ${h.world.line}.`;
+  function prompt(h,b){return `You are helping a DM prep a D&D 5e (2024 rules preferred, 2014 monsters allowed) job for a guild campaign.
+Setting: one universal World Tree (Yggdrasil) grows through the planes; branches rise into many worlds of many genres; a city sits at its base and inside it. Guilds rank Iron→Bronze→Silver→Gold→Platinum. The party belongs to a young Adventurer's Guild founded by Mordecai (gruff, sarcastic changeling). Tone: whimsical and strange with a hopeful heart. The DM runs about 1 fight per short rest, 2 per long rest.
+
+JOB HOOK:
+${hookSummary(h)}
+Reward: ${fmt(h.gold)} gp plus ${h.incentive.item} (${h.incentive.rarity}). The patron also pays the guild a ${fmt(guildFee(h))} gp fee.
+${h.complication?`DM-only complication to weave in: ${h.complication}`:"No complication."}
+Party: ${S.partySize} characters of level ${S.partyLevel}. XP budget per encounter (2024 DMG): Low ${b.low}, Moderate ${b.mod}, High ${b.high}. Fight plan: ${b.plan}.
+
+Return ONLY JSON with this shape:
+{"title": short evocative job title,
+ "summary": 2 sentences for the DM,
+ "beats": [3 short scene beats, each one sentence],
+ "encounters": [2 or 3 example builds: {"name": string, "difficulty": "Low"|"Moderate"|"High", "monsters": "e.g. 2 × Gnoll (CR 1/2), 1 × Hyena", "xp": total XP number, "reskin": one sentence reskinning to the world's genre}],
+ "complication": ${h.complication?"one-sentence way the complication shows up":"null"},
+ "rewardNote": one sentence on how/when the reward is delivered,
+ "notice": {"heading": e.g. "BY ORDER OF" or "HELP WANTED" or "BOUNTY", "title": short in-world title, "body": 2-4 sentences written in-world by the patron (their voice and quirk), no DM secrets, "reward": short in-world reward line, "deadline": short in-world deadline or "Until filled", "signature": how the patron signs}}
+Make the world feel coherent: treat its quirk as a grounded, everyday fact of life there and let it touch the job where natural. Use real official monster names, keep each build's XP within the budget for its difficulty.`}
+  function fallback(h){return {ai:false,title:`${h.type}: ${h.patron.arch}`,summary:`${h.patron.name} needs the party to ${h.objective}.`,
+    beats:[`Meet ${h.patron.name} (${h.patron.quirk}).`,`Travel to ${h.location.toLowerCase()} and ${h.objective}.`,`Return for payment${h.complication?", once the complication surfaces":""}.`],
+    encounters:[],complication:h.complication,rewardNote:"Paid on return.",notice:basicNotice(h)}}
+  const basicNotice=h=>({heading:"HELP WANTED",title:`${h.type} Needed`,body:`Seeking capable adventurers to ${h.objective}. Inquire with ${h.patron.name}.`,reward:`${fmt(h.gold)} gold & ${h.incentive.item}`,deadline:"Until filled",signature:h.patron.name});
+  function expand(h,btn){const b=budget(h);aiRun({prompt:prompt(h,b),fallback:fallback(h),btn,apply:x=>{h.expanded=x;commit();render()}})}
+
+  /* render */
+  function render(){
+    if(!$("#jobBoard"))return;
+    const el=$("#jobBoard");el.innerHTML="";
+    $("#jobAI").textContent=AI.mode()==="none"?"No Claude connection: Expand fills in from the tables and gives you a prompt to copy into Claude.":`Expand asks Claude (${AI.mode()==="claude"?"built in":"your API key"}) for the prep card and Quest Notice.`;
+    if(!C.jobs.length){el.innerHTML='<p class="muted">Pick the guild tier and roll the board.</p>';return}
+    C.jobs.forEach((h,i)=>el.appendChild(UI.jobView==="dm"?dmCard(h):noticeCard(h,i)));
+  }
+  function dmCard(h,compact){
+    const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");
+    const b=budget(h),t=tierOf(h.rank),x=h.expanded,wb=h.worldBlock;
+    d.innerHTML=`<h3>${esc(hookTitle(h))}</h3>
+    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.final?'<span class="badge leaf">Final</span>':""}</div>
+    <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
+      ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
+    ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}
+    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}</div>
+    <div class="row"><b>Job:</b> ${esc(cap(h.objective))}${compact?"":'<span class="reroll" data-f="objective" title="Reroll job">↻</span>'}</div>
+    <div class="row"><b>Reward:</b> ${fmt(h.gold)} gp + ${esc(h.incentive.item)} <span class="muted">(${h.incentive.rarity})</span>${compact?"":'<span class="reroll" data-f="incentive" title="Reroll incentive">↻</span>'}<br><span class="muted">Guild fee: ${fmt(guildFee(h))} gp to the treasury</span></div>
+    ${h.complication?`<div class="dm"><b>DM:</b> ${esc(h.complication)}${compact?"":'<span class="reroll" data-f="complication">↻</span>'}</div>`:""}
+    ${x?expandedHTML(h,x,b):""}
+    ${compact?"":`<div class="actions">
+      <button class="btn small primary" data-act="expand">${x?"Re-expand":"Expand"}</button>
+      <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
+      <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
+      <button class="btn small" data-act="paid">Paid → treasury</button>
+      <button class="btn small" data-act="reroll">Reroll</button>
+      <button class="btn small" data-act="copy">Copy</button>
+      <button class="btn small" data-act="del">✕</button></div>`}`;
+    if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
+    d.addEventListener("click",ev=>{const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
+      if(f)rerollField(h,f);
+      else if(a==="wb")h.worldBlock=h.worldBlock?null:rollWorldBlock();
+      else if(a==="expand"){expand(h,ev.target);return}
+      else if(a==="keep")h.kept=!h.kept;
+      else if(a==="final"){h.final=!h.final;if(h.final)h.kept=true}
+      else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
+      else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
+      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
+      else if(a==="copy"){copyText(cardText(h));return}
+      commit();App.render()});
+    return d;
+  }
+  function expandedHTML(h,x,b){
+    return `<div class="expanded">${x.note?`<p class="muted">${esc(x.note)}</p>`:""}
+     ${x.summary?`<p>${esc(x.summary)}</p>`:""}
+     <h4>Beats</h4><ol>${(x.beats||[]).map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+     <h4>Encounters</h4>
+     <div class="muted" style="font-size:14.5px">Budget for ${S.partySize} × lvl ${S.partyLevel}: Low ${fmt(b.low)} · Moderate ${fmt(b.mod)} · High ${fmt(b.high)} XP. ${esc(b.plan)}.</div>
+     ${(x.encounters||[]).length?`<ul>${x.encounters.map(e=>`<li><b>${esc(e.name)}</b> (${esc(e.difficulty)}, ${fmt(+e.xp||0)} XP): ${esc(e.monsters)}<br><i class="muted">${esc(e.reskin||"")}</i></li>`).join("")}</ul>`:'<p class="muted">Pick monsters within the budget.</p>'}
+     ${x.complication?`<div class="dm"><b>Complication:</b> ${esc(x.complication)}</div>`:""}
+     <h4>Reward</h4><p>${fmt(h.gold)} gp + ${esc(h.incentive.item)} (${h.incentive.rarity}). ${esc(x.rewardNote||"")}</p></div>`;
+  }
+  const noticeData=h=>h.expanded?.notice||basicNotice(h);
+  function noticeHTML(h,rot){const n=noticeData(h);
+    return `<div class="notice" style="--rot:${rot||0}deg"><div class="nhead">${esc(n.heading)}</div><div class="ntitle">${esc(n.title)}</div><div class="nbody">${esc(n.body)}</div><hr class="nrule">
+      <div class="nreward">Reward: ${esc(n.reward)}</div><div class="nfoot"><span>${esc(n.deadline)}</span><span>Rank: ${rankName(h.rank)} or above</span></div>
+      <div class="sig">~ ${esc(n.signature)}</div><div class="stamp">${TIERS[tierOf(h.rank)].toUpperCase()}<br>TIER</div></div>`}
+  function noticeCard(h,i){const n=noticeData(h),w=document.createElement("div");w.className="notice-wrap";
+    w.innerHTML=noticeHTML(h,((i*37)%7-3)*0.6)+`<div class="actions">${h.expanded?"":'<span class="muted" style="font-size:14px">Basic notice. Expand in DM view for a written one.</span>'}<button class="btn small" data-act="copyn">Copy notice text</button></div>`;
+    w.querySelector('[data-act="copyn"]').onclick=()=>copyText(`${n.heading}\n${n.title}\n\n${n.body}\n\nReward: ${n.reward}\n${n.deadline} · Rank: ${rankName(h.rank)} or above\n~ ${n.signature}`);
+    return w}
+  function cardText(h){const x=h.expanded,b=budget(h);
+    let s=`${hookTitle(h)} [${rankName(h.rank)} · ${h.size} · rec. lvl ${recLevel(h.rank)} · +${h.contribution} contribution]
+Where: ${h.location}${h.world.genre?` (${h.world.genre})`:""}: ${h.world.line}
+Patron: ${h.patron.name}, ${h.patron.arch} (${h.patron.cat}), ${h.patron.quirk}
+Job: ${cap(h.objective)}
+Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild fee ${fmt(guildFee(h))} gp`;
+    if(h.complication)s+=`\nDM complication: ${h.complication}`;
+    if(x){s+=`\n\n${x.summary||""}\nBeats:\n${(x.beats||[]).map((t,i)=>`${i+1}. ${t}`).join("\n")}\nBudget: Low ${b.low} / Moderate ${b.mod} / High ${b.high} XP. ${b.plan}`;
+      (x.encounters||[]).forEach(e=>s+=`\n- ${e.name} (${e.difficulty}, ${e.xp} XP): ${e.monsters}. ${e.reskin||""}`)}
+    return s}
+  function noticesPrintHTML(){const f=C.jobs.filter(h=>h.final);if(!f.length)return "";
+    return `<div class="pr-notices">${f.map(h=>`<div class="pr-notice">${noticeHTML(h,0)}</div>`).join("")}</div>`}
+  const PRINT_CSS=NOTICE_CSS+`.pr-notices{display:grid;grid-template-columns:1fr;gap:24px;max-width:640px;margin:0 auto}.pr-notice{break-inside:avoid;page-break-inside:avoid;padding-top:12px}.notice{transform:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}`;
+
+  function initControls(){
+    const sel=$("#tierSel");sel.innerHTML="";
+    for(let r=0;r<15;r++){const o=document.createElement("option");o.value=r;o.textContent=`${rankName(r)} (lvl ${recLevel(r)})`;sel.appendChild(o)}
+    sel.value=S.tierRank;$("#pl").value=S.partyLevel;$("#ps").value=S.partySize;
+    $("#vDM").classList.toggle("on",UI.jobView==="dm");$("#vNotice").classList.toggle("on",UI.jobView!=="dm");
+  }
+  function bind(){
+    $("#tierSel").onchange=e=>{S.tierRank=+e.target.value;commit();App.render()};
+    $("#pl").onchange=e=>{S.partyLevel=Math.max(1,Math.min(20,+e.target.value||3));commit();render()};
+    $("#ps").onchange=e=>{S.partySize=Math.max(1,+e.target.value||4);commit();render()};
+    $("#rollBtn").onclick=rollBoard;
+    $("#vDM").onclick=()=>{UI.jobView="dm";saveUI();initControls();render()};
+    $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
+  }
+  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,tables:()=>T};
+})();
+
+/* ================= GUILD UPGRADES ================= */
+const Upgrades=(()=>{
+  let T=DEFAULT_UPG_TABLES;
+  function reloadTables(){T=C.tables.upgrades||DEFAULT_UPG_TABLES}
+  const G=()=>C.guild;
+  const ROMAN=["I","II","III"];
+  const fee=t=>(T.goldBaseByLevel[tierMidLevel(t)]||100)*S.feePct/100;
+  function nice(n){if(n<=0)return 0;if(n<100)return Math.max(5,Math.round(n/5)*5);if(n<1000)return Math.round(n/25)*25;if(n<10000)return Math.round(n/100)*100;return Math.round(n/500)*500}
+  const priceOf=L=>L.gp!=null?L.gp:nice((L.jobs||1)*fee(L.tier||0));
+  const genName=()=>`${pick(T.names.first)} ${pick(T.names.last)}`;
+  const catItem=id=>T.catalog.find(u=>u.id===id);
+  const canAfford=c=>G().treasury==null||c<=G().treasury;
+  const typeBadges=t=>[...(t||"")].map(c=>`<span class="badge">${T.perkLabels[c]||c}</span>`).join("");
+  const opCatalog=()=>T.catalog.filter(u=>u.op);
+
+  /* peddlers */
+  function rollGenre(t){const JT=Jobs.tables();const f=JT.fantasyShare.iron+(JT.fantasyShare.platinum-JT.fantasyShare.iron)*(t/4);
+    const grp=Math.random()<f?JT.genres.fantasy:JT.genres.other;return wpick(Object.entries(grp).map(([k,v])=>[k,v.w??v]))}
+  function newOffer(){
+    const t=tierOf(S.tierRank),tn=TIERS[t];
+    const w=T.offers.typeWeightsByTier[tn]||{unique:60,deal:25,hire:15};
+    const type=wpick(Object.entries(w)),genre=rollGenre(t);
+    const o={id:uid(),type,genre,vendor:pick(T.offers.vendors[genre]||T.offers.vendors.Any),tier:t};
+    if(type==="deal"){const opts=[];T.catalog.forEach(u=>{const lv=G().owned[u.id]||0;if(lv<3&&(u.levels[lv].tier||0)<=t+1)opts.push([u,lv])});
+      if(opts.length){const [u,lv]=pick(opts),L=u.levels[lv],d=pick(T.offers.discounts);
+        return Object.assign(o,{ref:{id:u.id,lvl:lv},name:`${u.name} ${ROMAN[lv]}: ${L.name}`,cat:u.cat,orig:priceOf(L),cost:nice(priceOf(L)*(100-d)/100),discount:d,days:L.days,perk:L.perk,reason:pick(T.offers.dealReasons)})}
+      o.type="unique"}
+    if(o.type==="hire"){const h=pick(T.offers.hires),g=T.grades[h.grade]||T.grades.Skilled;
+      return Object.assign(o,{name:`${genName()}, ${h.arch}`,cat:"Staff",role:h.role,skills:h.skills,grade:h.grade,quirk:h.quirk,cost:nice(nice(g.jobs*fee(g.tier))*(0.8+Math.random()*0.4)),days:0,perk:`${h.grade} ${h.role.toLowerCase()} (${h.skills.join(", ")}); ${h.quirk}.`})}
+    const own=T.offers.unique[genre]||[],any=T.offers.unique.Any||[];
+    const u=pick(own.length&&Math.random()<0.7?own:own.concat(any));
+    return Object.assign(o,{type:"unique",name:u.name,cat:u.cat,cost:nice(u.jobs*fee(t)),days:u.days,perk:u.perk});
+  }
+  function rollOffers(){G().offers=Array.from({length:Math.max(1,S.offerCount)},newOffer);commit();render()}
+
+  /* buying */
+  function spend(cost){const g=G();if(g.treasury!=null){if(cost>g.treasury){toast(`Not enough in the treasury (${fmt(cost)} gp)`);return false}g.treasury-=cost}return true}
+  function hireStaff(u,L){let m=C.roster.find(x=>x.staffOf===u.id);
+    if(m){m.skills=(m.skills||[]).map(s=>({...s,g:L.grade}));m.role=u.name}
+    else C.roster.push({id:uid(),name:genName(),kind:"Hired NPC",role:u.name,level:null,ancestry:"",player:"",status:"In the hall",skills:(u.skills||[]).map(s=>({s,g:L.grade})),assign:"",notes:"",staffOf:u.id})}
+  function buyLevel(u,lv){if(!spend(priceOf(u.levels[lv])))return;G().owned[u.id]=lv+1;if(u.cat==="Staff")hireStaff(u,u.levels[lv]);
+    commit();toast(`${u.levels[lv].name} bought${u.cat==="Staff"?" and added to the roster":""}`);App.render()}
+  function buyOffer(o){if(o.sold||!spend(o.cost))return;const g=G();
+    if(o.type==="deal"){const u=catItem(o.ref.id),lv=g.owned[u.id]||0;
+      if(lv!==o.ref.lvl){if(g.treasury!=null)g.treasury+=o.cost;toast("That level isn't next in line anymore");return}
+      g.owned[u.id]=lv+1;if(u.cat==="Staff")hireStaff(u,u.levels[lv])}
+    else if(o.type==="hire")C.roster.push({id:uid(),name:o.name.split(",")[0],kind:"Hired NPC",role:o.role,level:null,ancestry:o.name.split(", ").slice(1).join(", "),player:"",status:"In the hall",skills:o.skills.map(s=>({s,g:o.grade})),assign:"",notes:o.quirk?`Quirk: ${o.quirk}.`:""});
+    else g.uniques.push({id:o.id,name:o.name,cat:o.cat,perk:o.perk,genre:o.genre,cost:o.cost,days:o.days,x:o.x||null});
+    o.sold=true;commit();toast("Bought");App.render()}
+
+  /* expand */
+  function expand(info,btn,apply){
+    const comp=Math.random()*100<S.buildComp?pick(T.complications):null;
+    const prompt=`You are helping a DM prep a guild-hall upgrade for a D&D 5e campaign.
+Setting: one universal World Tree (Yggdrasil) grows through the planes; branches rise into worlds of every genre; a city sits at its base and inside it, where space is strange and guild halls can grow without limit. The guild is young (current tier: ${rankName(S.tierRank)}). Its founder is Mordecai, a gruff, sarcastic, world-weary changeling who looks like a rat-folk and hides his care under complaints. Tone: whimsical-weird with a hopeful heart.
+
+UPGRADE: ${info.name} (${info.cat})${info.genre?`, sold by ${info.vendor}, flavored by a ${info.genre} world`:""}.
+Perk: ${info.perk}
+Cost: ${fmt(info.cost)} gp. Build time: ${info.days} days.${info.op?` Needs an operator with ${info.op}.`:""}
+${comp?`DM-only build complication to adapt: ${comp}`:"No build complication."}
+
+Return ONLY JSON:
+{"title": short evocative name for this specific build,
+ "description": 2-3 sentences of player-safe flavor describing how it looks and feels in the hall,
+ "npc": {"name": string, "role": "builder" or "operator" or similar, "quirk": one short phrase},
+ "mordecai": one line of Mordecai grumbling about the cost, in quotes,
+ "hooks": [1 or 2 one-sentence story hooks tied to this upgrade],
+ "complication": ${comp?"one or two sentences on how the complication plays out":"null"}}
+Don't change the perk's mechanics.`;
+    aiRun({prompt,btn,apply,fallback:{ai:false,title:info.name,description:info.perk,npc:{name:genName(),role:"builder",quirk:"works fast, talks faster"},mordecai:"\"That much? For THAT? Fine. Fine.\"",hooks:[],complication:comp}});
+  }
+  function expandedHTML(x,dm){if(!x)return"";
+    return `<div class="expanded">${dm&&x.note?`<p class="muted">${esc(x.note)}</p>`:""}${x.title?`<div><b>${esc(x.title)}</b></div>`:""}<div>${esc(x.description)}</div>
+    ${dm?`${x.npc?`<h4>${esc(cap(x.npc.role||"NPC"))}</h4><div>${esc(x.npc.name)}: ${esc(x.npc.quirk)}</div>`:""}
+    ${x.mordecai?`<div class="muted" style="margin-top:4px"><i>Mordecai: ${esc(x.mordecai)}</i></div>`:""}
+    ${(x.hooks||[]).length?`<h4>Hooks</h4><ul>${x.hooks.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>`:""}
+    ${x.complication?`<div class="dm" style="margin-top:4px"><b>Build complication:</b> ${esc(x.complication)}</div>`:""}`:""}</div>`}
+
+  /* render */
+  function render(){
+    const el=$("#shop");if(!el)return;el.innerHTML="";
+    const dm=UI.shopView==="dm",c=UI.shopCat,g=G();
+    $("#treasury").value=g.treasury??"";
+    $$(".dmonly").forEach(e=>e.style.display=dm?"":"none");
+    $$("#cats button").forEach(b=>b.classList.toggle("on",b.dataset.c===c));
+    $("#vDMs").classList.toggle("on",dm);$("#vShop").classList.toggle("on",!dm);
+    const section=(title,cards)=>{el.insertAdjacentHTML("beforeend",`<div class="section-h">${title}</div>`);const b=document.createElement("div");b.className="board";cards(b);el.appendChild(b)};
+    if(c==="All"||c==="Offers")section("Today's Peddlers",b=>{if(!g.offers.length)b.innerHTML=`<p class="muted">${dm?"Roll Peddlers to see who's selling this downtime.":"No peddlers today."}</p>`;g.offers.forEach(o=>b.appendChild(offerCard(o,dm)))});
+    if(c==="All"&&g.uniques.length)section("Unique Acquisitions",b=>g.uniques.forEach(u=>{const d=document.createElement("div");d.className="card owned";
+      d.innerHTML=`<h3>${esc(u.name)}</h3><div class="badges"><span class="badge gold">Owned</span><span class="badge">${esc(u.cat)}</span>${u.genre?`<span class="badge">${esc(u.genre)}</span>`:""}</div><div class="row">${esc(u.perk)}</div>${expandedHTML(u.x,dm)}${dm?`<div class="actions"><button class="btn small danger" data-a="rm">Remove</button></div>`:""}`;
+      d.querySelector('[data-a="rm"]')?.addEventListener("click",()=>{g.uniques=g.uniques.filter(x=>x!==u);commit();render()});b.appendChild(d)}));
+    ["Facilities","Services","Staff"].forEach(cat=>{if(c!=="All"&&c!==cat)return;section(cat,b=>T.catalog.filter(u=>u.cat===cat).forEach(u=>b.appendChild(upgradeCard(u,dm))))});
+  }
+  function upgradeCard(u,dm){
+    const g=G(),own=g.owned[u.id]||0,d=document.createElement("div");d.className="card"+(own?" owned":"");
+    const lvls=u.levels.map((L,i)=>{const cost=priceOf(L),st=i<own?"owned":i===own?"next":"later",dim=st!=="owned"&&!canAfford(cost);
+      return `<div class="lv ${st}${dim?" dim":""}"><span class="n">${ROMAN[i]}</span><span class="nm">${esc(L.name)} <span class="badge t${L.tier||0}">${TIERS[L.tier||0]}</span></span><span class="cost">${st==="owned"?"✓ Owned":fmt(cost)+" gp"}</span>
+      <span class="perk">${esc(L.perk)}</span><span class="meta">${L.days?`${L.days} day${L.days>1?"s":""} to build`:u.cat==="Staff"?"Hired immediately":"Ready immediately"}${dm&&st==="next"?` · <button class="btn small primary" data-buy="${i}">${u.cat==="Staff"?(i?"Promote":"Hire"):"Buy"}</button>`:""}</span></div>`}).join("");
+    const ad=u.addons||[],ownedAd=g.addons[u.id]||[];
+    const addons=ad.length?`<details class="addons"><summary>${u.cat==="Staff"?"Other options":"Add-ons"} (${ad.length})${ownedAd.length?` · ${ownedAd.length} owned`:""}</summary><ul>${ad.map((a,i)=>{const o=ownedAd.includes(a.name);return `<li class="${o?"addon-owned":""}${!o&&!canAfford(a.gp)?" muted":""}"><b>${esc(a.name)}</b> · ${o?"✓ owned":fmt(a.gp)+" gp"}: ${esc(a.perk)} ${dm&&!o?`<button class="btn small" data-ad="${i}">Buy</button>`:""}${dm&&o?`<button class="btn small" data-adrm="${i}">✕</button>`:""}</li>`}).join("")}</ul></details>`:"";
+    let op="";
+    if(u.op&&dm){const ops=C.roster.filter(m=>Roster.bestSkill(m,u.op.skills)),cur=C.roster.find(m=>m.assign===u.id),best=cur?Roster.bestSkill(cur,u.op.skills):null,out=best?T.grades[best.g]:null;
+      op=`<div class="op"><b>Operator:</b> <select data-op><option value="">${ops.length?"— none —":"no one on the roster has "+esc(u.op.skills.join(" / "))}</option>${ops.map(m=>`<option value="${m.id}"${cur&&cur.id===m.id?" selected":""}>${esc(m.name)} (${Roster.bestSkill(m,u.op.skills).g})</option>`).join("")}</select>
+      ${own&&out?`<br>${esc(best.g)}: <b style="color:var(--ink)">${out.output}×</b> ${esc(u.op.makes[Math.max(0,own-1)]||"")} per downtime, up to ${out.cap}.`:own?`<br><span class="muted">Needs ${esc(u.op.skills.join(" or "))}.</span>`:`<br><span class="muted">Buy Level I first.</span>`}</div>`}
+    const x=C.expanded[u.id];
+    d.innerHTML=`<h3>${esc(u.name)}</h3><div class="badges">${own?`<span class="badge gold">Owned ${ROMAN[own-1]}</span>`:""}${typeBadges(u.types)}${u.skills?`<span class="badge">${esc(u.skills.join(" / "))}</span>`:""}${u.op?`<span class="badge">Operator: ${esc(u.op.skills.join(" / "))}</span>`:""}</div>
+    <div class="flav">${esc(u.flavor||"")}</div>${lvls}${addons}${op}${expandedHTML(x,dm)}
+    ${dm?`<div class="actions">${own<3?`<button class="btn small" data-a="exp">${x?"Re-expand":"Expand"}</button>`:""}<label class="inline" style="font-size:14px;color:var(--mute)">Owned <select data-own>${[0,1,2,3].map(n=>`<option value="${n}"${n===own?" selected":""}>${n?ROMAN[n-1]:"none"}</option>`).join("")}</select></label></div>`:""}`;
+    const setX=r=>{C.expanded[u.id]=r;commit();render()};
+    if(dm&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,setX));
+    d.addEventListener("click",ev=>{const t=ev.target;
+      if(t.dataset.buy!=null)buyLevel(u,+t.dataset.buy);
+      else if(t.dataset.ad!=null){const a=ad[+t.dataset.ad];if(!spend(a.gp))return;(g.addons[u.id]=g.addons[u.id]||[]).push(a.name);commit();render()}
+      else if(t.dataset.adrm!=null){g.addons[u.id]=(g.addons[u.id]||[]).filter(n=>n!==ad[+t.dataset.adrm].name);commit();render()}
+      else if(t.dataset.a==="exp"){const i=Math.min(own,2),L=u.levels[i];expand({name:`${u.name} ${ROMAN[i]}: ${L.name}`,cat:u.cat,perk:L.perk,cost:priceOf(L),days:L.days,op:u.op?u.op.skills.join(" or "):null},t,setX)}});
+    d.querySelector("[data-own]")?.addEventListener("change",e=>{g.owned[u.id]=+e.target.value;commit();render()});
+    d.querySelector("[data-op]")?.addEventListener("change",e=>{C.roster.forEach(m=>{if(m.assign===u.id)m.assign=""});const m=C.roster.find(x=>x.id===e.target.value);if(m)m.assign=u.id;commit();render()});
+    return d;
+  }
+  function offerCard(o,dm){
+    const d=document.createElement("div");d.className="card offer"+(o.sold?" sold":"");
+    d.innerHTML=`<h3>${esc(o.name)}</h3><div class="badges"><span class="badge gold">${{unique:"Unique",deal:"Deal",hire:"Rare hire"}[o.type]}</span><span class="badge">${esc(o.cat)}</span><span class="badge">${esc(o.genre)}</span>${o.sold?'<span class="badge leaf">Sold</span>':""}</div>
+     <div class="flav">Offered by ${esc(o.vendor)}${o.reason?`: ${esc(o.reason)}`:""}.</div>
+     <div class="lv${!o.sold&&!canAfford(o.cost)?" dim":""}"><span class="n">⟡</span><span class="nm">${o.type==="deal"?`<s class="muted">${fmt(o.orig)}</s> −${o.discount}%`:o.type==="hire"?"Hire":"One of a kind"}</span><span class="cost">${fmt(o.cost)} gp</span><span class="perk">${esc(o.perk)}</span><span class="meta">${o.days?`${o.days} day${o.days>1?"s":""} to build`:"Ready immediately"}</span></div>
+     ${expandedHTML(o.x,dm)}${dm?`<div class="actions">${o.sold?"":`<button class="btn small primary" data-a="buy">Buy</button>`}<button class="btn small" data-a="exp">${o.x?"Re-expand":"Expand"}</button><button class="btn small" data-a="re">Reroll</button><button class="btn small" data-a="del">✕</button></div>`:""}`;
+    const setX=r=>{o.x=r;commit();render()};
+    if(dm&&o.x&&o.x.prompt)d.querySelector(".actions").appendChild(aiButtons(o.x,setX));
+    d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
+      if(a==="buy")buyOffer(o);
+      else if(a==="re"){Object.assign(o,newOffer(),{x:null,sold:false});commit();render()}
+      else if(a==="del"){G().offers=G().offers.filter(x=>x!==o);commit();render()}
+      else if(a==="exp")expand(o,ev.target,setX)});
+    return d;
+  }
+
+  /* print */
+  const PRINT_CSS=`.pr{font-family:"Crimson Pro",Georgia,serif;color:#2a1c0c}
+.pr-sheet{background:linear-gradient(135deg,#f1e4c3,#e6d3a5);padding:28px 30px;border-radius:4px;margin:0 auto 18px;max-width:820px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr h1{font:700 30px "IM Fell English SC",serif;text-align:center;margin:0;color:#2a1c0c;letter-spacing:.05em}
+.pr .prsub{text-align:center;font-family:"IM Fell English",serif;font-style:italic;margin:2px 0 14px;color:#5a3e1e}
+.pr h2{font:700 17px "Cinzel",serif;color:#5a1e10;border-bottom:1.5px solid #8a6a3a;margin:16px 0 6px;padding-bottom:2px}
+.pr table{width:100%;border-collapse:collapse;font-size:14px}
+.pr td{padding:4px 6px;vertical-align:top;border-bottom:1px dotted #a88a5a}
+.pr td.c{white-space:nowrap;text-align:right;font-weight:600;color:#5a1e10}
+.pr td.nm{width:30%;font-weight:600}
+.pr .lvl{font:700 11px "Cinzel",serif;color:#7a5a2a}
+.pr .ad{font-size:12px;color:#5a3e1e;font-style:italic}
+.pr .peddlers{border:2px double #5a1e10;padding:8px 12px;margin-top:10px}
+.pr .foot{margin-top:14px;text-align:center;font-style:italic;font-size:13px;color:#5a3e1e}
+.pr-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;margin:0 auto}
+.pr-card{border:2px solid #5a3e1e;border-radius:6px;padding:14px 16px;min-height:240px;background:linear-gradient(135deg,#f1e4c3,#e6d3a5);break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr-card h3{font:700 18px "IM Fell English SC",serif;margin:0;color:#2a1c0c}
+.pr-card .k{font:600 11px "Cinzel",serif;color:#7a5a2a;letter-spacing:.08em}
+.pr-card p{font-size:14.5px;margin:6px 0}
+.pr-card .fl{font-style:italic;color:#5a3e1e}
+.pr-break{break-before:page;page-break-before:always}
+.pr-roster td{font-size:14px}`;
+  function ledgerHTML(full,withOffers){const g=G();
+    const sec=cat=>`<h2>${cat}</h2><table>${T.catalog.filter(u=>u.cat===cat).map(u=>{const own=g.owned[u.id]||0;if(!full&&own>=3)return "";
+      const idxs=full?[0,1,2]:[own];
+      const lr=idxs.map(i=>{const L=u.levels[i];return `<tr><td class="nm">${i===idxs[0]?esc(u.name)+"<br>":""}<span class="lvl">${ROMAN[i]} · ${esc(L.name)}</span></td><td>${esc(L.perk)}${L.days?` <i>(${L.days} d)</i>`:""}</td><td class="c">${i<own?"✓ owned":fmt(priceOf(L))+" gp"}</td></tr>`}).join("");
+      const ad=(u.addons||[]).filter(a=>!(g.addons[u.id]||[]).includes(a.name));
+      return lr+(ad.length?`<tr><td></td><td colspan="2" class="ad">${cat==="Staff"?"Also":"Add-ons"}: ${ad.map(a=>`${esc(a.name)} (${fmt(a.gp)} gp)`).join(" · ")}</td></tr>`:"")}).join("")}</table>`;
+    const open=g.offers.filter(o=>!o.sold);
+    const ped=withOffers&&open.length?`<div class="peddlers"><h2 style="margin-top:0">Today's Peddlers</h2><table>${open.map(o=>`<tr><td class="nm">${esc(o.name)}<br><span class="lvl">${{unique:"One of a kind",deal:`Deal: ${o.discount}% off`,hire:"Rare hire"}[o.type]}</span></td><td>${esc(o.perk)}${o.days?` <i>(${o.days} d)</i>`:""}</td><td class="c">${fmt(o.cost)} gp</td></tr>`).join("")}</table></div>`:"";
+    return `<div class="pr pr-sheet"><h1>The Builder's Ledger</h1><div class="prsub">Upgrades for the guild hall · ${rankName(S.tierRank)}${g.treasury!=null?` · Treasury: ${fmt(g.treasury)} gp`:""}</div>${ped}${sec("Facilities")}${sec("Services")}${sec("Staff")}<div class="foot">Prices are final. Complaints may be addressed to Mordecai, who will ignore them.</div></div>`}
+  function cardsHTML(){const g=G(),cards=[];
+    T.catalog.forEach(u=>{const own=g.owned[u.id]||0;if(!own)return;const L=u.levels[own-1],x=C.expanded[u.id],ad=g.addons[u.id]||[];
+      cards.push(`<div class="pr pr-card"><div class="k">${esc(u.cat)} · ${ROMAN[own-1]}</div><h3>${esc(u.name)}: ${esc(L.name)}</h3><p class="fl">${esc(x?.description||u.flavor||"")}</p><p>${esc(L.perk)}</p>${own>1?`<p style="font-size:13px">Also: ${u.levels.slice(0,own-1).map(l=>esc(l.perk)).join(" ")}</p>`:""}${ad.length?`<p style="font-size:13px"><b>Add-ons:</b> ${ad.map(esc).join(", ")}</p>`:""}${u.op?`<p style="font-size:13px"><b>Operator:</b> ${esc(C.roster.find(m=>m.assign===u.id)?.name||"unassigned")}</p>`:""}</div>`)});
+    g.uniques.forEach(u=>cards.push(`<div class="pr pr-card"><div class="k">Unique · ${esc(u.cat)}</div><h3>${esc(u.name)}</h3>${u.x?.description?`<p class="fl">${esc(u.x.description)}</p>`:""}<p>${esc(u.perk)}</p></div>`));
+    return cards.length?`<div class="pr-cards">${cards.join("")}</div>`:""}
+
+  function bind(){
+    let tt;$("#treasury").oninput=e=>{clearTimeout(tt);tt=setTimeout(()=>{G().treasury=e.target.value===""?null:Math.max(0,+e.target.value);commit();render()},400)};
+    $("#rollOffers").onclick=rollOffers;
+    $("#vDMs").onclick=()=>{UI.shopView="dm";saveUI();render()};
+    $("#vShop").onclick=()=>{UI.shopView="shop";saveUI();render()};
+    $("#cats").onclick=e=>{const c=e.target.dataset.c;if(!c)return;UI.shopCat=c;saveUI();render()};
+  }
+  return {reloadTables,render,bind,ledgerHTML,cardsHTML,PRINT_CSS,catItem,opCatalog,priceOf,fee,tables:()=>T,ROMAN};
+})();
+
+/* ================= GUILD ROSTER ================= */
+const Roster=(()=>{
+  const KINDS=["Founder","Active PC","Retired PC","Hired NPC"],STATUSES=["In the hall","Adventuring","Away","Fallen"],GORDER=["Novice","Skilled","Expert","Master"];
+  const SKILL_HINTS=["Alchemist's Supplies","Smith's Tools","Cook's Utensils","Herbalism Kit","Arcana","History","Medicine","Religion","Nature","Persuasion","Guild Administration","Tinker's Tools","Calligrapher's Supplies","Carpenter's Tools","Leatherworker's Tools","Brewer's Supplies","Jeweler's Tools","Woodcarver's Tools"];
+  let editing=null,filter="all";
+  function gradeOf(m,sk){if(sk.g==="Prof")return "Skilled";if(sk.g==="Exp")return (m.level||0)>=11?"Master":"Expert";return sk.g||"Skilled"}
+  function bestSkill(m,skills){let best=null;(m.skills||[]).forEach(sk=>{if(skills.some(s=>s.toLowerCase()===String(sk.s||"").toLowerCase())){const g=gradeOf(m,sk);if(!best||GORDER.indexOf(g)>GORDER.indexOf(best.g))best={s:sk.s,g}}});return best}
+  const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
+  const sorted=()=>C.roster.slice().sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
+  function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
+  function render(){
+    const el=$("#roster");if(!el)return;el.innerHTML="";renderEditor();
+    $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
+    let list=sorted();
+    if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
+    if(filter==="hall")list=list.filter(m=>m.kind!=="Active PC"&&m.status==="In the hall");
+    if(!list.length){el.innerHTML=`<p class="muted">${C.roster.length?"No one matches this filter.":"The roster is empty."}</p>`;return}
+    list.forEach(m=>{const d=document.createElement("div");d.className="card";
+      d.innerHTML=`<h3>${esc(m.name)}</h3>
+      <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
+      <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
+      ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
+      ${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
+      d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
+        if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+        else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
+        else if(a==="del"){if(ev.target.dataset.sure){C.roster=C.roster.filter(x=>x.id!==m.id);commit();render()}else{ev.target.dataset.sure=1;ev.target.textContent="Confirm delete?"}}});
+      el.appendChild(d)});
+  }
+  function renderEditor(){
+    const h=$("#editorHost");if(!editing){h.innerHTML="";return}
+    const m=editing,gopts=[["Novice","Novice"],["Skilled","Skilled"],["Expert","Expert"],["Master","Master"],["Prof","Proficient (auto)"],["Exp","Expertise (auto)"]];
+    const owners=Upgrades.opCatalog().filter(u=>(C.guild.owned[u.id]||0)>0);
+    h.innerHTML=`<div class="editor"><div class="grid">
+      <label>Name <input data-k="name" value="${esc(m.name)}"></label>
+      <label>Type <select data-k="kind">${KINDS.map(k=>`<option${k===m.kind?" selected":""}>${k}</option>`).join("")}</select></label>
+      <label>Status <select data-k="status">${STATUSES.map(k=>`<option${k===m.status?" selected":""}>${k}</option>`).join("")}</select></label>
+      <label>Level <input data-k="level" type="number" min="1" max="20" value="${esc(m.level??"")}"></label>
+      <label>Ancestry / class <input data-k="ancestry" value="${esc(m.ancestry||"")}"></label>
+      <label>Player <input data-k="player" value="${esc(m.player||"")}"></label>
+      <label>Role <input data-k="role" value="${esc(m.role||"")}" placeholder="e.g. Alchemist"></label>
+      <label>Operating <select data-k="assign"><option value="">— nothing —</option>${owners.map(u=>`<option value="${u.id}"${u.id===m.assign?" selected":""}>${esc(u.name)}</option>`).join("")}</select></label></div>
+      <div><div class="muted" style="font-size:13px">Working skills &amp; tools</div><div id="skillRows"></div><button class="btn small" id="addSkill">＋ skill</button></div>
+      <label>Notes <textarea data-k="notes" rows="2">${esc(m.notes||"")}</textarea></label>
+      <datalist id="skillList">${SKILL_HINTS.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+      <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
+    const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
+    rows();
+    h.oninput=h.onchange=e=>{const t=e.target;
+      if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.value;
+      if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
+      if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
+    h.onclick=e=>{const t=e.target;
+      if(t.id==="addSkill"){(m.skills=m.skills||[]).push({s:"",g:m.kind==="Active PC"?"Prof":"Skilled"});rows()}
+      else if(t.dataset.sx!=null){m.skills.splice(+t.dataset.sx,1);rows()}
+      else if(t.id==="cancelMem"){editing=null;renderEditor()}
+      else if(t.id==="saveMem"){if(!String(m.name||"").trim()){toast("Give them a name");return}
+        m.skills=(m.skills||[]).filter(s=>String(s.s).trim());
+        if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
+        save(m);editing=null;render();toast("Saved")}};
+  }
+  const text=()=>sorted().map(m=>`${m.name} [${m.kind}${m.status?", "+m.status:""}]${m.level?" lvl "+m.level:""} ${m.ancestry||""}${m.role?" · "+m.role:""}${m.player?" · player: "+m.player:""}
+  Skills: ${(m.skills||[]).map(s=>`${s.s} (${gradeOf(m,s)})`).join(", ")||"none"}${m.assign?"\n  Operating: "+assignName(m):""}${m.notes?"\n  Notes: "+m.notes:""}`).join("\n");
+  const printHTML=()=>`<div class="pr pr-sheet pr-roster"><h1>Guild Roster</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${sorted().map(m=>`<tr><td class="nm">${esc(m.name)}<br><span class="lvl">${esc(m.kind)} · ${esc(m.status||"")}</span></td><td>${m.level?`Lvl ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.role?` · ${esc(m.role)}`:""}<br>${(m.skills||[]).map(s=>`${esc(s.s)} (${gradeOf(m,s)})`).join(", ")}${m.assign?`<br><i>Operating: ${esc(assignName(m))}</i>`:""}</td></tr>`).join("")}</table></div>`;
+  function bind(){
+    $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
+    $("#addMember").onclick=()=>{editing={id:uid(),name:"",kind:"Active PC",status:"Adventuring",level:S.partyLevel,ancestry:"",player:"",role:"",skills:[],assign:"",notes:""};renderEditor()};
+    $("#copyRoster").onclick=()=>copyText(text());
+  }
+  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML};
+})();
+
+/* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
+const App=(()=>{
+  const PREP_TABS=["jobs","shop","roster","print","settings"],TABLE_TABS=["table","print","settings"];
+  const prices=()=>C.tables.prices||DEFAULT_PRICES;
+  function tabs(){return UI.tableMode?TABLE_TABS:PREP_TABS}
+  function nav(){
+    if(!tabs().includes(UI.tab))UI.tab=tabs()[0];
+    $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
+    $$("main>section").forEach(s=>s.hidden=s.id!=="tab-"+UI.tab);
+    $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
+    $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
+  }
+  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
+  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Jobs.initControls();render()}
+
+  /* ---------- table mode ---------- */
+  function renderTable(){
+    const el=$("#tableView");el.innerHTML="";
+    const live=C.jobs.filter(h=>h.kept||h.final);
+    const col=(title,inner)=>{const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>${title}</h2>`;if(typeof inner==="string")p.insertAdjacentHTML("beforeend",inner);else p.appendChild(inner);el.appendChild(p);return p};
+    const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
+    if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
+    live.forEach(h=>jobs.appendChild(Jobs.dmCard(h,true)));
+    col("Jobs in play",jobs);
+    const UT=Upgrades.tables(),g=C.guild,owned=UT.catalog.filter(u=>(g.owned[u.id]||0)>0);
+    col("The guild hall",`<div class="row"><b>Treasury:</b> ${g.treasury==null?"—":fmt(g.treasury)+" gp"}</div>
+      ${owned.length||g.uniques.length?`<ul style="margin:4px 0;padding-left:18px">${owned.map(u=>{const lv=g.owned[u.id],L=u.levels[lv-1],op=C.roster.find(m=>m.assign===u.id);return `<li><b>${esc(u.name)} ${Upgrades.ROMAN[lv-1]}</b>: ${esc(L.perk)}${op?` <span class="muted">(${esc(op.name)})</span>`:""}</li>`}).join("")}${g.uniques.map(u=>`<li><b>${esc(u.name)}</b>: ${esc(u.perk)}</li>`).join("")}</ul>`:'<p class="muted">No upgrades yet.</p>'}`);
+    const chapel=g.owned.chapel||0,disc=[0,.25,.5,.75][chapel]||0;
+    const rv=col("Revival fee",`<label class="inline">Character level <input id="rvLvl" type="number" min="1" max="20" value="${S.partyLevel}"></label><div class="row" id="rvOut"></div><p class="hint">${S.revive} gp × level${chapel?`, −${disc*100}% from the Root Chapel ${Upgrades.ROMAN[chapel-1]}`:""}. Death in the worlds is normal D&D.</p>`);
+    const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
+    rv.querySelector("#rvLvl").oninput=upd;upd();
+    col("Who's in the hall",`<table class="ref">${Roster.sorted().map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
+    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
+  }
+
+  /* ---------- print center ---------- */
+  function printBody(){const p=UI.print;let out="";
+    if(p.notices)out+=Jobs.noticesPrintHTML();
+    if(p.ledger)out+=(out?'<div class="pr-break"></div>':"")+Upgrades.ledgerHTML(p.full,p.offers);
+    if(p.cards){const c=Upgrades.cardsHTML();if(c)out+=(out?'<div class="pr-break"></div>':"")+c}
+    if(p.roster)out+=(out?'<div class="pr-break"></div>':"")+Roster.printHTML();
+    return out}
+  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS;
+  function renderPrint(){
+    const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
+    $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
+    $("#pNoticeCount").textContent=`(${finals} marked final)`;
+    $("#printGo").textContent=FRAMED?"Download printable":"Print";
+    const body=printBody();
+    $("#preview").innerHTML=body?`<style>${printCSS().replace(/@media print\{[^}]*\}\}?/g,"")}</style>${body}`:'<p class="muted" style="color:#5a3e1e">Nothing selected yet. Mark jobs final on the Job Board, buy upgrades, or tick a section above.</p>';
+  }
+
+  /* ---------- settings ---------- */
+  function renderSettings(){
+    const mt=$("#mapTbl");mt.innerHTML="";
+    TIERS.forEach(t=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${t}</td><td>lvl <input type="number" min="1" max="20" data-t="${t}" data-i="0" value="${S.mapping[t][0]}"> to <input type="number" min="1" max="20" data-t="${t}" data-i="1" value="${S.mapping[t][1]}"></td><td class="muted">1 job ≈ ${fmt(Math.round(Upgrades.fee(TIERS.indexOf(t))))} gp</td>`;mt.appendChild(tr)});
+    $$("#numSettings input[data-s]").forEach(i=>i.value=S[i.dataset.s]);
+    $("#apiKey").value="";$("#apiKey").placeholder=AI.key()?"Key saved in this browser (hidden)":"sk-ant-…";
+    const known=["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"];
+    $("#modelSel").value=known.includes(UI.model)?UI.model:"custom";$("#modelCustom").value=known.includes(UI.model)?"":UI.model;$("#modelCustom").hidden=known.includes(UI.model);
+    $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
+    $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
+    loadTblEditor();
+  }
+  let tblKey="jobs";
+  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES}[tblKey]);
+  function loadTblEditor(){$("#tblSel").value=tblKey;$("#tblJson").value=JSON.stringify(C.tables[tblKey]||tblDefaults(),null,2);$("#tblState").textContent=C.tables[tblKey]?"Customized (saved in the campaign file)":"Using the built-in defaults"}
+
+  function bind(){
+    $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
+    $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
+    $("#saveCamp").onclick=$("#bannerSave").onclick=saveCampaign;
+    $("#loadCamp").onclick=()=>$("#fileIn").click();
+    $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)loadCampaignFile(f);e.target.value=""};
+    $("#tab-print").onchange=e=>{const k=e.target.dataset.p;if(!k)return;UI.print[k]=e.target.checked;saveUI();renderPrint()};
+    $("#printGo").onclick=()=>{const b=printBody();if(!b){toast("Nothing to print yet");return}printHTML("Yggdrasil Handouts",b,printCSS())};
+    $("#mapTbl").oninput=e=>{const t=e.target.dataset.t;if(!t)return;S.mapping[t][+e.target.dataset.i]=+e.target.value||1;commit();Jobs.initControls()};
+    $("#numSettings").onchange=e=>{const k=e.target.dataset.s;if(!k)return;const v=+e.target.value;S[k]=isNaN(v)?S[k]:v;if(S.hMax<S.hMin)S.hMax=S.hMin;commit()};
+    $("#saveKey").onclick=()=>{const k=$("#apiKey").value.trim();if(!k){toast("Paste a key first");return}lsSet("ygh.apikey",k);toast("Key saved in this browser");render()};
+    $("#forgetKey").onclick=()=>{try{localStorage.removeItem("ygh.apikey")}catch(e){}toast("Key removed");render()};
+    $("#testKey").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="Testing…";
+      try{const r=await AI.json('Return {"ok":true} as JSON.');toast(r&&r.ok?"Claude answered":"Claude answered, oddly")}catch(err){toast(err.noai?"No key saved":"Failed: "+err.message)}b.disabled=false;b.textContent="Test"};
+    $("#modelSel").onchange=e=>{const v=e.target.value;$("#modelCustom").hidden=v!=="custom";if(v!=="custom"){UI.model=v;saveUI()}};
+    $("#modelCustom").onchange=e=>{if(e.target.value.trim()){UI.model=e.target.value.trim();saveUI()}};
+    $("#tblSel").onchange=e=>{tblKey=e.target.value;loadTblEditor()};
+    $("#saveTbl").onclick=()=>{try{C.tables[tblKey]=JSON.parse($("#tblJson").value);commit();reloadAll();toast("Tables saved")}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#resetTbl").onclick=()=>{C.tables[tblKey]=null;commit();reloadAll();toast("Defaults restored")};
+    $("#copyTbl").onclick=()=>copyText($("#tblJson").value);
+    $("#importPaste").onclick=()=>{try{importData(JSON.parse($("#importJson").value));$("#importJson").value=""}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#newCamp").onclick=e=>{if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Really wipe this browser's copy? Click again";return}
+      replaceCampaign(newCampaign());commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
+  }
+  async function boot(){
+    Jobs.reloadTables();Upgrades.reloadTables();Jobs.initControls();
+    Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
+    if(window.claude?.use){
+      try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
+      try{downloads=await claude.use("downloads")}catch(e){downloads=null}
+      render();
+    }
+  }
+  return {render,reloadAll,boot};
+})();
+App.boot();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+.notice{position:relative;background:
+  radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
+  radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),
+  linear-gradient(135deg,#ead9b0,#d9c08a 55%,#cfb178);
+  color:#3a2a16;padding:30px 26px 26px;border-radius:3px;font-family:"IM Fell English",serif;
+  box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 0 40px rgba(110,70,20,.35);transform:rotate(var(--rot,0deg))}
+.notice::before{content:"";position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e6e6e6,#6b6b6b 60%,#333);box-shadow:0 2px 3px rgba(0,0,0,.6)}
+.notice .nhead{text-align:center;font-family:"IM Fell English SC",serif;font-size:15px;letter-spacing:.25em;color:#6b4a22}
+.notice .ntitle{text-align:center;font-family:"IM Fell English SC",serif;font-size:28px;line-height:1.1;margin:4px 0 10px;color:#2a1c0c}
+.notice .nbody{font-size:17.5px;line-height:1.4}
+.notice .nrule{border:0;border-top:1px solid rgba(80,50,20,.45);margin:12px 0}
+.notice .nfoot{display:flex;justify-content:space-between;gap:10px;font-size:15.5px}
+.notice .nreward{font-family:"IM Fell English SC",serif;font-size:18px;color:#5a1e10}
+.notice .stamp{position:absolute;right:16px;bottom:52px;width:74px;height:74px;border-radius:50%;border:3px double rgba(150,30,20,.7);color:rgba(150,30,20,.8);display:flex;align-items:center;justify-content:center;text-align:center;font:700 12px "Cinzel",serif;transform:rotate(-14deg);line-height:1.05;padding:6px}
+.notice .sig{font-style:italic;text-align:right;margin-top:6px}
+.notice-wrap{display:flex;flex-direction:column;gap:6px}
