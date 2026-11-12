@@ -7,7 +7,7 @@ const Upgrades=(()=>{
   const fee=t=>(T.goldBaseByLevel[tierMidLevel(t)]||100)*S.feePct/100;
   function nice(n){if(n<=0)return 0;if(n<100)return Math.max(5,Math.round(n/5)*5);if(n<1000)return Math.round(n/25)*25;if(n<10000)return Math.round(n/100)*100;return Math.round(n/500)*500}
   const priceOf=L=>L.gp!=null?L.gp:nice((L.jobs||1)*fee(L.tier||0));
-  const genName=()=>`${pick(T.names.first)} ${pick(T.names.last)}`;
+  const genName=()=>Jobs.genName();
   const catItem=id=>T.catalog.find(u=>u.id===id);
   const canAfford=c=>G().treasury==null||c<=G().treasury;
   const typeBadges=t=>[...(t||"")].map(c=>`<span class="badge">${T.perkLabels[c]||c}</span>`).join("");
@@ -20,15 +20,15 @@ const Upgrades=(()=>{
     const t=tierOf(S.tierRank),tn=TIERS[t];
     const w=T.offers.typeWeightsByTier[tn]||{unique:60,deal:25,hire:15};
     const type=wpick(Object.entries(w)),genre=rollGenre(t);
-    const o={id:uid(),type,genre,vendor:pick(T.offers.vendors[genre]||T.offers.vendors.Any),tier:t};
+    const o={id:uid(),type,genre,vendor:pickFresh((T.offers.vendors[genre]||[]).concat(T.offers.vendors.Any||[]),"vendor"),tier:t};
     if(type==="deal"){const opts=[];T.catalog.forEach(u=>{const lv=G().owned[u.id]||0;if(lv<3&&(u.levels[lv].tier||0)<=t+1)opts.push([u,lv])});
       if(opts.length){const [u,lv]=pick(opts),L=u.levels[lv],d=pick(T.offers.discounts);
-        return Object.assign(o,{ref:{id:u.id,lvl:lv},name:`${u.name} ${ROMAN[lv]}: ${L.name}`,cat:u.cat,orig:priceOf(L),cost:nice(priceOf(L)*(100-d)/100),discount:d,days:L.days,perk:L.perk,reason:pick(T.offers.dealReasons)})}
+        return Object.assign(o,{ref:{id:u.id,lvl:lv},name:`${u.name} ${ROMAN[lv]}: ${L.name}`,cat:u.cat,orig:priceOf(L),cost:nice(priceOf(L)*(100-d)/100),discount:d,days:L.days,perk:L.perk,reason:pickFresh(T.offers.dealReasons,"dealr")})}
       o.type="unique"}
-    if(o.type==="hire"){const h=pick(T.offers.hires),g=T.grades[h.grade]||T.grades.Skilled;
+    if(o.type==="hire"){const h=pickFresh(T.offers.hires,"hire"),g=T.grades[h.grade]||T.grades.Skilled;
       return Object.assign(o,{name:`${genName()}, ${h.arch}`,cat:"Staff",role:h.role,skills:h.skills,grade:h.grade,quirk:h.quirk,cost:nice(nice(g.jobs*fee(g.tier))*(0.8+Math.random()*0.4)),days:0,perk:`${h.grade} ${h.role.toLowerCase()} (${h.skills.join(", ")}); ${h.quirk}.`})}
     const own=T.offers.unique[genre]||[],any=T.offers.unique.Any||[];
-    const u=pick(own.length&&Math.random()<0.7?own:own.concat(any));
+    const u=pickFresh(own.length&&Math.random()<0.6?own:own.concat(any),"unique");
     return Object.assign(o,{type:"unique",name:u.name,cat:u.cat,cost:nice(u.jobs*fee(t)),days:u.days,perk:u.perk});
   }
   function rollOffers(){G().offers=Array.from({length:Math.max(1,S.offerCount)},newOffer);commit();render()}
@@ -50,7 +50,7 @@ const Upgrades=(()=>{
 
   /* expand */
   function expand(info,btn,apply){
-    const comp=Math.random()*100<S.buildComp?pick(T.complications):null;
+    const comp=Math.random()*100<S.buildComp?pickFresh(T.complications,"bcomp"):null;
     const prompt=`You are helping a DM prep a guild-hall upgrade for a D&D 5e campaign.
 Setting: one universal World Tree (Yggdrasil) grows through the planes; branches rise into worlds of every genre; a city sits at its base and inside it, where space is strange and guild halls can grow without limit. The guild is young (current tier: ${rankName(S.tierRank)}). Its founder is Mordecai, a gruff, sarcastic, world-weary changeling who looks like a rat-folk and hides his care under complaints. Tone: whimsical-weird with a hopeful heart.
 

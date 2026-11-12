@@ -66,7 +66,9 @@ const App=(()=>{
   const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES}[tblKey]);
   function loadTblEditor(){
     $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
-    $("#tblState").textContent=C.tables[tblKey]?"Customized (saved in the campaign file)":"Using the built-in defaults";
+    const cur=C.tables[tblKey],def=tblDefaults(),stale=cur&&def.version&&(cur.version||0)<def.version;
+    $("#tblState").textContent=cur?(stale?"Customized, and newer default content is available":"Customized (saved in the campaign file)"):"Using the built-in defaults";
+    $("#mergeTbl").hidden=!stale;
     const easy=UI.tblMode!=="json";$("#tmEasy").classList.toggle("on",easy);$("#tmJson").classList.toggle("on",!easy);
     $("#tblEasy").hidden=!easy;$("#tblJson").hidden=easy;
     if(easy)TableEditor.render($("#tblEasy"),draft,()=>{$("#tblState").textContent="Unsaved table edits: click Save tables"});
@@ -91,6 +93,7 @@ const App=(()=>{
     $("#modelCustom").onchange=e=>{if(e.target.value.trim()){UI.model=e.target.value.trim();saveUI()}};
     $("#tblSel").onchange=e=>{tblKey=e.target.value;loadTblEditor()};
     $("#saveTbl").onclick=()=>{try{C.tables[tblKey]=UI.tblMode==="json"?JSON.parse($("#tblJson").value):clone(draft);commit();reloadAll();toast("Tables saved")}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#mergeTbl").onclick=()=>{C.tables[tblKey]=mergeNew(C.tables[tblKey],tblDefaults());commit();reloadAll();toast("New default content added; your edits kept")};
     $("#tmEasy").onclick=()=>{UI.tblMode="easy";saveUI();loadTblEditor()};
     $("#tmJson").onclick=()=>{UI.tblMode="json";saveUI();loadTblEditor()};
     $("#resetTbl").onclick=()=>{C.tables[tblKey]=null;commit();reloadAll();toast("Defaults restored")};

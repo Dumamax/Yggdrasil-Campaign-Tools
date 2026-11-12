@@ -22,6 +22,9 @@ Roster → Import character accepts the JSON in the project doc `claude/Guild Ha
 ## Conventions
 - Everything the DM must keep lives in `C`; UI prefs in `ygh.ui`; API key only in `ygh.apikey` (never in `C`).
 - Call `commit()` after every mutation of `C`.
+- Use `pickFresh(list, key)` (not `pick`) for anything players would notice repeating; recent picks are remembered in `C.recent`.
+- When default tables change, bump their `version`; customized tables get an "Add new default content" merge (`mergeNew`) in Settings.
+- `tools/` holds one-off content scripts (e.g. `content-v2.js`), already applied to `src/`.
 - Keep the dark wood & gold look (Cinzel / Crimson Pro; print uses IM Fell parchment).
 - Upgrade prices are in "jobs" = one Standard job's guild fee (25%) at mid-tier; `gp` overrides.
 - Bump `SCHEMA` and migrate in `normalize()` if the campaign shape changes.

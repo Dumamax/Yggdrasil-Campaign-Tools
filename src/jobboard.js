@@ -3,20 +3,29 @@ const NOTICE_CSS=/*NOTICE_CSS*/"";
 const Jobs=(()=>{
   let T=DEFAULT_JOB_TABLES;
   function reloadTables(){T=C.tables.jobs||DEFAULT_JOB_TABLES}
-  const fillTpl=(s,ctx)=>s.replace(/\{(\w+)\}/g,(_,k)=>{const loc=ctx&&ctx.fill&&ctx.fill[k];return pick(loc&&Math.random()<0.8?loc:(T.fill[k]||["?"]))});
+  const fillTpl=(s,ctx)=>s.replace(/\{(\w+)\}/g,(_,k)=>{const loc=ctx&&ctx.fill&&ctx.fill[k];const useLoc=loc&&loc.length&&Math.random()<0.65;return pickFresh(useLoc?loc:(T.fill[k]||["?"]),"fill:"+k)});
   const genreData=g=>T.genres.fantasy[g]||T.genres.other[g];
   const ctxOf=h=>h.world.genre?genreData(h.world.genre):(T.locales[h.location]||{});
   function rollRank(){const d=wpick([[0,60],[1,25],[2,15]]);return Math.max(0,S.tierRank-d)}
   function rollGenre(r){const f=T.fantasyShare.iron+(T.fantasyShare.platinum-T.fantasyShare.iron)*(r/14);
     const grp=Math.random()<f?T.genres.fantasy:T.genres.other;return wpick(Object.entries(grp).map(([k,v])=>[k,v.w]))}
   function rollWorld(r,loc){const lc=T.locales[loc];
-    if(lc)return {genre:null,line:`${loc==="The Trunk"?"The trunk between worlds":"Home ground"}, where ${pick(lc.quirks)}`};
-    const g=rollGenre(r),gd=genreData(g);return {genre:g,line:`${cap(pick(gd.places))}, where ${pick(gd.quirks)}`}}
+    if(lc)return {genre:null,line:`${loc==="The Trunk"?"The trunk between worlds":"Home ground"}, where ${pickFresh(lc.quirks,"lq:"+loc)}`};
+    const g=rollGenre(r),gd=genreData(g);return {genre:g,line:`${cap(pickFresh(gd.places,"place:"+g))}, where ${pickFresh(gd.quirks,"quirk:"+g)}`}}
+  /* names: a small recurring cast plus a large generated pool; avoids names already in play */
+  function genName(){const N=T.names||{};const used=new Set([...C.roster.map(m=>m.name),...C.jobs.map(h=>h.patron&&h.patron.name)]);
+    if(!N.first){return pickFresh(T.patronNames,"pname",used)}
+    for(let i=0;i<20;i++){const roll=Math.random();let n;
+      if(roll<0.1&&N.monikers)n=pickFresh(N.monikers,"moniker");
+      else{n=`${pickFresh(N.first,"first")} ${pickFresh(N.last,"last")}`;if(N.titles&&Math.random()<0.15)n=`${pick(N.titles)} ${n}`}
+      if(!used.has(n))return n}
+    return `${pick(N.first)} ${pick(N.last)}`}
+  function patronName(){const N=T.names||{};return Math.random()<(N.recurringChance??0.15)?pickFresh(T.patronNames,"recurring"):genName()}
   function rollPatron(){const cat=wpick(Object.entries(T.patrons).map(([k,v])=>[k,v.w]));const arch=pick(Object.keys(T.patrons[cat].archetypes));
-    return {cat,arch,name:pick(T.patronNames),quirk:pick(T.patronQuirks)}}
+    return {cat,arch,name:patronName(),quirk:pickFresh(T.patronQuirks,"pquirk")}}
   function rollIncentive(r,size,p){const ladder=["common","uncommon","rare","very rare","legendary"];
     let rar=ladder.indexOf(pick(T.rarityByTier[tierOf(r)]));if(size==="Small")rar--;if(size==="Major")rar++;rar=Math.max(0,Math.min(4,rar));
-    const kind=pick(T.patrons[p.cat].archetypes[p.arch]);const item=pick((T.items[kind]||T.items.favor)[ladder[rar]]);return {kind,rarity:ladder[rar],item}}
+    const kind=pick(T.patrons[p.cat].archetypes[p.arch]);const item=pickFresh((T.items[kind]||T.items.favor)[ladder[rar]],"item:"+kind+":"+ladder[rar]);return {kind,rarity:ladder[rar],item}}
   function rollGold(r,size,p){const base=T.goldBaseByLevel[recLevel(r)]||100;
     const g=base*(T.sizes.goldMult[size]||1)*(T.patrons[p.cat].wealth||1)*(0.75+Math.random()*0.5);return g<20?Math.round(g):Math.round(g/5)*5}
   const guildFee=h=>Math.round(h.gold*S.feePct/100);
@@ -28,19 +37,19 @@ const Jobs=(()=>{
     const loc=type==="World Crisis"?wpick(T.locations.names.slice(3).map((n,i)=>[n,T.locations.weights[tier][i+3]||1])):wpick(T.locations.names.map((n,i)=>[n,T.locations.weights[tier][i]]));
     const p=rollPatron(),world=rollWorld(r,loc);
     return {id:uid(),rank:r,type,size,location:loc,world,patron:p,
-      objective:fillTpl(pick(T.objectives[type]),world.genre?genreData(world.genre):T.locales[loc]),incentive:rollIncentive(r,size,p),gold:rollGold(r,size,p),
-      complication:Math.random()*100<S.jobComp?pick(T.complications):null,
+      objective:fillTpl(pickFresh(T.objectives[type],"obj:"+type),world.genre?genreData(world.genre):T.locales[loc]),incentive:rollIncentive(r,size,p),gold:rollGold(r,size,p),
+      complication:Math.random()*100<S.jobComp?pickFresh(T.complications,"jcomp"):null,
       contribution:Math.round((r+1)*(T.sizes.contribution[size]||1)),kept:false,final:false,worldBlock:null,expanded:null};
   }
   function rerollField(h,f){
-    if(f==="world"){h.world=rollWorld(h.rank,h.location);h.worldBlock=null;h.objective=fillTpl(pick(T.objectives[h.type]),ctxOf(h))}
+    if(f==="world"){h.world=rollWorld(h.rank,h.location);h.worldBlock=null;h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h))}
     if(f==="patron"){h.patron=rollPatron();h.incentive=rollIncentive(h.rank,h.size,h.patron);h.gold=rollGold(h.rank,h.size,h.patron)}
-    if(f==="objective")h.objective=fillTpl(pick(T.objectives[h.type]),ctxOf(h));
+    if(f==="objective")h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h));
     if(f==="incentive")h.incentive=rollIncentive(h.rank,h.size,h.patron);
-    if(f==="complication")h.complication=pick(T.complications);
+    if(f==="complication")h.complication=pickFresh(T.complications,"jcomp");
     h.expanded=null;
   }
-  const rollWorldBlock=()=>({magic:pick(T.worldBlock.magic),faction:pick(T.worldBlock.factions),threat:pick(T.worldBlock.threats)});
+  const rollWorldBlock=()=>({magic:pickFresh(T.worldBlock.magic,"wbm"),faction:pickFresh(T.worldBlock.factions,"wbf"),threat:pickFresh(T.worldBlock.threats,"wbt")});
   function rollBoard(){const kept=C.jobs.filter(h=>h.kept||h.final);
     const n=Math.max(S.hMin,Math.min(S.hMax,S.hMin+rnd(S.hMax-S.hMin+1)));
     const fresh=[];for(let i=kept.length;i<n;i++)fresh.push(newHook());C.jobs=[...kept,...fresh];commit();render()}
@@ -164,5 +173,5 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").onclick=()=>{UI.jobView="dm";saveUI();initControls();render()};
     $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
   }
-  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,tables:()=>T};
+  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,tables:()=>T};
 })();

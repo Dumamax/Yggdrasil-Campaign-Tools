@@ -11,6 +11,18 @@ const cap=s=>String(s).charAt(0).toUpperCase()+String(s).slice(1);
 const fmt=n=>Number(n||0).toLocaleString();
 const uid=()=>Math.random().toString(36).slice(2,10);
 const clone=o=>JSON.parse(JSON.stringify(o));
+/* pickFresh: random pick that avoids recently used entries (memory saved in the campaign, so it spans sessions) */
+function pickFresh(list,key,exclude){
+  if(!list||!list.length)return undefined;
+  const R=(C.recent=C.recent||{}),r=(R[key]=R[key]||[]),id=x=>typeof x==="string"?x:(x&&(x.name||x.arch))||JSON.stringify(x);
+  const mem=Math.min(Math.floor(list.length*0.7),150);
+  let pool=list.filter(x=>!r.includes(id(x))&&!(exclude&&exclude.has(id(x))));if(!pool.length)pool=list.filter(x=>!r.slice(-Math.ceil(mem/3)).includes(id(x)));if(!pool.length)pool=list;
+  const v=pick(pool);r.push(id(v));while(r.length>mem)r.shift();return v}
+/* mergeNew: add default content a customized table set is missing (keeps the DM's edits) */
+function mergeNew(cur,def){
+  if(Array.isArray(def)&&Array.isArray(cur)){const key=x=>typeof x==="string"?x:(x&&(x.id||x.name||x.arch))||JSON.stringify(x);const have=new Set(cur.map(key));def.forEach(x=>{if(!have.has(key(x)))cur.push(clone(x))});return cur}
+  if(def&&typeof def==="object"&&cur&&typeof cur==="object"){Object.keys(def).forEach(k=>{if(!(k in cur))cur[k]=clone(def[k]);else if(typeof def[k]==="object")mergeNew(cur[k],def[k])});if("version" in def)cur.version=def.version;return cur}
+  return cur}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2000)}
 async function copyText(t){try{await navigator.clipboard.writeText(t);toast("Copied")}catch(e){toast("Copy blocked: select and copy manually")}}
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
@@ -25,11 +37,11 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
   tables:{jobs:null,upgrades:null,prices:null},jobs:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
-  expanded:{}}}
+  expanded:{},recent:{}}}
 function normalize(c){const n=newCampaign();const o=Object.assign(n,c||{});
   o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null},o.tables||{});
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
-  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};return o}
+  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
 let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false}},lsGet("ygh.ui",{}));
