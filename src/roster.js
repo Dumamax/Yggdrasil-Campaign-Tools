@@ -2,14 +2,14 @@
 const Roster=(()=>{
   const KINDS=["Founder","Active PC","Retired PC","Hired NPC"],STATUSES=["In the hall","Adventuring","Away","Fallen"],GORDER=["Novice","Skilled","Expert","Master"];
   const SKILL_HINTS=["Alchemist's Supplies","Smith's Tools","Cook's Utensils","Herbalism Kit","Arcana","History","Medicine","Religion","Nature","Persuasion","Guild Administration","Tinker's Tools","Calligrapher's Supplies","Carpenter's Tools","Leatherworker's Tools","Brewer's Supplies","Jeweler's Tools","Woodcarver's Tools"];
-  let editing=null,filter="all";
+  let editing=null,filter="all",importing=false;
   function gradeOf(m,sk){if(sk.g==="Prof")return "Skilled";if(sk.g==="Exp")return (m.level||0)>=11?"Master":"Expert";return sk.g||"Skilled"}
   function bestSkill(m,skills){let best=null;(m.skills||[]).forEach(sk=>{if(skills.some(s=>s.toLowerCase()===String(sk.s||"").toLowerCase())){const g=gradeOf(m,sk);if(!best||GORDER.indexOf(g)>GORDER.indexOf(best.g))best={s:sk.s,g}}});return best}
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
   const sorted=()=>C.roster.slice().sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
   function render(){
-    const el=$("#roster");if(!el)return;el.innerHTML="";renderEditor();
+    const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();renderEditor();
     $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
     let list=sorted();
     if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
@@ -60,6 +60,53 @@ const Roster=(()=>{
         if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
         save(m);editing=null;render();toast("Saved")}};
   }
+  /* ---------- import a character (Guild Hall JSON from Claude, or a sheet via Claude) ---------- */
+  function mapG(g){const t=String(g||"").toLowerCase();if(t.startsWith("exp")&&t!=="expert")return "Exp";if(t.startsWith("prof"))return "Prof";const k=GORDER.find(x=>x.toLowerCase()===t);return k||"Prof"}
+  function mapMember(x){
+    const anc=x.ancestry||[x.species||x.race,x.class||x.classes].filter(Boolean).join(" ");
+    return {id:uid(),name:String(x.name||"").trim(),kind:KINDS.includes(x.kind)?x.kind:"Active PC",status:STATUSES.includes(x.status)?x.status:"Adventuring",
+      level:+x.level||null,ancestry:anc,player:x.player||"",role:x.role||"",assign:"",notes:x.notes||"",
+      skills:(x.skills||[]).map(k=>typeof k==="string"?{s:k,g:"Prof"}:{s:k.s||k.name||k.skill||"",g:mapG(k.g||k.grade||k.proficiency)}).filter(k=>k.s)}}
+  function candidates(o){if(Array.isArray(o))return o;if(o&&Array.isArray(o.members))return o.members;if(o&&Array.isArray(o.characters))return o.characters;return [o]}
+  function accept(o){
+    const list=candidates(o).filter(x=>x&&x.name).map(mapMember);
+    if(!list.length){msg("That didn't contain a character with a name.");return false}
+    const match=m=>C.roster.find(x=>x.name.toLowerCase()===m.name.toLowerCase());
+    if(list.length===1){const m=list[0],ex=match(m);
+      editing=ex?Object.assign(clone(ex),m,{id:ex.id,assign:ex.assign,kind:ex.kind==="Active PC"?m.kind:ex.kind}):m;
+      importing=false;render();toast(ex?`Updating ${m.name}: review and save`:`Review ${m.name}, then save`);$("#editorHost").scrollIntoView({behavior:"smooth"});return true}
+    list.forEach(m=>{const ex=match(m);if(ex)Object.assign(ex,m,{id:ex.id,assign:ex.assign});else C.roster.push(m)});
+    commit();importing=false;render();toast(`Imported ${list.length} characters`);return true}
+  const sheetPrompt=t=>`Convert this D&D 5e character into Guild Hall roster JSON. Return ONLY JSON:
+{"guildHall":"character","name":string,"kind":"Active PC","level":number,"ancestry":"Species Class (Subclass)","player":"" or the player's name if given,"role":"" or a guild job they'd suit (e.g. Alchemist),"skills":[{"s":"skill or tool name","g":"Prof" or "Exp"}],"notes":"one line: personality or look"}
+List every skill and tool they're proficient with; use "Exp" for expertise.
+${t?`
+CHARACTER:
+${t}`:""}`;
+  const msg=t=>{const e=$("#impMsg");if(e)e.textContent=t};
+  async function runImport(text,pdf){
+    if(!pdf){try{const o=AI.parse(text);if(accept(o))return}catch(e){}}
+    if(!text.trim()&&!pdf){msg("Paste something first.");return}
+    if(AI.mode()==="none"||(pdf&&AI.mode()!=="api")){
+      if(pdf){msg("PDF sheets need an API key in Settings. Otherwise paste the sheet's text here, or upload the PDF to Claude in the project and ask for a Guild Hall export.");return}
+      copyText(sheetPrompt(text));msg("No Claude connection here, so a Claude prompt with this sheet was copied. Paste it into Claude, then paste Claude's reply here and click Import.");return}
+    const b=$("#impGo");b.disabled=true;b.innerHTML='<span class="spin">✦</span> Reading…';
+    try{accept(await AI.json(sheetPrompt(pdf?"":text),pdf))}catch(e){msg("Claude couldn't read that: "+e.message)}
+    if($("#impGo")){$("#impGo").disabled=false;$("#impGo").textContent="Import"}
+  }
+  function renderImport(){
+    const h=$("#importHost");if(!importing){h.innerHTML="";return}
+    h.innerHTML=`<div class="editor"><div style="font:700 16px Cinzel,serif;color:var(--gold)">Import a character</div>
+      <p class="hint" style="margin:0">Best: in a Claude chat in this project, ask "Export [character] for the Guild Hall" and paste the block it gives you. You can also paste or upload a character sheet (text, or PDF with an API key) and Claude will pull out the details. Importing someone already on the roster updates them.</p>
+      <textarea id="impText" rows="7" style="font:13px ui-monospace,Menlo,monospace" placeholder="Paste here"></textarea>
+      <div class="actions"><button class="btn primary" id="impGo">Import</button><button class="btn" id="impUp">Upload file</button><input type="file" id="impFile" accept=".json,.txt,.md,.pdf" hidden><button class="btn" id="impCancel">Cancel</button><span class="muted" id="impMsg"></span></div></div>`;
+    $("#impGo").onclick=()=>runImport($("#impText").value);
+    $("#impCancel").onclick=()=>{importing=false;renderImport()};
+    $("#impUp").onclick=()=>$("#impFile").click();
+    $("#impFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+      if(/\.pdf$/i.test(f.name)){r.onload=()=>runImport("",String(r.result).split(",")[1]);r.readAsDataURL(f)}
+      else{r.onload=()=>{$("#impText").value=r.result;runImport(r.result)};r.readAsText(f)}};
+  }
   const text=()=>sorted().map(m=>`${m.name} [${m.kind}${m.status?", "+m.status:""}]${m.level?" lvl "+m.level:""} ${m.ancestry||""}${m.role?" · "+m.role:""}${m.player?" · player: "+m.player:""}
   Skills: ${(m.skills||[]).map(s=>`${s.s} (${gradeOf(m,s)})`).join(", ")||"none"}${m.assign?"\n  Operating: "+assignName(m):""}${m.notes?"\n  Notes: "+m.notes:""}`).join("\n");
   const printHTML=()=>`<div class="pr pr-sheet pr-roster"><h1>Guild Roster</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${sorted().map(m=>`<tr><td class="nm">${esc(m.name)}<br><span class="lvl">${esc(m.kind)} · ${esc(m.status||"")}</span></td><td>${m.level?`Lvl ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.role?` · ${esc(m.role)}`:""}<br>${(m.skills||[]).map(s=>`${esc(s.s)} (${gradeOf(m,s)})`).join(", ")}${m.assign?`<br><i>Operating: ${esc(assignName(m))}</i>`:""}</td></tr>`).join("")}</table></div>`;
@@ -67,6 +114,7 @@ const Roster=(()=>{
     $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
     $("#addMember").onclick=()=>{editing={id:uid(),name:"",kind:"Active PC",status:"Adventuring",level:S.partyLevel,ancestry:"",player:"",role:"",skills:[],assign:"",notes:""};renderEditor()};
     $("#copyRoster").onclick=()=>copyText(text());
+    $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML};
+  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();

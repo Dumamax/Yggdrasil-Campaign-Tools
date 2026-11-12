@@ -59,8 +59,10 @@
     <div class="controls">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
+      <button class="btn" id="importPC">Import character</button>
       <button class="btn" id="copyRoster">Copy roster</button>
     </div>
+    <div id="importHost"></div>
     <div id="editorHost"></div>
     <div id="roster" class="board"></div>
     <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
@@ -121,10 +123,11 @@
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
-        <p class="hint">Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
+        <p class="hint">Open a section to edit it; changes apply when you click Save tables. Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
       </div>
     </div>
   </section>

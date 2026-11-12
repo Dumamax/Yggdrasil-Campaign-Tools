@@ -111,3 +111,27 @@ table.ref td:last-child{text-align:right;color:var(--gold);white-space:nowrap}
   body.printing #printArea{display:block}
   body.printing{background:#fff}
 }
+
+.te{display:grid;gap:6px}
+.te-sec{background:#1f1c17;border:1px solid var(--line);border-radius:7px;padding:4px 10px}
+.te-sec>summary{cursor:pointer;font-weight:600;padding:3px 0}
+.te-sec[open]>summary{color:var(--gold)}
+.te-body{display:grid;gap:6px;padding:6px 0 4px}
+.te-body .te-sec{background:#26221b}
+.te-hint{display:block;font-weight:400;font-size:13px;color:var(--mute)}
+.te-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:15px;color:var(--ink)}
+.te-row>span{min-width:150px;color:var(--mute)}
+.te-row.grow,.te-li .te-row{flex:1}
+.te-li{display:flex;gap:6px;align-items:center}
+.te-li .te-txt{flex:1}
+.te-txt{min-width:220px;flex:1}
+textarea.te-txt{width:100%}
+.te-num{width:80px}
+.te-inline{display:flex;flex-wrap:wrap;gap:6px}
+.te-mini{display:flex;flex-direction:column;align-items:center;font-size:12px;color:var(--mute);gap:1px}
+.te-mini .te-num{width:64px}
+table.te-matrix{border-collapse:collapse}
+table.te-matrix th{font-size:12.5px;color:var(--mute);font-weight:600;padding:2px 6px;text-align:left}
+table.te-matrix td{padding:2px 3px}
+table.te-matrix .te-num{width:64px}
+table.te-matrix .te-txt{min-width:160px}

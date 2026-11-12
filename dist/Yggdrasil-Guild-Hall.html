@@ -121,6 +121,30 @@ table.ref td:last-child{text-align:right;color:var(--gold);white-space:nowrap}
   body.printing{background:#fff}
 }
 
+.te{display:grid;gap:6px}
+.te-sec{background:#1f1c17;border:1px solid var(--line);border-radius:7px;padding:4px 10px}
+.te-sec>summary{cursor:pointer;font-weight:600;padding:3px 0}
+.te-sec[open]>summary{color:var(--gold)}
+.te-body{display:grid;gap:6px;padding:6px 0 4px}
+.te-body .te-sec{background:#26221b}
+.te-hint{display:block;font-weight:400;font-size:13px;color:var(--mute)}
+.te-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:15px;color:var(--ink)}
+.te-row>span{min-width:150px;color:var(--mute)}
+.te-row.grow,.te-li .te-row{flex:1}
+.te-li{display:flex;gap:6px;align-items:center}
+.te-li .te-txt{flex:1}
+.te-txt{min-width:220px;flex:1}
+textarea.te-txt{width:100%}
+.te-num{width:80px}
+.te-inline{display:flex;flex-wrap:wrap;gap:6px}
+.te-mini{display:flex;flex-direction:column;align-items:center;font-size:12px;color:var(--mute);gap:1px}
+.te-mini .te-num{width:64px}
+table.te-matrix{border-collapse:collapse}
+table.te-matrix th{font-size:12.5px;color:var(--mute);font-weight:600;padding:2px 6px;text-align:left}
+table.te-matrix td{padding:2px 3px}
+table.te-matrix .te-num{width:64px}
+table.te-matrix .te-txt{min-width:160px}
+
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
   radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),
@@ -189,8 +213,10 @@ table.ref td:last-child{text-align:right;color:var(--gold);white-space:nowrap}
     <div class="controls">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
+      <button class="btn" id="importPC">Import character</button>
       <button class="btn" id="copyRoster">Copy roster</button>
     </div>
+    <div id="importHost"></div>
     <div id="editorHost"></div>
     <div id="roster" class="board"></div>
     <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
@@ -251,10 +277,11 @@ table.ref td:last-child{text-align:right;color:var(--gold);white-space:nowrap}
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
-        <p class="hint">Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
+        <p class="hint">Open a section to edit it; changes apply when you click Save tables. Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
       </div>
     </div>
   </section>
@@ -357,11 +384,11 @@ const AI={
   mode(){return this.sample?"claude":this.key()?"api":"none"},
   label(){return {claude:"Claude: built in",api:"Claude: API key",none:"Claude: copy/paste"}[this.mode()]},
   parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
-  async json(prompt){
-    if(this.sample)return await this.sample.json(prompt,{modelTier:"default"});
+  async json(prompt,pdfBase64){
+    if(this.sample&&!pdfBase64)return await this.sample.json(prompt,{modelTier:"default"});
     const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}
     const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:prompt}]})});
+      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:pdfBase64?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfBase64}},{type:"text",text:prompt}]:prompt}]})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok)throw new Error(data?.error?.message||`API error ${res.status}`);
     return this.parse((data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""));
@@ -1094,14 +1121,14 @@ Don't change the perk's mechanics.`;
 const Roster=(()=>{
   const KINDS=["Founder","Active PC","Retired PC","Hired NPC"],STATUSES=["In the hall","Adventuring","Away","Fallen"],GORDER=["Novice","Skilled","Expert","Master"];
   const SKILL_HINTS=["Alchemist's Supplies","Smith's Tools","Cook's Utensils","Herbalism Kit","Arcana","History","Medicine","Religion","Nature","Persuasion","Guild Administration","Tinker's Tools","Calligrapher's Supplies","Carpenter's Tools","Leatherworker's Tools","Brewer's Supplies","Jeweler's Tools","Woodcarver's Tools"];
-  let editing=null,filter="all";
+  let editing=null,filter="all",importing=false;
   function gradeOf(m,sk){if(sk.g==="Prof")return "Skilled";if(sk.g==="Exp")return (m.level||0)>=11?"Master":"Expert";return sk.g||"Skilled"}
   function bestSkill(m,skills){let best=null;(m.skills||[]).forEach(sk=>{if(skills.some(s=>s.toLowerCase()===String(sk.s||"").toLowerCase())){const g=gradeOf(m,sk);if(!best||GORDER.indexOf(g)>GORDER.indexOf(best.g))best={s:sk.s,g}}});return best}
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
   const sorted=()=>C.roster.slice().sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
   function render(){
-    const el=$("#roster");if(!el)return;el.innerHTML="";renderEditor();
+    const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();renderEditor();
     $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
     let list=sorted();
     if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
@@ -1152,6 +1179,53 @@ const Roster=(()=>{
         if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
         save(m);editing=null;render();toast("Saved")}};
   }
+  /* ---------- import a character (Guild Hall JSON from Claude, or a sheet via Claude) ---------- */
+  function mapG(g){const t=String(g||"").toLowerCase();if(t.startsWith("exp")&&t!=="expert")return "Exp";if(t.startsWith("prof"))return "Prof";const k=GORDER.find(x=>x.toLowerCase()===t);return k||"Prof"}
+  function mapMember(x){
+    const anc=x.ancestry||[x.species||x.race,x.class||x.classes].filter(Boolean).join(" ");
+    return {id:uid(),name:String(x.name||"").trim(),kind:KINDS.includes(x.kind)?x.kind:"Active PC",status:STATUSES.includes(x.status)?x.status:"Adventuring",
+      level:+x.level||null,ancestry:anc,player:x.player||"",role:x.role||"",assign:"",notes:x.notes||"",
+      skills:(x.skills||[]).map(k=>typeof k==="string"?{s:k,g:"Prof"}:{s:k.s||k.name||k.skill||"",g:mapG(k.g||k.grade||k.proficiency)}).filter(k=>k.s)}}
+  function candidates(o){if(Array.isArray(o))return o;if(o&&Array.isArray(o.members))return o.members;if(o&&Array.isArray(o.characters))return o.characters;return [o]}
+  function accept(o){
+    const list=candidates(o).filter(x=>x&&x.name).map(mapMember);
+    if(!list.length){msg("That didn't contain a character with a name.");return false}
+    const match=m=>C.roster.find(x=>x.name.toLowerCase()===m.name.toLowerCase());
+    if(list.length===1){const m=list[0],ex=match(m);
+      editing=ex?Object.assign(clone(ex),m,{id:ex.id,assign:ex.assign,kind:ex.kind==="Active PC"?m.kind:ex.kind}):m;
+      importing=false;render();toast(ex?`Updating ${m.name}: review and save`:`Review ${m.name}, then save`);$("#editorHost").scrollIntoView({behavior:"smooth"});return true}
+    list.forEach(m=>{const ex=match(m);if(ex)Object.assign(ex,m,{id:ex.id,assign:ex.assign});else C.roster.push(m)});
+    commit();importing=false;render();toast(`Imported ${list.length} characters`);return true}
+  const sheetPrompt=t=>`Convert this D&D 5e character into Guild Hall roster JSON. Return ONLY JSON:
+{"guildHall":"character","name":string,"kind":"Active PC","level":number,"ancestry":"Species Class (Subclass)","player":"" or the player's name if given,"role":"" or a guild job they'd suit (e.g. Alchemist),"skills":[{"s":"skill or tool name","g":"Prof" or "Exp"}],"notes":"one line: personality or look"}
+List every skill and tool they're proficient with; use "Exp" for expertise.
+${t?`
+CHARACTER:
+${t}`:""}`;
+  const msg=t=>{const e=$("#impMsg");if(e)e.textContent=t};
+  async function runImport(text,pdf){
+    if(!pdf){try{const o=AI.parse(text);if(accept(o))return}catch(e){}}
+    if(!text.trim()&&!pdf){msg("Paste something first.");return}
+    if(AI.mode()==="none"||(pdf&&AI.mode()!=="api")){
+      if(pdf){msg("PDF sheets need an API key in Settings. Otherwise paste the sheet's text here, or upload the PDF to Claude in the project and ask for a Guild Hall export.");return}
+      copyText(sheetPrompt(text));msg("No Claude connection here, so a Claude prompt with this sheet was copied. Paste it into Claude, then paste Claude's reply here and click Import.");return}
+    const b=$("#impGo");b.disabled=true;b.innerHTML='<span class="spin">✦</span> Reading…';
+    try{accept(await AI.json(sheetPrompt(pdf?"":text),pdf))}catch(e){msg("Claude couldn't read that: "+e.message)}
+    if($("#impGo")){$("#impGo").disabled=false;$("#impGo").textContent="Import"}
+  }
+  function renderImport(){
+    const h=$("#importHost");if(!importing){h.innerHTML="";return}
+    h.innerHTML=`<div class="editor"><div style="font:700 16px Cinzel,serif;color:var(--gold)">Import a character</div>
+      <p class="hint" style="margin:0">Best: in a Claude chat in this project, ask "Export [character] for the Guild Hall" and paste the block it gives you. You can also paste or upload a character sheet (text, or PDF with an API key) and Claude will pull out the details. Importing someone already on the roster updates them.</p>
+      <textarea id="impText" rows="7" style="font:13px ui-monospace,Menlo,monospace" placeholder="Paste here"></textarea>
+      <div class="actions"><button class="btn primary" id="impGo">Import</button><button class="btn" id="impUp">Upload file</button><input type="file" id="impFile" accept=".json,.txt,.md,.pdf" hidden><button class="btn" id="impCancel">Cancel</button><span class="muted" id="impMsg"></span></div></div>`;
+    $("#impGo").onclick=()=>runImport($("#impText").value);
+    $("#impCancel").onclick=()=>{importing=false;renderImport()};
+    $("#impUp").onclick=()=>$("#impFile").click();
+    $("#impFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+      if(/\.pdf$/i.test(f.name)){r.onload=()=>runImport("",String(r.result).split(",")[1]);r.readAsDataURL(f)}
+      else{r.onload=()=>{$("#impText").value=r.result;runImport(r.result)};r.readAsText(f)}};
+  }
   const text=()=>sorted().map(m=>`${m.name} [${m.kind}${m.status?", "+m.status:""}]${m.level?" lvl "+m.level:""} ${m.ancestry||""}${m.role?" · "+m.role:""}${m.player?" · player: "+m.player:""}
   Skills: ${(m.skills||[]).map(s=>`${s.s} (${gradeOf(m,s)})`).join(", ")||"none"}${m.assign?"\n  Operating: "+assignName(m):""}${m.notes?"\n  Notes: "+m.notes:""}`).join("\n");
   const printHTML=()=>`<div class="pr pr-sheet pr-roster"><h1>Guild Roster</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${sorted().map(m=>`<tr><td class="nm">${esc(m.name)}<br><span class="lvl">${esc(m.kind)} · ${esc(m.status||"")}</span></td><td>${m.level?`Lvl ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.role?` · ${esc(m.role)}`:""}<br>${(m.skills||[]).map(s=>`${esc(s.s)} (${gradeOf(m,s)})`).join(", ")}${m.assign?`<br><i>Operating: ${esc(assignName(m))}</i>`:""}</td></tr>`).join("")}</table></div>`;
@@ -1159,8 +1233,109 @@ const Roster=(()=>{
     $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
     $("#addMember").onclick=()=>{editing={id:uid(),name:"",kind:"Active PC",status:"Adventuring",level:S.partyLevel,ancestry:"",player:"",role:"",skills:[],assign:"",notes:""};renderEditor()};
     $("#copyRoster").onclick=()=>copyText(text());
+    $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML};
+  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+})();
+
+/* ================= FRIENDLY TABLE EDITOR (form view over any table JSON) ================= */
+const TableEditor=(()=>{
+  const HIDE=new Set(["version","tiers"]);
+  const RECORD=new Set(["fantasyShare","worldBlock","sizes","locations","offers","names","typeWeightsByTier","op","genres"]);
+  const LABELS={w:"Weight",wealth:"Wealth (gold ×)",jobTypes:"Job types",fantasyShare:"Fantasy share",worldBlock:"World details",patronNames:"Patron names",patronQuirks:"Patron quirks",
+    goldBaseByLevel:"Job gold by party level",rarityByTier:"Incentive rarity by tier",xpBudget:"XP budget per character",fightPlan:"Fight plan",goldMult:"Gold multiplier",
+    perkLabels:"Perk type labels",typeWeightsByTier:"Peddler type weights by tier",dealReasons:"Deal reasons",jobs:"Price (in jobs)",gp:"Price override (gp)",days:"Build days",
+    tier:"Recommended tier",types:"Perk types (P/A/B/C)",op:"Operator",makes:"Makes (per level)",cat:"Category",s:"Skill",g:"Grade",cap:"Rarity cap",output:"Items per downtime",
+    first:"First names",last:"Last names",rows:"Rows",rule:"Rule of thumb",arch:"Archetype"};
+  const HINTS={jobTypes:"How often each job type appears at each tier. Bigger number = more common; 0 = never.",
+    sizes:"How often each job size appears per tier, plus its gold multiplier and contribution value.",locations:"Where jobs happen, weighted per tier.",
+    fantasyShare:"Share of fantasy-flavored worlds at Iron vs. Platinum (0 to 1).",genres:"World genres: weight, places, quirks, and fill-in words used in job text.",
+    locales:"Home-ground locations (the city, inside the Tree, the Trunk) and their quirks.",worldBlock:"Extra world details rolled on demand.",
+    patrons:"Patron categories → archetypes → which kinds of incentive each gives.",objectives:"Job text templates per job type. Words in {braces} are filled from the fill-in lists.",
+    fill:"Fill-in word lists used by the {braces} in job text.",complications:"Complications that can be rolled.",goldBaseByLevel:"Gold for a Standard job (whole party), by party level.",
+    rarityByTier:"Which incentive rarities each tier can roll.",items:"Incentive items by kind and rarity.",xpBudget:"XP per character for Low / Moderate / High encounters, by level.",
+    grades:"Operator grades: items per downtime, rarity cap, and hire price (tier + jobs).",catalog:"Every Facility, Service, and Staff upgrade with its three levels and add-ons.",
+    offers:"Peddlers: type weights per tier, discounts, vendors, one-of-a-kind upgrades, rare hires.",names:"Name parts for generated NPCs.",perkLabels:"What the perk-type letters mean.",
+    rows:"Item and price, one row each.",rule:"Shown above the price table."};
+  const human=k=>LABELS[k]||String(k).replace(/([a-z])([A-Z])/g,"$1 $2").replace(/^./,c=>c.toUpperCase());
+  const isNum=v=>typeof v==="number",isStr=v=>typeof v==="string",isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+  const sig=v=>Array.isArray(v)?"a"+(v.length?sig(v[0]):""):isObj(v)?"o":typeof v;
+  const rowLabel=(n,i)=>n===5?TIERS[i]:n===21?`Lvl ${i}`:`${i+1}`;
+  function blankLike(v){if(isStr(v))return "";if(isNum(v))return 0;if(typeof v==="boolean")return false;
+    if(Array.isArray(v)){if(!v.length||isStr(v[0])||isObj(v[0]))return [];return v.map(blankLike)}
+    if(isObj(v)){const o={};Object.keys(v).forEach(k=>o[k]=blankLike(v[k]));return o}return null}
+  const isMap=(key,o)=>{if(RECORD.has(key))return false;const ks=Object.keys(o);if(ks.length<2)return false;
+    if(ks.every(k=>/^[a-z][a-zA-Z]*$/.test(k))&&Object.values(o).every(v=>!isObj(v)))return false;
+    const s=sig(o[ks[0]]);return ks.every(k=>sig(o[k])===s)};
+  const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
+  let changed=()=>{};
+
+  /* a collapsible section whose body renders on first open */
+  function lazy(title,count,build,open){
+    const d=el("details","te-sec");d.innerHTML=`<summary>${title}${count!=null?` <span class="muted">(${count})</span>`:""}</summary>`;
+    const body=el("div","te-body");d.appendChild(body);let done=false;
+    const go=()=>{if(!done&&d.open){done=true;build(body)}};d.addEventListener("toggle",go);if(open){d.open=true;go()}return d}
+  function input(val,set,opts={}){
+    let i;
+    if(opts.tier){i=el("select");TIERS.forEach((t,n)=>i.insertAdjacentHTML("beforeend",`<option value="${n}"${n===val?" selected":""}>${t}</option>`));i.onchange=()=>{set(+i.value);changed()};return i}
+    if(isNum(val)){i=el("input");i.type="number";i.step="any";i.value=val;i.className="te-num";i.oninput=()=>{set(i.value===""?0:+i.value);changed()};return i}
+    if(typeof val==="boolean"){i=el("input");i.type="checkbox";i.checked=val;i.onchange=()=>{set(i.checked);changed()};return i}
+    const long=isStr(val)&&val.length>70;i=el(long?"textarea":"input");if(long)i.rows=2;i.value=val??"";i.className="te-txt";
+    i.oninput=()=>{set(val===null&&i.value===""?null:i.value);changed()};return i}
+  function rm(fn){const b=el("button","btn small","✕");b.title="Remove";b.onclick=e=>{e.preventDefault();fn();changed()};return b}
+  function addBtn(label,fn){const b=el("button","btn small","＋ "+label);b.onclick=e=>{e.preventDefault();fn();changed()};return b}
+
+  /* render one value into container; parent[key] is the value */
+  function field(container,parent,key,ctx={}){
+    const v=parent[key],label=ctx.label??human(key),hint=HINTS[key];
+    const set=nv=>{parent[key]=nv};
+    if(v===undefined)return;
+    // primitives
+    if(!Array.isArray(v)&&!isObj(v)){const row=el("label","te-row");row.innerHTML=`<span>${esc(label)}</span>`;row.appendChild(input(v,set,{tier:key==="tier"&&isNum(v)}));container.appendChild(row);return}
+    // number list (per tier / per level)
+    if(Array.isArray(v)&&v.length&&v.every(isNum)){const box=el("div","te-row");box.innerHTML=`<span>${esc(label)}</span>`;const g=el("div","te-inline");
+      v.forEach((n,i)=>{const w=el("label","te-mini");w.innerHTML=`<small>${rowLabel(v.length,i)}</small>`;w.appendChild(input(n,x=>v[i]=x));g.appendChild(w)});box.appendChild(g);container.appendChild(box);return}
+    // matrix of numbers or tuples of strings
+    if(Array.isArray(v)&&v.length&&v.every(r=>Array.isArray(r)&&r.every(x=>isNum(x)||isStr(x)))){
+      const cols=(ctx.siblings&&Array.isArray(ctx.siblings.names)&&ctx.siblings.names.length===v[0].length)?ctx.siblings.names:null;
+      container.appendChild(lazy(esc(label)+(hint?` <span class="te-hint">${esc(hint)}</span>`:""),v.length,body=>{
+        const draw=()=>{body.innerHTML="";const t=el("table","te-matrix");
+          if(cols)t.insertAdjacentHTML("beforeend",`<tr><th></th>${cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr>`);
+          v.forEach((r,i)=>{const tr=el("tr");tr.appendChild(el("th","",v.length===5||v.length===21?rowLabel(v.length,i):""));
+            r.forEach((x,j)=>{const td=el("td");td.appendChild(input(x,nv=>r[j]=nv));tr.appendChild(td)});
+            if(v.length!==5&&v.length!==21){const td=el("td");td.appendChild(rm(()=>{v.splice(i,1);draw()}));tr.appendChild(td)}t.appendChild(tr)});
+          body.appendChild(t);if(v.length!==5&&v.length!==21)body.appendChild(addBtn("row",()=>{v.push(blankLike(v[0]));draw()}))};draw()},ctx.open));return}
+    // list of strings
+    if(Array.isArray(v)&&(v.length===0||v.every(isStr))){
+      container.appendChild(lazy(esc(label)+(hint?` <span class="te-hint">${esc(hint)}</span>`:""),v.length,body=>{
+        const draw=()=>{body.innerHTML="";v.forEach((s,i)=>{const r=el("div","te-li");r.appendChild(input(s,x=>v[i]=x));r.appendChild(rm(()=>{v.splice(i,1);draw()}));body.appendChild(r)});
+          body.appendChild(addBtn("add",()=>{v.push("");draw();body.querySelectorAll("input,textarea")[v.length-1]?.focus()}))};draw()},ctx.open));return}
+    // list of objects
+    if(Array.isArray(v)){
+      container.appendChild(lazy(esc(label)+(hint?` <span class="te-hint">${esc(hint)}</span>`:""),v.length,body=>{
+        const draw=()=>{body.innerHTML="";v.forEach((o,i)=>{
+          const t=o&&(o.name||o.role||o.arch||o.id)||`Item ${i+1}`;
+          const sec=lazy(esc(t)+(o&&o.cat?` <span class="muted">· ${esc(o.cat)}</span>`:""),null,b=>{objFields(b,o,key);const a=el("div","actions");
+            a.appendChild(addBtn("duplicate",()=>{const c=clone(o);if(c.id)c.id+="-copy";if(c.name)c.name+=" (copy)";v.splice(i+1,0,c);draw()}));a.appendChild(rm(()=>{v.splice(i,1);draw()}));b.appendChild(a)});
+          body.appendChild(sec)});
+          body.appendChild(addBtn("new",()=>{const n=blankLike(v[0]||{name:""});if("name" in n)n.name="New entry";if("id" in n)n.id="new-"+uid();v.push(n);draw()}))};draw()},ctx.open));return}
+    // object: map (add/remove entries) or record (fixed fields)
+    if(isMap(key,v)){
+      container.appendChild(lazy(esc(label)+(hint?` <span class="te-hint">${esc(hint)}</span>`:""),Object.keys(v).length,body=>{
+        const draw=()=>{body.innerHTML="";const simple=Object.values(v).every(x=>!isObj(x)&&!(Array.isArray(x)&&x.some(y=>isObj(y)||Array.isArray(y)))&&!(Array.isArray(x)&&x.every(isStr)&&x.length>0));
+          Object.keys(v).forEach(k=>{
+            if(simple){const r=el("div","te-li");field(r,v,k,{label:k});r.firstChild&&r.firstChild.classList&&r.firstChild.classList.add("grow");r.appendChild(rm(()=>{delete v[k];draw()}));body.appendChild(r)}
+            else{const sec=lazy(esc(k),null,b=>{if(isObj(v[k]))objFields(b,v[k],k);else field(b,v,k,{label:"Entries",open:true});const a=el("div","actions");a.appendChild(rm(()=>{delete v[k];draw()}));b.appendChild(a)});body.appendChild(sec)}});
+          const add=el("div","te-li");const nm=el("input","te-txt");nm.placeholder="New entry name";add.appendChild(nm);
+          add.appendChild(addBtn("add",()=>{const k=nm.value.trim();if(!k){toast("Type a name first");return}if(k in v){toast("That name exists");return}const f=Object.values(v)[0];v[k]=f===undefined?"":blankLike(f);draw()}));body.appendChild(add)};draw()},ctx.open));return}
+    container.appendChild(lazy(esc(label)+(hint?` <span class="te-hint">${esc(hint)}</span>`:""),null,b=>objFields(b,v,key),ctx.open));
+  }
+  function objFields(container,o,key){Object.keys(o).forEach(k=>{if(!HIDE.has(k))field(container,o,k,{siblings:o})})}
+  function render(container,data,onChange){
+    changed=onChange||(()=>{});container.innerHTML="";
+    Object.keys(data).forEach(k=>{if(!HIDE.has(k))field(container,data,k,{siblings:data})});
+  }
+  return {render};
 })();
 
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
@@ -1227,9 +1402,16 @@ const App=(()=>{
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     loadTblEditor();
   }
-  let tblKey="jobs";
+  let tblKey="jobs",draft=null;
   const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES}[tblKey]);
-  function loadTblEditor(){$("#tblSel").value=tblKey;$("#tblJson").value=JSON.stringify(C.tables[tblKey]||tblDefaults(),null,2);$("#tblState").textContent=C.tables[tblKey]?"Customized (saved in the campaign file)":"Using the built-in defaults"}
+  function loadTblEditor(){
+    $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
+    $("#tblState").textContent=C.tables[tblKey]?"Customized (saved in the campaign file)":"Using the built-in defaults";
+    const easy=UI.tblMode!=="json";$("#tmEasy").classList.toggle("on",easy);$("#tmJson").classList.toggle("on",!easy);
+    $("#tblEasy").hidden=!easy;$("#tblJson").hidden=easy;
+    if(easy)TableEditor.render($("#tblEasy"),draft,()=>{$("#tblState").textContent="Unsaved table edits: click Save tables"});
+    else $("#tblJson").value=JSON.stringify(draft,null,2);
+  }
 
   function bind(){
     $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
@@ -1248,7 +1430,9 @@ const App=(()=>{
     $("#modelSel").onchange=e=>{const v=e.target.value;$("#modelCustom").hidden=v!=="custom";if(v!=="custom"){UI.model=v;saveUI()}};
     $("#modelCustom").onchange=e=>{if(e.target.value.trim()){UI.model=e.target.value.trim();saveUI()}};
     $("#tblSel").onchange=e=>{tblKey=e.target.value;loadTblEditor()};
-    $("#saveTbl").onclick=()=>{try{C.tables[tblKey]=JSON.parse($("#tblJson").value);commit();reloadAll();toast("Tables saved")}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#saveTbl").onclick=()=>{try{C.tables[tblKey]=UI.tblMode==="json"?JSON.parse($("#tblJson").value):clone(draft);commit();reloadAll();toast("Tables saved")}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#tmEasy").onclick=()=>{UI.tblMode="easy";saveUI();loadTblEditor()};
+    $("#tmJson").onclick=()=>{UI.tblMode="json";saveUI();loadTblEditor()};
     $("#resetTbl").onclick=()=>{C.tables[tblKey]=null;commit();reloadAll();toast("Defaults restored")};
     $("#copyTbl").onclick=()=>copyText($("#tblJson").value);
     $("#importPaste").onclick=()=>{try{importData(JSON.parse($("#importJson").value));$("#importJson").value=""}catch(e){toast("Invalid JSON: "+e.message)}};

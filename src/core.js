@@ -93,11 +93,11 @@ const AI={
   mode(){return this.sample?"claude":this.key()?"api":"none"},
   label(){return {claude:"Claude: built in",api:"Claude: API key",none:"Claude: copy/paste"}[this.mode()]},
   parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
-  async json(prompt){
-    if(this.sample)return await this.sample.json(prompt,{modelTier:"default"});
+  async json(prompt,pdfBase64){
+    if(this.sample&&!pdfBase64)return await this.sample.json(prompt,{modelTier:"default"});
     const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}
     const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:prompt}]})});
+      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:pdfBase64?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfBase64}},{type:"text",text:prompt}]:prompt}]})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok)throw new Error(data?.error?.message||`API error ${res.status}`);
     return this.parse((data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""));

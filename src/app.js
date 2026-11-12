@@ -62,9 +62,16 @@ const App=(()=>{
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     loadTblEditor();
   }
-  let tblKey="jobs";
+  let tblKey="jobs",draft=null;
   const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES}[tblKey]);
-  function loadTblEditor(){$("#tblSel").value=tblKey;$("#tblJson").value=JSON.stringify(C.tables[tblKey]||tblDefaults(),null,2);$("#tblState").textContent=C.tables[tblKey]?"Customized (saved in the campaign file)":"Using the built-in defaults"}
+  function loadTblEditor(){
+    $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
+    $("#tblState").textContent=C.tables[tblKey]?"Customized (saved in the campaign file)":"Using the built-in defaults";
+    const easy=UI.tblMode!=="json";$("#tmEasy").classList.toggle("on",easy);$("#tmJson").classList.toggle("on",!easy);
+    $("#tblEasy").hidden=!easy;$("#tblJson").hidden=easy;
+    if(easy)TableEditor.render($("#tblEasy"),draft,()=>{$("#tblState").textContent="Unsaved table edits: click Save tables"});
+    else $("#tblJson").value=JSON.stringify(draft,null,2);
+  }
 
   function bind(){
     $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
@@ -83,7 +90,9 @@ const App=(()=>{
     $("#modelSel").onchange=e=>{const v=e.target.value;$("#modelCustom").hidden=v!=="custom";if(v!=="custom"){UI.model=v;saveUI()}};
     $("#modelCustom").onchange=e=>{if(e.target.value.trim()){UI.model=e.target.value.trim();saveUI()}};
     $("#tblSel").onchange=e=>{tblKey=e.target.value;loadTblEditor()};
-    $("#saveTbl").onclick=()=>{try{C.tables[tblKey]=JSON.parse($("#tblJson").value);commit();reloadAll();toast("Tables saved")}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#saveTbl").onclick=()=>{try{C.tables[tblKey]=UI.tblMode==="json"?JSON.parse($("#tblJson").value):clone(draft);commit();reloadAll();toast("Tables saved")}catch(e){toast("Invalid JSON: "+e.message)}};
+    $("#tmEasy").onclick=()=>{UI.tblMode="easy";saveUI();loadTblEditor()};
+    $("#tmJson").onclick=()=>{UI.tblMode="json";saveUI();loadTblEditor()};
     $("#resetTbl").onclick=()=>{C.tables[tblKey]=null;commit();reloadAll();toast("Defaults restored")};
     $("#copyTbl").onclick=()=>copyText($("#tblJson").value);
     $("#importPaste").onclick=()=>{try{importData(JSON.parse($("#importJson").value));$("#importJson").value=""}catch(e){toast("Invalid JSON: "+e.message)}};
