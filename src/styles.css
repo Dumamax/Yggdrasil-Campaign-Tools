@@ -305,3 +305,18 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
 .badge.red{border-color:var(--red);color:var(--red)}
 body.mobile .st-btns{margin-left:0;width:100%}body.mobile .st-btns .btn{flex:1;min-height:38px}
 body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-form>label[style]{grid-column:1/-1}body.mobile .st-form select,body.mobile .st-form input{width:100%}
+/* player view */
+body.player #qsBtn,body.player #undoBtn,body.player #tmToggle,body.player #loadCamp,body.player #saveCamp,body.player #aiMode,body.player .banner{display:none!important}
+body.player #dmBtn{color:var(--mute)}
+#syncBtn .lbl{font-size:13px;color:var(--mute)}
+.pv{display:grid;gap:22px;justify-items:center}
+.pv>*{width:100%;max-width:820px}
+.pv .pr-notices{justify-content:center}
+.pv-h{font:700 20px "Cinzel",serif;color:var(--gold);text-align:center;margin:10px 0 0}
+.pv-empty{text-align:center;color:var(--mute);font-style:italic;padding:40px 10px}
+.pv-foot{text-align:center;font-size:13px}
+.modal{padding:18px 20px}.modal h2{margin:0 0 8px}.modal form{display:grid;gap:10px}.modal input{width:100%}
+body.mobile .pv .pr-cards{grid-template-columns:1fr}
+body.mobile .pv .pr-sheet{padding:16px 14px}
+body.mobile #syncBtn .lbl{display:none}
+body.player header .sub{display:none}

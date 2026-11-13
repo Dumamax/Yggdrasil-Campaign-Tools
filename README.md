@@ -12,6 +12,9 @@ Download **[`dist/Yggdrasil-Guild-Hall.html`](dist/Yggdrasil-Guild-Hall.html)** 
 - **At the Table**: Table Mode shows jobs in play, the hall's upgrades, a revival-fee calculator, who's in the hall, and a price reference.
 - **Print**: Quest Notices, the Builder's Ledger, upgrade cards, and a roster sheet.
 
+## Online (GitHub Pages)
+Open the Pages link. Everyone starts in **Player View**: read-only notices, guild standing, Council, market and Builder's Ledger, refreshed automatically from the latest save. The DM clicks **DM View** and enters the password. To save to GitHub, add a token under Settings → GitHub saves (instructions there); Save / Ctrl+S then commits `data/campaign.json` and every copy picks it up. Without a token, saving falls back to a campaign file.
+
 ## On a phone
 The app switches to a phone layout automatically on narrow screens (bottom tab bar, icon header, stacked forms). Settings → Display can force Phone or Desktop. Phones download a campaign file on each save; Load Campaign opens one from your Files/Downloads.
 

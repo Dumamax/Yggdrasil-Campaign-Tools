@@ -18,16 +18,19 @@
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
+    <button class="btn ghost hb" id="syncBtn" data-ico="refresh" title="Check for the latest save"><span class="lbl">…</span></button>
     <button class="btn ghost hb" id="qsBtn" data-ico="search" title="Search everything (Ctrl+K)" aria-label="Search"><span class="lbl">Search</span></button>
     <button class="btn ghost hb" id="undoBtn" data-ico="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo" disabled><span class="lbl">Undo</span></button>
     <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
     <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
+    <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM View</span></button>
     <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button>
   <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
   <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
@@ -38,6 +41,7 @@
 </nav>
 </div>
 <main>
+  <section id="tab-p" hidden></section>
   <section id="tab-jobs">
     <div class="standing-host"></div>
     <div class="controls">
@@ -127,6 +131,15 @@
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>GitHub saves</h2>
+        <div id="syncSettings"></div>
+      </div>
+      <div class="panel">
+        <h2>DM password</h2>
+        <p class="hint">Keeps players from wandering into DM View. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
+        <form class="actions" id="pwForm"><input type="password" name="pw" placeholder="New password" required><input type="password" name="pw2" placeholder="Repeat" required><button class="btn">Change password</button><button type="button" class="btn ghost" id="lockNow">Lock now (Player View)</button></form>
       </div>
       <div class="panel">
         <h2>Guild standing</h2>

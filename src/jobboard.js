@@ -182,7 +182,7 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     if(x){s+=`\n\n${x.summary||""}\nBeats:\n${(x.beats||[]).map((t,i)=>`${i+1}. ${t}`).join("\n")}\nBudget: Low ${b.low} / Moderate ${b.mod} / High ${b.high} XP. ${b.plan}`;
       (x.encounters||[]).forEach(e=>s+=`\n- ${e.name} (${e.difficulty}, ${e.xp} XP): ${e.monsters}. ${e.reskin||""}`)}
     return s}
-  function noticesPrintHTML(){const f=C.jobs.filter(h=>h.final);if(!f.length)return "";
+  function noticesPrintHTML(){const f=C.jobs.filter(h=>h.final&&!h.done);if(!f.length)return "";
     return `<div class="pr-notices">${f.map(h=>`<div class="pr-notice">${noticeHTML(h,0)}</div>`).join("")}</div>`}
   const PRINT_CSS=NOTICE_CSS+`.pr-notices{display:grid;grid-template-columns:1fr;gap:24px;max-width:640px;margin:0 auto}.pr-notice{break-inside:avoid;page-break-inside:avoid;padding-top:12px}.notice{transform:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}`;
 
