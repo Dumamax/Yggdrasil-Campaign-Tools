@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1a16">
 <title>Yggdrasil Guild Hall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
@@ -175,14 +176,6 @@ table.ref td:first-child{min-width:11em}
 .print-opts label.sub::before{content:"↳";margin-right:-2px}
 .print-opts label.off{opacity:.45}
 .print-opts #printGo{align-self:center;margin-left:auto}
-@media (max-width:700px){
-  header .sub{display:none}
-  header{padding:10px 14px 2px}.hdr-right{margin-left:0}
-  nav{flex-wrap:nowrap;overflow-x:auto;padding:6px 14px 8px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
-  nav button{white-space:nowrap}
-  main{padding:12px 14px 40px}
-  .board,.tm-grid{grid-template-columns:1fr}
-}
 /* compact job cards + overflow menu */
 .tog{cursor:pointer;user-select:none}
 .tog:hover{color:#f0c463}
@@ -210,6 +203,101 @@ details.more .menu .btn{text-align:left;padding:6px 10px;font-size:15px}
 .gen-row select{max-width:150px}
 table.backups td:last-child{white-space:nowrap}
 .te-mini .te-num{width:76px}
+/* ---- icons ---- */
+svg.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;flex:none}
+[data-ico]{display:inline-flex;align-items:center;gap:6px}
+.slbl{display:none}
+/* ================= PHONE LAYOUT (body.mobile: auto under 760px or forced in Settings) ================= */
+body.mobile{font-size:16px;-webkit-text-size-adjust:100%}
+body.mobile .topbar{backdrop-filter:none;-webkit-backdrop-filter:none;background:#1d1a16;padding-top:env(safe-area-inset-top)}
+body.mobile header{padding:8px 12px;flex-wrap:nowrap;align-items:center;gap:8px}
+body.mobile h1{font-size:19px;white-space:nowrap}
+body.mobile h1 .lbl,body.mobile header .sub,body.mobile .aimode{display:none}
+body.mobile .hdr-right{gap:2px;flex-wrap:nowrap}
+body.mobile .hb .lbl{display:none}
+body.mobile .hb{padding:0;width:40px;height:40px;justify-content:center;border-radius:10px}
+body.mobile .hb svg.ico{width:20px;height:20px}
+body.mobile .hb.keep-lbl{width:auto;padding:0 12px}
+body.mobile .hb.keep-lbl .slbl{display:inline}
+body.mobile .banner{padding:6px 12px;font-size:14px;gap:6px}
+body.mobile .banner .btn{margin-left:auto}
+/* bottom tab bar */
+body.mobile nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;flex-wrap:nowrap;gap:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom));background:#1a1713;border-top:1px solid var(--line);border-bottom:0;box-shadow:0 -6px 18px rgba(0,0,0,.45)}
+body.mobile nav button{flex:1 1 0;min-width:0;flex-direction:column;gap:2px;border:0;background:none;color:var(--mute);padding:6px 2px 4px;font-size:11.5px;border-radius:10px}
+body.mobile nav button svg.ico{width:22px;height:22px}
+body.mobile nav button .lbl{display:none}body.mobile nav button .slbl{display:block}
+body.mobile nav button.on{background:none;color:var(--gold)}
+body.mobile nav button.on svg.ico{filter:drop-shadow(0 0 6px rgba(214,168,74,.5))}
+body.mobile main{padding:10px 10px calc(92px + env(safe-area-inset-bottom))}
+body.mobile .toast{bottom:calc(84px + env(safe-area-inset-bottom));max-width:92vw;text-align:center}
+/* controls become a two-column form */
+body.mobile .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;align-items:end}
+body.mobile .controls>*{min-width:0;margin-left:0!important}
+body.mobile .controls label{min-width:0!important;flex:none!important}
+body.mobile .controls select,body.mobile .controls input:not([type=checkbox]){width:100%;min-height:40px}
+body.mobile .controls>.btn,body.mobile .controls>.seg,body.mobile .controls>.btn-pair,body.mobile .controls>span,body.mobile .controls>label[style*="flex:1"]{grid-column:1/-1}
+body.mobile .controls>.btn,body.mobile .btn-pair .btn{min-height:42px}
+body.mobile .btn-pair .btn{flex:1}
+body.mobile .controls>#rMemCtl{display:contents!important}
+body.mobile .controls label.inline{grid-column:auto}
+body.mobile .seg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+body.mobile .seg::-webkit-scrollbar{display:none}
+body.mobile .seg button{white-space:nowrap;flex:1 0 auto;min-height:38px}
+body.mobile .cats{margin-bottom:10px}
+/* cards and lists */
+body.mobile .board,body.mobile .tm-grid{grid-template-columns:1fr;gap:10px}
+body.mobile .card{padding:12px}
+body.mobile .btn.small{padding:6px 11px;font-size:15px;min-height:34px}
+body.mobile .reroll{display:inline-block;padding:2px 6px;font-size:15px}
+body.mobile .actions{gap:6px}
+body.mobile details.more .menu{min-width:230px}
+body.mobile details.more .menu .btn{min-height:42px}
+body.mobile .badge{font-size:12px}
+body.mobile .settings{gap:10px}
+body.mobile .panel{padding:12px}
+body.mobile .panel .controls{grid-template-columns:1fr 1fr}
+/* tables that don't fit: stack */
+body.mobile table.council,body.mobile table.council tbody,body.mobile table.council tr,body.mobile table.council td{display:block;width:100%}
+body.mobile table.council tr{border-bottom:1px solid var(--line);padding:8px 0}
+body.mobile table.council td{border:0;padding:2px 0}
+body.mobile table.council select{max-width:none;width:100%;min-height:40px;margin-bottom:4px}
+body.mobile table.ref td:first-child{min-width:0}
+body.mobile table.backups td{display:block;border:0}body.mobile table.backups tr{display:block;border-bottom:1px solid var(--line);padding:6px 0}
+body.mobile table.map input{width:62px}
+/* editors */
+body.mobile .editor{padding:10px}
+body.mobile .editor .grid{grid-template-columns:1fr 1fr}
+body.mobile .te-row>span{min-width:0;width:100%}
+body.mobile .te-txt{min-width:0}
+body.mobile textarea.json{min-height:240px}
+/* print */
+body.mobile .print-opts{display:flex;flex-direction:column}
+body.mobile .print-opts fieldset{flex-direction:column;align-items:flex-start;gap:8px}
+body.mobile .print-opts label.inline{min-height:30px}
+body.mobile .print-opts #printGo{margin:0;width:100%;min-height:44px}
+body.mobile .preview{padding:4px;font-size:14px}
+/* notices fit the screen */
+body.mobile .notice{padding:24px 16px 20px}
+body.mobile .notice .ntitle{font-size:23px}
+body.mobile .notice .stamp{width:60px;height:60px;font-size:10px;right:10px}
+/* search sheet */
+body.mobile .qs{padding-top:0;align-items:stretch}
+body.mobile .qs-box{width:100%;border-radius:0 0 14px 14px;border-top:0;max-height:85vh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+body.mobile .qs-res{max-height:none;flex:1}
+body.mobile .qs-item{white-space:normal;padding:10px 12px}
+body.mobile .qs-foot{display:none}
+body.mobile .hb:not(.primary){background:transparent;border-color:transparent;color:var(--ink)}
+body.mobile .hb.on{color:var(--gold);background:rgba(214,168,74,.12)}
+body.mobile #bannerSave{display:none}
+body.mobile .banner{font-size:13px;padding:4px 12px}
+body.mobile .banner span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.mobile #tab-jobs .controls>label:first-child{grid-column:1/-1}
+body.mobile #tab-jobs .controls>#jobsAll{grid-column:auto;min-height:38px}
+body.mobile #tab-jobs .controls>.seg{grid-column:auto}
+body.mobile #tab-jobs .controls>.seg button{flex:1 1 0;padding:6px 4px}
+body.mobile #rMemCtl>.seg{grid-column:1/-1}
+body.mobile .print-opts{align-items:stretch}
+body.mobile .print-opts fieldset{width:100%}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -233,27 +321,27 @@ table.backups td:last-child{white-space:nowrap}
 <body>
 <div class="topbar">
 <header>
-  <h1>⟡ Yggdrasil Guild Hall</h1>
+  <h1>⟡ <span class="lbl">Yggdrasil </span>Guild Hall</h1>
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
-    <button class="btn ghost" id="qsBtn" title="Search everything (Ctrl+K)">⌕ Search</button>
-    <button class="btn ghost" id="undoBtn" title="Undo last change (Ctrl+Z)" disabled>↶ Undo</button>
-    <button class="btn" id="tmToggle">Table Mode</button>
-    <button class="btn primary" id="saveCamp" title="Save Campaign (Ctrl+S)">Save Campaign</button>
-    <button class="btn" id="loadCamp">Load Campaign</button>
+    <button class="btn ghost hb" id="qsBtn" data-ico="search" title="Search everything (Ctrl+K)" aria-label="Search"><span class="lbl">Search</span></button>
+    <button class="btn ghost hb" id="undoBtn" data-ico="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo" disabled><span class="lbl">Undo</span></button>
+    <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
+    <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
+    <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
-  <button data-tab="jobs">Job Board</button>
-  <button data-tab="shop">Guild Upgrades</button>
-  <button data-tab="roster">Roster</button>
-  <button data-tab="market">Shop Generator</button>
-  <button data-tab="table">At the Table</button>
-  <button data-tab="print">Print</button>
-  <button data-tab="settings">Settings &amp; Tables</button>
+  <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
+  <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
+  <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
+  <button data-tab="market" data-ico="store"><span class="lbl">Shop Generator</span><span class="slbl">Shops</span></button>
+  <button data-tab="table" data-ico="dice"><span class="lbl">At the Table</span><span class="slbl">Table</span></button>
+  <button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
+  <button data-tab="settings" data-ico="gear"><span class="lbl">Settings &amp; Tables</span><span class="slbl">Settings</span></button>
 </nav>
 </div>
 <main>
@@ -338,6 +426,11 @@ table.backups td:last-child{white-space:nowrap}
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Display</h2>
+        <div class="actions"><span class="muted">Layout</span><div class="seg" id="layoutSeg"><button class="btn" data-l="auto">Auto</button><button class="btn" data-l="phone">Phone</button><button class="btn" data-l="desktop">Desktop</button></div><span class="muted" id="layoutNow"></span></div>
+        <p class="hint">Auto uses the phone layout on narrow screens (under 760 px wide). This choice is saved in this browser only.</p>
       </div>
       <div class="panel">
         <h2>Claude</h2>
@@ -6289,7 +6382,7 @@ const App=(()=>{
     if(!tabs().includes(UI.tab))UI.tab=tabs()[0];
     $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
     $$("main>section").forEach(s=>s.hidden=s.id!=="tab-"+UI.tab);
-    $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
+    $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
   function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
@@ -6371,7 +6464,7 @@ const App=(()=>{
   }
 
   function bind(){
-    $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
+    $("#mainNav").onclick=e=>{const t=e.target.closest("[data-tab]")?.dataset.tab;if(!t)return;const same=UI.tab===t;UI.tab=t;saveUI();render();if(!same)window.scrollTo(0,0)};
     $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
     $("#saveCamp").onclick=$("#bannerSave").onclick=()=>saveCampaign();
     $("#undoBtn").onclick=undo;
@@ -6399,6 +6492,21 @@ const App=(()=>{
     $("#newCamp").onclick=e=>{if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Really wipe this browser's copy? Click again";return}
       replaceCampaign(newCampaign(),"Before starting a new campaign");commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
   }
+  /* ---------- layout (phone / desktop) + icons ---------- */
+  const ICONS={search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
+    save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+    open:'<path d="m6 14 1.5-2.9A2 2 0 0 1 9.2 10H20a2 2 0 0 1 1.9 2.5l-1.5 6a2 2 0 0 1-2 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v2"/>',
+    dice:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/>',
+    jobs:'<path d="M8 21h11a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4M15 8h-5M15 12h-5"/>',
+    hall:'<path d="M3 21h18M5 21V10l7-6 7 6v11"/><path d="M10 21v-5h4v5"/>',
+    people:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1M16 3.5a4 4 0 0 1 0 8M22 21v-1a5 5 0 0 0-3.5-4.8"/>',
+    store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
+    print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
+    gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
+  function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
+  const MQ=window.matchMedia("(max-width: 760px)");
+  function layout(){const l=UI.layout||"auto",phone=l==="phone"||(l==="auto"&&MQ.matches);document.body.classList.toggle("mobile",phone);
+    $$("#layoutSeg button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));const n=$("#layoutNow");if(n)n.textContent=`Showing: ${phone?"Phone":"Desktop"}`}
   /* ---------- go to + quick search ---------- */
   function flash(sel){requestAnimationFrame(()=>{const el=document.querySelector(sel);if(!el)return;el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")})}
   function go(tab,sel,prep){if(UI.tableMode&&!TABLE_TABS.includes(tab))UI.tableMode=false;UI.tab=tab;if(prep)prep();saveUI();render();flash(sel)}
@@ -6433,6 +6541,7 @@ const App=(()=>{
   }
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
+    icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
     Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}

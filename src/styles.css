@@ -166,14 +166,6 @@ table.ref td:first-child{min-width:11em}
 .print-opts label.sub::before{content:"↳";margin-right:-2px}
 .print-opts label.off{opacity:.45}
 .print-opts #printGo{align-self:center;margin-left:auto}
-@media (max-width:700px){
-  header .sub{display:none}
-  header{padding:10px 14px 2px}.hdr-right{margin-left:0}
-  nav{flex-wrap:nowrap;overflow-x:auto;padding:6px 14px 8px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
-  nav button{white-space:nowrap}
-  main{padding:12px 14px 40px}
-  .board,.tm-grid{grid-template-columns:1fr}
-}
 /* compact job cards + overflow menu */
 .tog{cursor:pointer;user-select:none}
 .tog:hover{color:#f0c463}
@@ -201,3 +193,98 @@ details.more .menu .btn{text-align:left;padding:6px 10px;font-size:15px}
 .gen-row select{max-width:150px}
 table.backups td:last-child{white-space:nowrap}
 .te-mini .te-num{width:76px}
+/* ---- icons ---- */
+svg.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;flex:none}
+[data-ico]{display:inline-flex;align-items:center;gap:6px}
+.slbl{display:none}
+/* ================= PHONE LAYOUT (body.mobile: auto under 760px or forced in Settings) ================= */
+body.mobile{font-size:16px;-webkit-text-size-adjust:100%}
+body.mobile .topbar{backdrop-filter:none;-webkit-backdrop-filter:none;background:#1d1a16;padding-top:env(safe-area-inset-top)}
+body.mobile header{padding:8px 12px;flex-wrap:nowrap;align-items:center;gap:8px}
+body.mobile h1{font-size:19px;white-space:nowrap}
+body.mobile h1 .lbl,body.mobile header .sub,body.mobile .aimode{display:none}
+body.mobile .hdr-right{gap:2px;flex-wrap:nowrap}
+body.mobile .hb .lbl{display:none}
+body.mobile .hb{padding:0;width:40px;height:40px;justify-content:center;border-radius:10px}
+body.mobile .hb svg.ico{width:20px;height:20px}
+body.mobile .hb.keep-lbl{width:auto;padding:0 12px}
+body.mobile .hb.keep-lbl .slbl{display:inline}
+body.mobile .banner{padding:6px 12px;font-size:14px;gap:6px}
+body.mobile .banner .btn{margin-left:auto}
+/* bottom tab bar */
+body.mobile nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;flex-wrap:nowrap;gap:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom));background:#1a1713;border-top:1px solid var(--line);border-bottom:0;box-shadow:0 -6px 18px rgba(0,0,0,.45)}
+body.mobile nav button{flex:1 1 0;min-width:0;flex-direction:column;gap:2px;border:0;background:none;color:var(--mute);padding:6px 2px 4px;font-size:11.5px;border-radius:10px}
+body.mobile nav button svg.ico{width:22px;height:22px}
+body.mobile nav button .lbl{display:none}body.mobile nav button .slbl{display:block}
+body.mobile nav button.on{background:none;color:var(--gold)}
+body.mobile nav button.on svg.ico{filter:drop-shadow(0 0 6px rgba(214,168,74,.5))}
+body.mobile main{padding:10px 10px calc(92px + env(safe-area-inset-bottom))}
+body.mobile .toast{bottom:calc(84px + env(safe-area-inset-bottom));max-width:92vw;text-align:center}
+/* controls become a two-column form */
+body.mobile .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;align-items:end}
+body.mobile .controls>*{min-width:0;margin-left:0!important}
+body.mobile .controls label{min-width:0!important;flex:none!important}
+body.mobile .controls select,body.mobile .controls input:not([type=checkbox]){width:100%;min-height:40px}
+body.mobile .controls>.btn,body.mobile .controls>.seg,body.mobile .controls>.btn-pair,body.mobile .controls>span,body.mobile .controls>label[style*="flex:1"]{grid-column:1/-1}
+body.mobile .controls>.btn,body.mobile .btn-pair .btn{min-height:42px}
+body.mobile .btn-pair .btn{flex:1}
+body.mobile .controls>#rMemCtl{display:contents!important}
+body.mobile .controls label.inline{grid-column:auto}
+body.mobile .seg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+body.mobile .seg::-webkit-scrollbar{display:none}
+body.mobile .seg button{white-space:nowrap;flex:1 0 auto;min-height:38px}
+body.mobile .cats{margin-bottom:10px}
+/* cards and lists */
+body.mobile .board,body.mobile .tm-grid{grid-template-columns:1fr;gap:10px}
+body.mobile .card{padding:12px}
+body.mobile .btn.small{padding:6px 11px;font-size:15px;min-height:34px}
+body.mobile .reroll{display:inline-block;padding:2px 6px;font-size:15px}
+body.mobile .actions{gap:6px}
+body.mobile details.more .menu{min-width:230px}
+body.mobile details.more .menu .btn{min-height:42px}
+body.mobile .badge{font-size:12px}
+body.mobile .settings{gap:10px}
+body.mobile .panel{padding:12px}
+body.mobile .panel .controls{grid-template-columns:1fr 1fr}
+/* tables that don't fit: stack */
+body.mobile table.council,body.mobile table.council tbody,body.mobile table.council tr,body.mobile table.council td{display:block;width:100%}
+body.mobile table.council tr{border-bottom:1px solid var(--line);padding:8px 0}
+body.mobile table.council td{border:0;padding:2px 0}
+body.mobile table.council select{max-width:none;width:100%;min-height:40px;margin-bottom:4px}
+body.mobile table.ref td:first-child{min-width:0}
+body.mobile table.backups td{display:block;border:0}body.mobile table.backups tr{display:block;border-bottom:1px solid var(--line);padding:6px 0}
+body.mobile table.map input{width:62px}
+/* editors */
+body.mobile .editor{padding:10px}
+body.mobile .editor .grid{grid-template-columns:1fr 1fr}
+body.mobile .te-row>span{min-width:0;width:100%}
+body.mobile .te-txt{min-width:0}
+body.mobile textarea.json{min-height:240px}
+/* print */
+body.mobile .print-opts{display:flex;flex-direction:column}
+body.mobile .print-opts fieldset{flex-direction:column;align-items:flex-start;gap:8px}
+body.mobile .print-opts label.inline{min-height:30px}
+body.mobile .print-opts #printGo{margin:0;width:100%;min-height:44px}
+body.mobile .preview{padding:4px;font-size:14px}
+/* notices fit the screen */
+body.mobile .notice{padding:24px 16px 20px}
+body.mobile .notice .ntitle{font-size:23px}
+body.mobile .notice .stamp{width:60px;height:60px;font-size:10px;right:10px}
+/* search sheet */
+body.mobile .qs{padding-top:0;align-items:stretch}
+body.mobile .qs-box{width:100%;border-radius:0 0 14px 14px;border-top:0;max-height:85vh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+body.mobile .qs-res{max-height:none;flex:1}
+body.mobile .qs-item{white-space:normal;padding:10px 12px}
+body.mobile .qs-foot{display:none}
+body.mobile .hb:not(.primary){background:transparent;border-color:transparent;color:var(--ink)}
+body.mobile .hb.on{color:var(--gold);background:rgba(214,168,74,.12)}
+body.mobile #bannerSave{display:none}
+body.mobile .banner{font-size:13px;padding:4px 12px}
+body.mobile .banner span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.mobile #tab-jobs .controls>label:first-child{grid-column:1/-1}
+body.mobile #tab-jobs .controls>#jobsAll{grid-column:auto;min-height:38px}
+body.mobile #tab-jobs .controls>.seg{grid-column:auto}
+body.mobile #tab-jobs .controls>.seg button{flex:1 1 0;padding:6px 4px}
+body.mobile #rMemCtl>.seg{grid-column:1/-1}
+body.mobile .print-opts{align-items:stretch}
+body.mobile .print-opts fieldset{width:100%}

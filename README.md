@@ -12,6 +12,9 @@ Download **[`dist/Yggdrasil-Guild-Hall.html`](dist/Yggdrasil-Guild-Hall.html)** 
 - **At the Table**: Table Mode shows jobs in play, the hall's upgrades, a revival-fee calculator, who's in the hall, and a price reference.
 - **Print**: Quest Notices, the Builder's Ledger, upgrade cards, and a roster sheet.
 
+## On a phone
+The app switches to a phone layout automatically on narrow screens (bottom tab bar, icon header, stacked forms). Settings → Display can force Phone or Desktop. Phones download a campaign file on each save; Load Campaign opens one from your Files/Downloads.
+
 ## Saving (important)
 The **campaign file** is the source of truth. In Chrome or Edge, the first Save asks where to keep it (e.g. `yggdrasil-campaign.json`) and every later Save / Ctrl+S updates that same file; Load Campaign links the file you open. Other browsers download a dated copy (`yggdrasil-campaign-YYYY-MM-DD-HHMM.json`) each time. Settings → Backups in this browser keeps the last 25 automatic snapshots (on save, before loads/restores, every 5 min of changes) with Restore and Download. The browser keeps a working copy, but save a file after every prep session and keep the files somewhere safe. `Load Campaign` restores one. The page warns about unsaved changes. Shortcuts: **Ctrl/Cmd+S** saves the campaign file; **Ctrl/Cmd+Z** (or ↶ Undo) reverses the last change this session, including deletes; **Ctrl/Cmd+K** searches every job, person, shop, upgrade, and tab.
 

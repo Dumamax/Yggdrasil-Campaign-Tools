@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1a16">
 <title>Yggdrasil Guild Hall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
@@ -13,27 +14,27 @@
 <body>
 <div class="topbar">
 <header>
-  <h1>⟡ Yggdrasil Guild Hall</h1>
+  <h1>⟡ <span class="lbl">Yggdrasil </span>Guild Hall</h1>
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
-    <button class="btn ghost" id="qsBtn" title="Search everything (Ctrl+K)">⌕ Search</button>
-    <button class="btn ghost" id="undoBtn" title="Undo last change (Ctrl+Z)" disabled>↶ Undo</button>
-    <button class="btn" id="tmToggle">Table Mode</button>
-    <button class="btn primary" id="saveCamp" title="Save Campaign (Ctrl+S)">Save Campaign</button>
-    <button class="btn" id="loadCamp">Load Campaign</button>
+    <button class="btn ghost hb" id="qsBtn" data-ico="search" title="Search everything (Ctrl+K)" aria-label="Search"><span class="lbl">Search</span></button>
+    <button class="btn ghost hb" id="undoBtn" data-ico="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo" disabled><span class="lbl">Undo</span></button>
+    <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
+    <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
+    <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
-  <button data-tab="jobs">Job Board</button>
-  <button data-tab="shop">Guild Upgrades</button>
-  <button data-tab="roster">Roster</button>
-  <button data-tab="market">Shop Generator</button>
-  <button data-tab="table">At the Table</button>
-  <button data-tab="print">Print</button>
-  <button data-tab="settings">Settings &amp; Tables</button>
+  <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
+  <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
+  <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
+  <button data-tab="market" data-ico="store"><span class="lbl">Shop Generator</span><span class="slbl">Shops</span></button>
+  <button data-tab="table" data-ico="dice"><span class="lbl">At the Table</span><span class="slbl">Table</span></button>
+  <button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
+  <button data-tab="settings" data-ico="gear"><span class="lbl">Settings &amp; Tables</span><span class="slbl">Settings</span></button>
 </nav>
 </div>
 <main>
@@ -118,6 +119,11 @@
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Display</h2>
+        <div class="actions"><span class="muted">Layout</span><div class="seg" id="layoutSeg"><button class="btn" data-l="auto">Auto</button><button class="btn" data-l="phone">Phone</button><button class="btn" data-l="desktop">Desktop</button></div><span class="muted" id="layoutNow"></span></div>
+        <p class="hint">Auto uses the phone layout on narrow screens (under 760 px wide). This choice is saved in this browser only.</p>
       </div>
       <div class="panel">
         <h2>Claude</h2>

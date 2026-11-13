@@ -18,6 +18,7 @@ A single-file, offline HTML app ("Guild Hall") the DM uses for prep and at the t
 - `app.js` (`App`): nav, Table Mode, print center, settings (incl. backups list), quick search (Ctrl+K; `index()` + `go()`; cards carry `data-job` / `data-member` / `data-npc` / `data-id` (shops) / `data-upg` so search and `App.flash(sel)` can find them), boot.
 - Saving: `saveCampaign()` writes to a linked file handle when the File System Access API exists (handle kept in IndexedDB `ygh`/kv); otherwise downloads. `IDB` also stores rolling backups (`backup(reason)`, last 25). `replaceCampaign(c, reason)` backs up first; loading a file another way unlinks the handle so a different campaign never overwrites it.
 - Job Board cards are collapsed by default (`UI.jobsOpen` per id, `UI.jobsAllOpen`); secondary actions live in a `details.more` overflow menu. Roster subtabs: members / npcs / council (`NPCs.render(mode)`).
+- Phone layout: `App.layout()` sets `body.mobile` (auto under 760px via matchMedia, or `UI.layout` = phone/desktop from Settings → Display). All phone CSS is scoped under `body.mobile` at the end of `styles.css`; `#mainNav` becomes a fixed bottom tab bar. Icons are inline SVGs injected into `[data-ico]` elements (`ICONS` in app.js); labels live in `.lbl` (full) / `.slbl` (short), so click handlers on those buttons must use `closest()`, not `e.target.dataset`.
 - `notice.css` is shared by the page and print output (injected as `NOTICE_CSS`).
 
 ## Character import
