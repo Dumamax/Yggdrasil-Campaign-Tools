@@ -1,18 +1,31 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"];
+  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
-  function tabs(){return UI.tableMode?TABLE_TABS:PREP_TABS}
+  function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
     if(!tabs().includes(UI.tab))UI.tab=tabs()[0];
     $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
-    $$("main>section").forEach(s=>s.hidden=s.id!=="tab-"+UI.tab);
+    const pl=!isDM();document.body.classList.toggle("player",pl);
+    $$("main>section").forEach(s=>s.hidden=pl?s.id!=="tab-p":s.id!=="tab-"+UI.tab);
+    $("#dmBtn .lbl").textContent=pl?"DM View":"Player View";$("#dmBtn").title=pl?"Unlock DM View":"Lock and switch to Player View";
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
+  /* ---------- player view (read-only handouts) ---------- */
+  const none=msg=>`<p class="pv-empty">${msg}</p>`;
+  function playerRoster(){const L=Roster.sorted().filter(m=>m.status!=="Left");if(!L.length)return "";
+    return `<div class="pr pr-sheet"><h1>Members</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${L.map(m=>`<tr><td class="nm">${esc(m.name)}</td><td>${esc(m.kind==="Active PC"?"Adventurer":m.kind==="Retired PC"?"Retired adventurer":m.kind==="Hired NPC"?(m.role||"Staff"):m.kind)}${m.level?` · level ${m.level}`:""}</td><td>${esc(m.ancestry||"")}</td></tr>`).join("")}</table></div>`}
+  function renderPlayer(){const el=$("#tab-p");
+    const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
+      "p-guild":()=>Standing.printHTML()+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
+      "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
+      "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
+      "p-ledger":()=>Upgrades.ledgerHTML(false,true)};
+    el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`}
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";
@@ -112,6 +125,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
+    const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
     const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
@@ -174,6 +188,7 @@ const App=(()=>{
     people:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1M16 3.5a4 4 0 0 1 0 8M22 21v-1a5 5 0 0 0-3.5-4.8"/>',
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
+    shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
   const MQ=window.matchMedia("(max-width: 760px)");
@@ -209,12 +224,15 @@ const App=(()=>{
     $("#qsIn").onkeydown=e=>{const n=$("#qsRes")._L.length;
       if(e.key==="ArrowDown"){e.preventDefault();qsSel=(qsSel+1)%Math.max(1,n);qsDraw()}else if(e.key==="ArrowUp"){e.preventDefault();qsSel=(qsSel-1+n)%Math.max(1,n);qsDraw()}
       else if(e.key==="Enter"){e.preventDefault();qsPick(qsSel)}else if(e.key==="Escape")qsClose()};
-    window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#qs").hidden?qsOpen():qsClose()}else if(e.key==="Escape"&&!$("#qs").hidden)qsClose()});
+    window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"&&isDM()){e.preventDefault();$("#qs").hidden?qsOpen():qsClose()}else if(e.key==="Escape"&&!$("#qs").hidden)qsClose()});
   }
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
-    Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();
+    $("#dmBtn").onclick=()=>isDM()?lockDM():dmGate();$("#syncBtn").onclick=()=>Sync.pull(true);
+    $("#pwForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(f.get("pw")!==f.get("pw2")){toast("Passwords don't match");return}S.dmHash=await hashPw(f.get("pw"));lsSet("ygh.dm",S.dmHash);commit();e.target.reset();toast("Password changed. Save so it travels with the campaign")};
+    $("#lockNow").onclick=lockDM;
+    Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();Sync.start();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
       try{downloads=await claude.use("downloads")}catch(e){downloads=null}

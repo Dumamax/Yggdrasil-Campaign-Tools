@@ -104,7 +104,10 @@ async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"
   const w=await h.createWritable();await w.write(text);await w.close()}
 function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
 async function saveCampaign(asNew){
-  C.savedAt=new Date().toISOString();const text=JSON.stringify(C,null,1);
+  if(!isDM())return;
+  C.savedAt=new Date().toISOString();
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){toast(e.message+": saving a file instead")}}
+  const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
     catch(e){toast(`Couldn't write ${fileHandle.name}; choose where to save`)}
@@ -141,11 +144,11 @@ function importData(d){
 function banner(){
   const b=$("#banner");if(!b)return;
   b.classList.toggle("show",dirty);
-  $("#bannerText").textContent=fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  $("#bannerText").textContent=Sync.canPush()?"Unsaved changes. Ctrl+S saves them to GitHub so everyone gets them.":fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
   const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
 document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false}));
-window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();
+window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey||!isDM())return;const k=e.key.toLowerCase();
   if(k==="s"){e.preventDefault();saveCampaign()}
   else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});
 window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});

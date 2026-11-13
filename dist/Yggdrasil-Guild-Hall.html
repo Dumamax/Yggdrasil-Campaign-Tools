@@ -315,6 +315,21 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
 .badge.red{border-color:var(--red);color:var(--red)}
 body.mobile .st-btns{margin-left:0;width:100%}body.mobile .st-btns .btn{flex:1;min-height:38px}
 body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-form>label[style]{grid-column:1/-1}body.mobile .st-form select,body.mobile .st-form input{width:100%}
+/* player view */
+body.player #qsBtn,body.player #undoBtn,body.player #tmToggle,body.player #loadCamp,body.player #saveCamp,body.player #aiMode,body.player .banner{display:none!important}
+body.player #dmBtn{color:var(--mute)}
+#syncBtn .lbl{font-size:13px;color:var(--mute)}
+.pv{display:grid;gap:22px;justify-items:center}
+.pv>*{width:100%;max-width:820px}
+.pv .pr-notices{justify-content:center}
+.pv-h{font:700 20px "Cinzel",serif;color:var(--gold);text-align:center;margin:10px 0 0}
+.pv-empty{text-align:center;color:var(--mute);font-style:italic;padding:40px 10px}
+.pv-foot{text-align:center;font-size:13px}
+.modal{padding:18px 20px}.modal h2{margin:0 0 8px}.modal form{display:grid;gap:10px}.modal input{width:100%}
+body.mobile .pv .pr-cards{grid-template-columns:1fr}
+body.mobile .pv .pr-sheet{padding:16px 14px}
+body.mobile #syncBtn .lbl{display:none}
+body.player header .sub{display:none}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -342,16 +357,19 @@ body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
+    <button class="btn ghost hb" id="syncBtn" data-ico="refresh" title="Check for the latest save"><span class="lbl">…</span></button>
     <button class="btn ghost hb" id="qsBtn" data-ico="search" title="Search everything (Ctrl+K)" aria-label="Search"><span class="lbl">Search</span></button>
     <button class="btn ghost hb" id="undoBtn" data-ico="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo" disabled><span class="lbl">Undo</span></button>
     <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
     <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
+    <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM View</span></button>
     <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button>
   <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
   <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
@@ -362,6 +380,7 @@ body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-
 </nav>
 </div>
 <main>
+  <section id="tab-p" hidden></section>
   <section id="tab-jobs">
     <div class="standing-host"></div>
     <div class="controls">
@@ -451,6 +470,15 @@ body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>GitHub saves</h2>
+        <div id="syncSettings"></div>
+      </div>
+      <div class="panel">
+        <h2>DM password</h2>
+        <p class="hint">Keeps players from wandering into DM View. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
+        <form class="actions" id="pwForm"><input type="password" name="pw" placeholder="New password" required><input type="password" name="pw2" placeholder="Repeat" required><button class="btn">Change password</button><button type="button" class="btn ghost" id="lockNow">Lock now (Player View)</button></form>
       </div>
       <div class="panel">
         <h2>Guild standing</h2>
@@ -606,7 +634,10 @@ async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"
   const w=await h.createWritable();await w.write(text);await w.close()}
 function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
 async function saveCampaign(asNew){
-  C.savedAt=new Date().toISOString();const text=JSON.stringify(C,null,1);
+  if(!isDM())return;
+  C.savedAt=new Date().toISOString();
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){toast(e.message+": saving a file instead")}}
+  const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
     catch(e){toast(`Couldn't write ${fileHandle.name}; choose where to save`)}
@@ -643,11 +674,11 @@ function importData(d){
 function banner(){
   const b=$("#banner");if(!b)return;
   b.classList.toggle("show",dirty);
-  $("#bannerText").textContent=fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  $("#bannerText").textContent=Sync.canPush()?"Unsaved changes. Ctrl+S saves them to GitHub so everyone gets them.":fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
   const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
 document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false}));
-window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();
+window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey||!isDM())return;const k=e.key.toLowerCase();
   if(k==="s"){e.preventDefault();saveCampaign()}
   else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});
 window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
@@ -707,6 +738,97 @@ async function printHTML(title,body,css){
   window.addEventListener("afterprint",done);
   setTimeout(()=>{window.print();setTimeout(done,1500)},150);
 }
+
+/* ===== Player View / DM View + GitHub sync =====
+   Player View (default): read-only handouts, no editing, no secrets on screen. DM View: unlocked per browser with the DM password
+   (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
+   GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
+   GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
+const SYNC_DEF={repo:"Dumamax/Yggdrasil-Campaign-Tools",branch:"main",path:"data/campaign.json"};
+async function hashPw(pw){const s="ygh-dm:"+pw;
+  try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+  catch(e){let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return "d"+h.toString(16)}}
+const isDM=()=>!!S.dmHash&&lsGet("ygh.dm",null)===S.dmHash;
+function lockDM(){lsSet("ygh.dm",null);UI.tab="p-board";saveUI();App.render();toast("Player View")}
+
+/* small modal helper: returns {el,close} */
+function modal(html){const w=document.createElement("div");w.className="qs";w.innerHTML=`<div class="qs-box modal">${html}</div>`;document.body.appendChild(w);
+  const close=()=>w.remove();w.addEventListener("click",e=>{if(e.target===w)close()});w.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+  setTimeout(()=>w.querySelector("input,button")?.focus(),30);return {el:w,close}}
+function ask(title,msg,buttons){return new Promise(res=>{const m=modal(`<h2>${esc(title)}</h2><p>${msg}</p><div class="actions">${buttons.map((b,i)=>`<button class="btn${i===0?" primary":""}" data-i="${i}">${esc(b)}</button>`).join("")}</div>`);
+  m.el.addEventListener("click",e=>{const i=e.target.dataset.i;if(i==null)return;m.close();res(+i)})})}
+
+function dmGate(){
+  const first=!S.dmHash;
+  const m=modal(`<h2>${first?"Set a DM password":"DM View"}</h2>
+    <p class="muted">${first?"DM View shows secrets and lets you edit everything. Pick a password to keep players from wandering in; this browser stays unlocked until you lock it.":"Enter the DM password. This browser stays unlocked until you switch back to Player View."}</p>
+    <form><input type="password" name="pw" placeholder="Password" autocomplete="current-password" required>${first?'<input type="password" name="pw2" placeholder="Repeat password" required>':""}
+    <div class="actions"><button class="btn primary">${first?"Set password & unlock":"Unlock"}</button><button type="button" class="btn ghost" data-x>Cancel</button></div><p class="muted" id="gateMsg"></p></form>`);
+  m.el.querySelector("[data-x]").onclick=m.close;
+  m.el.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),pw=f.get("pw");
+    if(first){if(pw!==f.get("pw2")){$("#gateMsg").textContent="Passwords don't match.";return}S.dmHash=await hashPw(pw);commit()}
+    else if(await hashPw(pw)!==S.dmHash){$("#gateMsg").textContent="That's not it.";e.target.pw.select();return}
+    lsSet("ygh.dm",S.dmHash);m.close();UI.tab="jobs";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM View unlocked")}}
+
+const Sync=(()=>{
+  const cfg=()=>Object.assign({},SYNC_DEF,lsGet("ygh.sync",{}));
+  const token=()=>lsGet("ygh.ghtoken","")||"";
+  let sha=lsGet("ygh.sha",null),last=null,status="",busy=false;
+  const api=(withRef)=>{const c=cfg();return `https://api.github.com/repos/${c.repo}/contents/${c.path.split("/").map(encodeURIComponent).join("/")}${withRef?`?ref=${encodeURIComponent(c.branch)}`:""}`};
+  const hdr=raw=>{const h={Accept:raw?"application/vnd.github.raw+json":"application/vnd.github+json"};if(token())h.Authorization="Bearer "+token();return h};
+  const enc=s=>{const b=new TextEncoder().encode(s);let o="";for(let i=0;i<b.length;i+=0x8000)o+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(o)};
+  const dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
+  const canPush=()=>isDM()&&!!token();
+  function setStatus(s){status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
+  async function fetchRemote(){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
+    if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403?"GitHub rate limit or no access":"GitHub error "+r.status);
+    const j=await r.json();let text;if(j.content&&j.encoding==="base64")text=dec(j.content);else text=await (await fetch(api(true),{headers:hdr(true),cache:"no-cache"})).text();
+    return {sha:j.sha,data:JSON.parse(text)}}
+  function adopt(r,msg){const wasDM=isDM();replaceCampaign(r.data,"Before loading the GitHub save");sha=r.sha;lsSet("ygh.sha",sha);dirty=false;lsSet("ygh.dirty",false);banner();
+    if(wasDM&&!isDM())lsSet("ygh.dm",S.dmHash); // a password change elsewhere shouldn't lock out a DM mid-session
+    if(msg)toast(msg)}
+  async function pull(manual){if(busy)return;busy=true;try{
+      const r=await fetchRemote();last=Date.now();
+      if(r.missing){setStatus(isDM()?"Not on GitHub yet":"Nothing published yet");return}
+      if(r.sha===sha){setStatus("Up to date");if(manual)toast("Already up to date");return}
+      if(!isDM()){adopt(r,sha?"Updated with the DM's latest save":"");setStatus("Up to date");return}
+      const localEmpty=!C.savedAt&&!C.jobs.length&&!C.guild.cp.log.length;
+      if(sha&&!dirty||localEmpty){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date");return}
+      const when=r.data.savedAt?new Date(r.data.savedAt).toLocaleString():"recently";
+      const i=await ask("Newer save on GitHub",`Someone saved the campaign to GitHub (${esc(when)}) and this browser has ${dirty?"unsaved changes":"a different copy"}. Your current copy goes to Settings → Backups either way.`,["Load the GitHub save","Keep mine (overwrite on next save)"]);
+      if(i===0){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date")}else{sha=r.sha;lsSet("ygh.sha",sha);dirty=true;lsSet("ygh.dirty",true);banner();setStatus("Your copy differs")}
+    }catch(e){setStatus(navigator.onLine===false?"Offline":"Can't reach GitHub");if(manual)toast(e.message)}finally{busy=false}}
+  async function push(){const c=cfg();const body={message:`Save campaign · ${new Date().toLocaleString()}`,content:enc(JSON.stringify(C,null,1)),branch:c.branch};if(sha)body.sha=sha;
+    const r=await fetch(api(false),{method:"PUT",headers:Object.assign(hdr(),{"Content-Type":"application/json"}),body:JSON.stringify(body)});
+    if(r.status===409||r.status===422){const remote=await fetchRemote().catch(()=>null);
+      const i=await ask("Someone else saved first",`The GitHub copy changed since you loaded it${remote?.data?.savedAt?` (saved ${esc(new Date(remote.data.savedAt).toLocaleString())})`:""}.`,["Overwrite with mine","Load theirs instead","Cancel"]);
+      if(i===0&&remote&&!remote.missing){sha=remote.sha;return push()}if(i===0&&remote?.missing){sha=null;return push()}
+      if(i===1&&remote&&!remote.missing){adopt(remote,"Loaded their save (yours is in Backups)");setStatus("Up to date")}return false}
+    if(!r.ok)throw new Error(r.status===401?"GitHub token was refused (expired?)":r.status===403||r.status===404?"The token can't write to "+c.repo:"GitHub error "+r.status);
+    const j=await r.json();sha=j.content.sha;lsSet("ygh.sha",sha);setStatus("Saved to GitHub");return true}
+  let timer=null;
+  function start(){pull();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:60e3);
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&last&&Date.now()-last>30e3&&(!isDM()||!dirty))pull()})}
+  function settingsHTML(){const c=cfg();return `
+    <p class="hint">Saves go to <b>${esc(c.repo)}</b> → <code>${esc(c.path)}</code>, and every copy of the app (players included) pulls the latest automatically. Saving needs a GitHub token on this browser; it's kept here only, never in the campaign.</p>
+    <div class="controls" style="margin:0;background:none;border:0;padding:0">
+      <label style="flex:1;min-width:260px">GitHub token <input id="ghTok" type="password" placeholder="${token()?"•••••••• (saved; paste to replace)":"github_pat_…"}" autocomplete="off"></label>
+      <label>Repo <input id="ghRepo" value="${esc(c.repo)}" style="width:260px"></label>
+      <label>Branch <input id="ghBranch" value="${esc(c.branch)}" style="width:90px"></label>
+      <label>File <input id="ghPath" value="${esc(c.path)}" style="width:180px"></label></div>
+    <div class="actions"><button class="btn" id="ghSave">Save settings</button><button class="btn" id="ghPull">Check GitHub now</button>${token()?'<button class="btn ghost danger" id="ghForget">Forget token</button>':""}<span class="muted">${esc(status||"")}</span></div>
+    <details class="hint" style="margin-top:8px"><summary>How to make a token (2 minutes)</summary>
+      <ol><li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.</li>
+      <li>Expiration: up to 1 year (set a reminder to renew). Repository access: <b>Only select repositories</b> → ${esc(c.repo.split("/")[1]||c.repo)}.</li>
+      <li>Repository permissions → <b>Contents: Read and write</b>. Generate, copy, and paste it above.</li>
+      <li>The repo owner must add the DM as a collaborator first, or the DM uses a token from the owner's account.</li></ol></details>`}
+  function bindSettings(host){host.onclick=async e=>{const id=e.target.id;
+    if(id==="ghSave"){const t=$("#ghTok").value.trim();if(t)lsSet("ygh.ghtoken",t);lsSet("ygh.sync",{repo:$("#ghRepo").value.trim()||SYNC_DEF.repo,branch:$("#ghBranch").value.trim()||"main",path:$("#ghPath").value.trim()||SYNC_DEF.path});
+      sha=null;lsSet("ygh.sha",null);toast("GitHub settings saved");await pull(true);App.render()}
+    else if(id==="ghPull")pull(true);
+    else if(id==="ghForget"){lsSet("ygh.ghtoken","");toast("Token removed from this browser");App.render()}}}
+  return {pull,push,start,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
+})();
 
 /* Job Board default tables (content v3: expanded quirks, places, items, names) */
 const DEFAULT_JOB_TABLES={
@@ -5376,7 +5498,7 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     if(x){s+=`\n\n${x.summary||""}\nBeats:\n${(x.beats||[]).map((t,i)=>`${i+1}. ${t}`).join("\n")}\nBudget: Low ${b.low} / Moderate ${b.mod} / High ${b.high} XP. ${b.plan}`;
       (x.encounters||[]).forEach(e=>s+=`\n- ${e.name} (${e.difficulty}, ${e.xp} XP): ${e.monsters}. ${e.reskin||""}`)}
     return s}
-  function noticesPrintHTML(){const f=C.jobs.filter(h=>h.final);if(!f.length)return "";
+  function noticesPrintHTML(){const f=C.jobs.filter(h=>h.final&&!h.done);if(!f.length)return "";
     return `<div class="pr-notices">${f.map(h=>`<div class="pr-notice">${noticeHTML(h,0)}</div>`).join("")}</div>`}
   const PRINT_CSS=NOTICE_CSS+`.pr-notices{display:grid;grid-template-columns:1fr;gap:24px;max-width:640px;margin:0 auto}.pr-notice{break-inside:avoid;page-break-inside:avoid;padding-top:12px}.notice{transform:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}`;
 
@@ -6516,19 +6638,32 @@ const TableEditor=(()=>{
 
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"];
+  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
-  function tabs(){return UI.tableMode?TABLE_TABS:PREP_TABS}
+  function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
     if(!tabs().includes(UI.tab))UI.tab=tabs()[0];
     $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
-    $$("main>section").forEach(s=>s.hidden=s.id!=="tab-"+UI.tab);
+    const pl=!isDM();document.body.classList.toggle("player",pl);
+    $$("main>section").forEach(s=>s.hidden=pl?s.id!=="tab-p":s.id!=="tab-"+UI.tab);
+    $("#dmBtn .lbl").textContent=pl?"DM View":"Player View";$("#dmBtn").title=pl?"Unlock DM View":"Lock and switch to Player View";
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
+  /* ---------- player view (read-only handouts) ---------- */
+  const none=msg=>`<p class="pv-empty">${msg}</p>`;
+  function playerRoster(){const L=Roster.sorted().filter(m=>m.status!=="Left");if(!L.length)return "";
+    return `<div class="pr pr-sheet"><h1>Members</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${L.map(m=>`<tr><td class="nm">${esc(m.name)}</td><td>${esc(m.kind==="Active PC"?"Adventurer":m.kind==="Retired PC"?"Retired adventurer":m.kind==="Hired NPC"?(m.role||"Staff"):m.kind)}${m.level?` · level ${m.level}`:""}</td><td>${esc(m.ancestry||"")}</td></tr>`).join("")}</table></div>`}
+  function renderPlayer(){const el=$("#tab-p");
+    const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
+      "p-guild":()=>Standing.printHTML()+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
+      "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
+      "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
+      "p-ledger":()=>Upgrades.ledgerHTML(false,true)};
+    el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`}
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";
@@ -6628,6 +6763,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
+    const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
     const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
@@ -6690,6 +6826,7 @@ const App=(()=>{
     people:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1M16 3.5a4 4 0 0 1 0 8M22 21v-1a5 5 0 0 0-3.5-4.8"/>',
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
+    shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
   const MQ=window.matchMedia("(max-width: 760px)");
@@ -6725,12 +6862,15 @@ const App=(()=>{
     $("#qsIn").onkeydown=e=>{const n=$("#qsRes")._L.length;
       if(e.key==="ArrowDown"){e.preventDefault();qsSel=(qsSel+1)%Math.max(1,n);qsDraw()}else if(e.key==="ArrowUp"){e.preventDefault();qsSel=(qsSel-1+n)%Math.max(1,n);qsDraw()}
       else if(e.key==="Enter"){e.preventDefault();qsPick(qsSel)}else if(e.key==="Escape")qsClose()};
-    window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#qs").hidden?qsOpen():qsClose()}else if(e.key==="Escape"&&!$("#qs").hidden)qsClose()});
+    window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"&&isDM()){e.preventDefault();$("#qs").hidden?qsOpen():qsClose()}else if(e.key==="Escape"&&!$("#qs").hidden)qsClose()});
   }
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
-    Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();
+    $("#dmBtn").onclick=()=>isDM()?lockDM():dmGate();$("#syncBtn").onclick=()=>Sync.pull(true);
+    $("#pwForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(f.get("pw")!==f.get("pw2")){toast("Passwords don't match");return}S.dmHash=await hashPw(f.get("pw"));lsSet("ygh.dm",S.dmHash);commit();e.target.reset();toast("Password changed. Save so it travels with the campaign")};
+    $("#lockNow").onclick=lockDM;
+    Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();Sync.start();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
       try{downloads=await claude.use("downloads")}catch(e){downloads=null}
