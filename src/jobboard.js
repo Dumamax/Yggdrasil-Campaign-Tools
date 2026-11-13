@@ -91,12 +91,27 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     const el=$("#jobBoard");el.innerHTML="";
     $("#jobAI").textContent=AI.mode()==="none"?"No Claude connection: Expand fills in from the tables and gives you a prompt to copy into Claude.":`Expand asks Claude (${AI.mode()==="claude"?"built in":"your API key"}) for the prep card and Quest Notice.`;
     if(!C.jobs.length){el.innerHTML='<p class="muted">Pick the guild tier and roll the board.</p>';return}
+    $("#jobsAll").hidden=UI.jobView!=="dm";$("#jobsAll").textContent=UI.jobsAllOpen?"Collapse all":"Open all";
     C.jobs.forEach((h,i)=>el.appendChild(UI.jobView==="dm"?dmCard(h):noticeCard(h,i)));
   }
+  const openMap=()=>(UI.jobsOpen=UI.jobsOpen||{});
+  const isOpen=h=>h.id in openMap()?openMap()[h.id]:!!UI.jobsAllOpen;
+  function setOpen(h,v){openMap()[h.id]=v;saveUI()}
+  const moreMenu=items=>`<details class="more"><summary class="btn small ghost" title="More actions">⋯</summary><div class="menu">${items}</div></details>`;
+  function closedCard(h){
+    const d=document.createElement("div");d.className="card closed"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
+    d.innerHTML=`<h3 class="tog" data-act="toggle" title="Show details"><span class="chev" data-act="toggle">▸</span>${esc(hookTitle(h))}</h3>
+    <div class="badges"><span class="badge t${tierOf(h.rank)}">${rankName(h.rank)}</span><span class="badge">${h.size}</span>${h.world.genre?`<span class="badge"><i>${esc(h.world.genre)}</i></span>`:`<span class="badge">${esc(h.location)}</span>`}${h.bounty?'<span class="badge gold">Bounty</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}${h.expanded?'<span class="badge leaf">Prepped</span>':""}</div>
+    <div class="row">${esc(cap(h.objective))}</div>
+    <div class="row muted">${esc(h.patron.name)} · <span style="color:var(--gold)">${fmt(h.gold)} gp</span> + ${esc(h.incentive.item)}</div>
+    <div class="actions"><button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button><button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
+      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="expand">${h.expanded?"Re-expand":"Expand"} with prep card</button><button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`;
+    d.addEventListener("click",ev=>onCardClick(h,ev));return d}
   function dmCard(h,compact){
-    const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");
+    if(!compact&&!isOpen(h))return closedCard(h);
+    const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
     const b=budget(h),t=tierOf(h.rank),x=h.expanded,wb=h.worldBlock;
-    d.innerHTML=`<h3>${esc(hookTitle(h))}</h3>
+    d.innerHTML=`<h3${compact?"":' class="tog" data-act="toggle" title="Collapse"'}>${compact?"":'<span class="chev" data-act="toggle">▾</span>'}${esc(hookTitle(h))}</h3>
     <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
@@ -110,15 +125,17 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small primary" data-act="expand">${x?"Re-expand":"Expand"}</button>
       <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
-      <button class="btn small" data-act="paid">Paid → treasury</button>
-      <button class="btn small" data-act="reroll">Reroll</button>
-      <button class="btn small" data-act="copy">Copy</button>
-      <button class="btn small" data-act="del">✕</button></div>`}`;
+      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
-    d.addEventListener("click",ev=>{const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
+    d.addEventListener("click",ev=>onCardClick(h,ev));
+    return d;
+  }
+  function onCardClick(h,ev){const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
+      ev.target.closest("details.more")?.removeAttribute("open");
+      if(a==="toggle"){setOpen(h,!isOpen(h));render();return}
       if(f)rerollField(h,f);
       else if(a==="wb")h.worldBlock=h.worldBlock?null:rollWorldBlock();
-      else if(a==="expand"){expand(h,ev.target);return}
+      else if(a==="expand"){if(!isOpen(h)){setOpen(h,true);render();expand(h,$(`[data-job="${h.id}"] [data-act="expand"]`));return}expand(h,ev.target);return}
       else if(a==="keep"){h.kept=!h.kept;if(h.kept)NPCs.fromPatron(h,true)}
       else if(a==="final"){h.final=!h.final;if(h.final){h.kept=true;NPCs.fromPatron(h,true)}}
       else if(a==="savenpc")NPCs.fromPatron(h);
@@ -128,11 +145,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
         sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
-      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
+      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1);setTimeout(()=>toast("Job deleted · Ctrl+Z to undo"),0)}
       else if(a==="copy"){copyText(cardText(h));return}
-      commit();App.render()});
-    return d;
-  }
+      commit();App.render()}
   function patronLinks(h){const m=h.patron.npcId&&C.roster.find(x=>x.id===h.patron.npcId);
     return ` ${m?'<span class="badge leaf">saved NPC</span>':'<span class="reroll" data-act="savenpc" title="Save the patron to Roster → NPCs">save NPC</span>'} <span class="reroll" data-act="usenpc" title="Use a saved NPC as the patron">⇄ use NPC</span> ${m&&NPCs.isMember(m)?"":'<span class="reroll" data-act="pguild" title="Add the patron to the guild">＋ guild</span>'}`}
   function expandedHTML(h,x,b){
@@ -175,6 +190,7 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").classList.toggle("on",UI.jobView==="dm");$("#vNotice").classList.toggle("on",UI.jobView!=="dm");
   }
   function bind(){
+    $("#jobsAll").onclick=()=>{UI.jobsAllOpen=!UI.jobsAllOpen;UI.jobsOpen={};saveUI();render()};
     $("#tierSel").onchange=e=>{S.tierRank=+e.target.value;commit();App.render()};
     $("#pl").onchange=e=>{S.partyLevel=Math.max(1,Math.min(20,+e.target.value||3));commit();render()};
     $("#ps").onchange=e=>{S.partySize=Math.max(1,+e.target.value||4);commit();render()};
@@ -182,5 +198,5 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").onclick=()=>{UI.jobView="dm";saveUI();initControls();render()};
     $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
   }
-  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
+  return {reloadTables,render,initControls,bind,dmCard,hookTitle,setOpen,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
 })();

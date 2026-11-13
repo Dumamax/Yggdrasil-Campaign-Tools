@@ -151,6 +151,65 @@ table.te-matrix .te-txt{min-width:160px}
 select.att{padding:2px 6px;font-size:14px}
 table.council td{vertical-align:top}table.council a{color:var(--gold)}
 table.council select{max-width:230px}
+/* ---- polish v2: sticky top bar, button hierarchy, focus, print groups ---- */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(29,26,22,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+header{padding:12px 22px 4px}
+nav{padding:6px 22px 8px}
+nav button,.btn{transition:background .15s,border-color .15s,color .15s,transform .05s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mute)}
+.btn.ghost:hover:not(:disabled){border-color:var(--line);color:var(--ink)}
+.btn.ghost.danger{color:var(--mute)}.btn.ghost.danger:hover{color:var(--red);border-color:var(--red)}
+.act-end{margin-left:auto;display:flex;gap:2px}
+.btn-pair{display:flex;gap:6px;align-items:end}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(214,168,74,.25)}
+.card{transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:#5d5140}
+.toast{bottom:22px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+table.ref td:first-child{min-width:11em}
+.print-opts{align-items:stretch}
+.print-opts fieldset{border:1px solid var(--line);border-radius:8px;padding:6px 12px 8px;margin:0;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.print-opts legend{font:600 13px "Cinzel",serif;color:var(--gold);padding:0 4px;letter-spacing:.03em}
+.print-opts label.sub{color:var(--mute);margin-left:-8px}
+.print-opts label.sub::before{content:"↳";margin-right:-2px}
+.print-opts label.off{opacity:.45}
+.print-opts #printGo{align-self:center;margin-left:auto}
+@media (max-width:700px){
+  header .sub{display:none}
+  header{padding:10px 14px 2px}.hdr-right{margin-left:0}
+  nav{flex-wrap:nowrap;overflow-x:auto;padding:6px 14px 8px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+  nav button{white-space:nowrap}
+  main{padding:12px 14px 40px}
+  .board,.tm-grid{grid-template-columns:1fr}
+}
+/* compact job cards + overflow menu */
+.tog{cursor:pointer;user-select:none}
+.tog:hover{color:#f0c463}
+.chev{display:inline-block;width:1.1em;color:var(--mute);font-size:14px}
+.card.closed{gap:4px}
+details.more{position:relative}
+details.more>summary{list-style:none;font-size:18px;line-height:1;padding:2px 10px}
+details.more>summary::-webkit-details-marker{display:none}
+details.more[open]>summary{border-color:var(--line);color:var(--ink)}
+details.more .menu{position:absolute;right:0;top:calc(100% + 4px);z-index:15;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px;display:flex;flex-direction:column;min-width:220px;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+details.more .menu .btn{text-align:left;padding:6px 10px;font-size:15px}
+/* quick search */
+.qs{position:fixed;inset:0;z-index:50;background:rgba(10,8,6,.6);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
+.qs-box{width:min(640px,92vw);background:var(--panel);border:1px solid var(--gold);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.6);overflow:hidden}
+.qs-box input{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px 16px;font-size:19px;background:transparent}
+.qs-box input:focus{box-shadow:none}
+.qs-res{max-height:55vh;overflow:auto;padding:4px}
+.qs-item{padding:7px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qs-item.on,.qs-item:hover{background:var(--panel2)}
+.qs-item.on{box-shadow:inset 3px 0 0 var(--gold)}
+.qs-foot{font-size:13px;padding:6px 14px;border-top:1px solid var(--line)}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,30%{box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(214,168,74,.5)}100%{box-shadow:none}}
+/* NPC generator on one row, backups */
+.gen-row select{max-width:150px}
+table.backups td:last-child{white-space:nowrap}
+.te-mini .te-num{width:76px}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -172,13 +231,16 @@ table.council select{max-width:230px}
 </style>
 </head>
 <body>
+<div class="topbar">
 <header>
   <h1>⟡ Yggdrasil Guild Hall</h1>
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
+    <button class="btn ghost" id="qsBtn" title="Search everything (Ctrl+K)">⌕ Search</button>
+    <button class="btn ghost" id="undoBtn" title="Undo last change (Ctrl+Z)" disabled>↶ Undo</button>
     <button class="btn" id="tmToggle">Table Mode</button>
-    <button class="btn primary" id="saveCamp">Save Campaign</button>
+    <button class="btn primary" id="saveCamp" title="Save Campaign (Ctrl+S)">Save Campaign</button>
     <button class="btn" id="loadCamp">Load Campaign</button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
@@ -193,6 +255,7 @@ table.council select{max-width:230px}
   <button data-tab="print">Print</button>
   <button data-tab="settings">Settings &amp; Tables</button>
 </nav>
+</div>
 <main>
   <section id="tab-jobs">
     <div class="controls">
@@ -200,6 +263,7 @@ table.council select{max-width:230px}
       <label>Party level <input id="pl" type="number" min="1" max="20"></label>
       <label>Party size <input id="ps" type="number" min="1" max="8"></label>
       <button class="btn primary" id="rollBtn">Roll the Board</button>
+      <button class="btn ghost" id="jobsAll" title="Show or hide details on every card">Open all</button>
       <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">DM view</button><button class="btn" id="vNotice">Notice view</button></div>
     </div>
     <div id="jobBoard" class="board"></div>
@@ -219,7 +283,7 @@ table.council select{max-width:230px}
 
   <section id="tab-roster" hidden>
     <div class="controls">
-      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button></div>
+      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button><button class="btn" data-sub="council">Council</button></div>
       <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
@@ -240,16 +304,20 @@ table.council select{max-width:230px}
   </section>
 
   <section id="tab-print" hidden>
-    <div class="controls">
-      <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
-      <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
-      <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
-      <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
-      <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
-      <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
-      <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
-      <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned, DM only)</label>
-      <label class="inline"><input type="checkbox" data-p="council"> Council Notice (players)</label>
+    <div class="controls print-opts">
+      <fieldset><legend>For the players</legend>
+        <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
+        <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
+        <label class="inline sub"><input type="checkbox" data-p="full"> full I–III paths</label>
+        <label class="inline sub"><input type="checkbox" data-p="offers"> with Peddlers</label>
+        <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+        <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
+        <label class="inline"><input type="checkbox" data-p="council"> Council Notice</label>
+      </fieldset>
+      <fieldset><legend>DM only</legend>
+        <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+        <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned)</label>
+      </fieldset>
       <button class="btn primary" id="printGo">Print</button>
     </div>
     <div class="preview" id="preview"></div>
@@ -261,7 +329,11 @@ table.council select{max-width:230px}
         <h2>Campaign file</h2>
         <p class="hint">The campaign file is the source of truth: jobs, upgrades, treasury, roster, write-ups, and any custom tables. The page also keeps a working copy in this browser, but save a file after each prep session and keep the files somewhere safe (Drive, Dropbox, USB).</p>
         <p class="row" id="lastSaved"></p>
-        <div class="actions"><button class="btn primary" onclick="saveCampaign()">Save Campaign</button><button class="btn" onclick="$('#fileIn').click()">Load Campaign</button><button class="btn danger" id="newCamp">Start a new campaign</button></div>
+        <p class="row" id="linkedFile"></p>
+        <div class="actions"><button class="btn primary" onclick="saveCampaign()">Save Campaign</button><button class="btn" id="saveAsNew">Save as new file…</button><button class="btn" onclick="openCampaign()">Load Campaign</button><button class="btn ghost" id="unlinkFile" hidden>Unlink file</button><button class="btn danger" id="newCamp">Start a new campaign</button></div>
+        <h2 style="margin-top:14px">Backups in this browser</h2>
+        <p class="hint">Taken automatically when you save, before loading a file or restoring, and every 5 minutes while you have unsaved changes (last 25 kept). They live in this browser only, so they're a safety net, not a replacement for the campaign file.</p>
+        <div id="backupList"></div>
         <h2 style="margin-top:14px">Import pasted data</h2>
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
@@ -303,6 +375,7 @@ table.council select{max-width:230px}
   </section>
 </main>
 <div id="printArea"></div>
+<div class="qs" id="qs" hidden><div class="qs-box" role="dialog" aria-label="Search"><input id="qsIn" placeholder="Search jobs, people, shops, upgrades…" autocomplete="off"><div id="qsRes" class="qs-res"></div><div class="qs-foot muted">↑↓ to move · Enter to open · Esc to close</div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
@@ -356,8 +429,12 @@ let S=C.settings;
 let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
-function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
-function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);App.reloadAll()}
+/* undo: snapshots of C before each commit (session only) */
+const UNDO=[];let lastSnap=JSON.stringify(C);
+function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
+function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
+function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
 
 /* tiers */
 const tierOf=r=>Math.floor(r/3);
@@ -377,18 +454,53 @@ async function saveFile(filename,data,mime){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
 }
 function stamp(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`}
-async function saveCampaign(){
-  C.savedAt=new Date().toISOString();
-  const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,JSON.stringify(C,null,1));
-  if(ok){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast("Campaign saved to file")}
+/* IndexedDB: linked file handle + rolling backups (this browser only) */
+const IDB=(()=>{let dbp;const db=()=>dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open("ygh",1);
+    r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("kv");d.createObjectStore("backups",{keyPath:"t"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  const tx=async(st,mode,fn)=>{const d=await db();return new Promise((res,rej)=>{const t=d.transaction(st,mode),r=fn(t.objectStore(st));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})};
+  return {get:k=>tx("kv","readonly",s=>s.get(k)),set:(k,v)=>tx("kv","readwrite",s=>s.put(v,k)),del:k=>tx("kv","readwrite",s=>s.delete(k)),
+    list:()=>tx("backups","readonly",s=>s.getAll()),put:b=>tx("backups","readwrite",s=>s.put(b)),drop:t=>tx("backups","readwrite",s=>s.delete(t))}})();
+const BACKUP_KEEP=25;
+async function backup(reason){try{const data=JSON.stringify(C),p=C.roster.filter(m=>m.kind!=="NPC").length,n=C.roster.length-p,
+    summary=`${C.jobs.length} jobs · ${p} members · ${n} NPCs · ${C.shops.length} shops · treasury ${C.guild.treasury==null?"—":fmt(C.guild.treasury)+" gp"}`;
+  const L=(await IDB.list()).sort((a,b)=>a.t-b.t);if(L.length&&L[L.length-1].data===data)return;
+  await IDB.put({t:Date.now(),reason,data,summary});
+  for(const b of L.slice(0,Math.max(0,L.length+1-BACKUP_KEEP)))await IDB.drop(b.t)}catch(e){}}
+let backupAt=lsGet("ygh.backupAt",0);
+setInterval(()=>{if(dirty&&Date.now()-backupAt>5*60e3){backupAt=Date.now();lsSet("ygh.backupAt",backupAt);backup("Auto (every 5 min of changes)")}},60e3);
+/* linked campaign file (Chrome / Edge): pick once, then Save overwrites it */
+const FS_OK=!FRAMED&&!!window.showSaveFilePicker;
+let fileHandle=null;
+const FILE_TYPES=[{description:"Guild Hall campaign",accept:{"application/json":[".json"]}}];
+async function linkHandle(h){fileHandle=h;try{await IDB.set("fileHandle",h)}catch(e){}banner()}
+async function unlinkFile(){fileHandle=null;try{await IDB.del("fileHandle")}catch(e){}banner();App.render();toast("Unlinked: Save will ask where to save next time")}
+async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"}))!=="granted"&&(await h.requestPermission({mode:"readwrite"}))!=="granted")throw new Error("permission");
+  const w=await h.createWritable();await w.write(text);await w.close()}
+function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
+async function saveCampaign(asNew){
+  C.savedAt=new Date().toISOString();const text=JSON.stringify(C,null,1);
+  if(FS_OK){
+    try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
+    catch(e){toast(`Couldn't write ${fileHandle.name}; choose where to save`)}
+    try{const h=await showSaveFilePicker({suggestedName:"yggdrasil-campaign.json",types:FILE_TYPES});await writeHandle(h,text);await linkHandle(h);markSaved(`Saved to ${h.name}. Ctrl+S updates this file from now on`)}
+    catch(e){if(e.name!=="AbortError")toast("Save failed: "+e.message)}
+    return}
+  const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,text);
+  if(ok)markSaved("Campaign saved to file");
 }
+async function openCampaign(){
+  if(!FS_OK){$("#fileIn").click();return}
+  try{const [h]=await showOpenFilePicker({types:FILE_TYPES});const d=JSON.parse(await (await h.getFile()).text());
+    importData(d);if(d&&d.app===APP_ID){await linkHandle(h);toast(`Loaded ${h.name}. Save updates this file`)}}
+  catch(e){if(e.name!=="AbortError")toast(e instanceof SyntaxError?"That file isn't valid JSON":"Couldn't open: "+e.message)}}
+(async()=>{if(FS_OK)try{fileHandle=(await IDB.get("fileHandle"))||null;banner()}catch(e){}})();
 function loadCampaignFile(file){
   const r=new FileReader();
   r.onload=()=>{try{importData(JSON.parse(r.result))}catch(e){toast("That file isn't valid JSON")}};
   r.readAsText(file);
 }
 function importData(d){
-  if(d&&d.app===APP_ID){replaceCampaign(d);dirty=false;lsSet("ygh.dirty",false);banner();toast("Campaign loaded");return}
+  if(d&&d.app===APP_ID){if(fileHandle){fileHandle=null;IDB.del("fileHandle").catch(()=>{})}replaceCampaign(d);dirty=false;lsSet("ygh.dirty",false);banner();toast("Campaign loaded");return}
   if(d&&d.source==="job-board"){ // export from the old standalone Job Board
     const have=new Set(C.jobs.map(h=>h.id));(d.hooks||[]).forEach(h=>{if(!have.has(h.id))C.jobs.push(h)});
     if(d.settings){["tierRank","partyLevel","partySize","mapping","hMin","hMax"].forEach(k=>{if(d.settings[k]!=null)S[k]=d.settings[k]});if(d.settings.compChance!=null)S.jobComp=d.settings.compChance}
@@ -403,8 +515,13 @@ function importData(d){
 function banner(){
   const b=$("#banner");if(!b)return;
   b.classList.toggle("show",dirty);
-  $("#bannerText").textContent=C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  $("#bannerText").textContent=fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
+document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false}));
+window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();
+  if(k==="s"){e.preventDefault();saveCampaign()}
+  else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});
 window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
 
 /* ---------- AI: Claude-in-artifact, API key, or copy/paste ---------- */
@@ -5040,12 +5157,27 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     const el=$("#jobBoard");el.innerHTML="";
     $("#jobAI").textContent=AI.mode()==="none"?"No Claude connection: Expand fills in from the tables and gives you a prompt to copy into Claude.":`Expand asks Claude (${AI.mode()==="claude"?"built in":"your API key"}) for the prep card and Quest Notice.`;
     if(!C.jobs.length){el.innerHTML='<p class="muted">Pick the guild tier and roll the board.</p>';return}
+    $("#jobsAll").hidden=UI.jobView!=="dm";$("#jobsAll").textContent=UI.jobsAllOpen?"Collapse all":"Open all";
     C.jobs.forEach((h,i)=>el.appendChild(UI.jobView==="dm"?dmCard(h):noticeCard(h,i)));
   }
+  const openMap=()=>(UI.jobsOpen=UI.jobsOpen||{});
+  const isOpen=h=>h.id in openMap()?openMap()[h.id]:!!UI.jobsAllOpen;
+  function setOpen(h,v){openMap()[h.id]=v;saveUI()}
+  const moreMenu=items=>`<details class="more"><summary class="btn small ghost" title="More actions">⋯</summary><div class="menu">${items}</div></details>`;
+  function closedCard(h){
+    const d=document.createElement("div");d.className="card closed"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
+    d.innerHTML=`<h3 class="tog" data-act="toggle" title="Show details"><span class="chev" data-act="toggle">▸</span>${esc(hookTitle(h))}</h3>
+    <div class="badges"><span class="badge t${tierOf(h.rank)}">${rankName(h.rank)}</span><span class="badge">${h.size}</span>${h.world.genre?`<span class="badge"><i>${esc(h.world.genre)}</i></span>`:`<span class="badge">${esc(h.location)}</span>`}${h.bounty?'<span class="badge gold">Bounty</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}${h.expanded?'<span class="badge leaf">Prepped</span>':""}</div>
+    <div class="row">${esc(cap(h.objective))}</div>
+    <div class="row muted">${esc(h.patron.name)} · <span style="color:var(--gold)">${fmt(h.gold)} gp</span> + ${esc(h.incentive.item)}</div>
+    <div class="actions"><button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button><button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
+      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="expand">${h.expanded?"Re-expand":"Expand"} with prep card</button><button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`;
+    d.addEventListener("click",ev=>onCardClick(h,ev));return d}
   function dmCard(h,compact){
-    const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");
+    if(!compact&&!isOpen(h))return closedCard(h);
+    const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
     const b=budget(h),t=tierOf(h.rank),x=h.expanded,wb=h.worldBlock;
-    d.innerHTML=`<h3>${esc(hookTitle(h))}</h3>
+    d.innerHTML=`<h3${compact?"":' class="tog" data-act="toggle" title="Collapse"'}>${compact?"":'<span class="chev" data-act="toggle">▾</span>'}${esc(hookTitle(h))}</h3>
     <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
@@ -5059,15 +5191,17 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small primary" data-act="expand">${x?"Re-expand":"Expand"}</button>
       <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
-      <button class="btn small" data-act="paid">Paid → treasury</button>
-      <button class="btn small" data-act="reroll">Reroll</button>
-      <button class="btn small" data-act="copy">Copy</button>
-      <button class="btn small" data-act="del">✕</button></div>`}`;
+      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
-    d.addEventListener("click",ev=>{const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
+    d.addEventListener("click",ev=>onCardClick(h,ev));
+    return d;
+  }
+  function onCardClick(h,ev){const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
+      ev.target.closest("details.more")?.removeAttribute("open");
+      if(a==="toggle"){setOpen(h,!isOpen(h));render();return}
       if(f)rerollField(h,f);
       else if(a==="wb")h.worldBlock=h.worldBlock?null:rollWorldBlock();
-      else if(a==="expand"){expand(h,ev.target);return}
+      else if(a==="expand"){if(!isOpen(h)){setOpen(h,true);render();expand(h,$(`[data-job="${h.id}"] [data-act="expand"]`));return}expand(h,ev.target);return}
       else if(a==="keep"){h.kept=!h.kept;if(h.kept)NPCs.fromPatron(h,true)}
       else if(a==="final"){h.final=!h.final;if(h.final){h.kept=true;NPCs.fromPatron(h,true)}}
       else if(a==="savenpc")NPCs.fromPatron(h);
@@ -5077,11 +5211,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
         sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
-      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
+      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1);setTimeout(()=>toast("Job deleted · Ctrl+Z to undo"),0)}
       else if(a==="copy"){copyText(cardText(h));return}
-      commit();App.render()});
-    return d;
-  }
+      commit();App.render()}
   function patronLinks(h){const m=h.patron.npcId&&C.roster.find(x=>x.id===h.patron.npcId);
     return ` ${m?'<span class="badge leaf">saved NPC</span>':'<span class="reroll" data-act="savenpc" title="Save the patron to Roster → NPCs">save NPC</span>'} <span class="reroll" data-act="usenpc" title="Use a saved NPC as the patron">⇄ use NPC</span> ${m&&NPCs.isMember(m)?"":'<span class="reroll" data-act="pguild" title="Add the patron to the guild">＋ guild</span>'}`}
   function expandedHTML(h,x,b){
@@ -5124,6 +5256,7 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").classList.toggle("on",UI.jobView==="dm");$("#vNotice").classList.toggle("on",UI.jobView!=="dm");
   }
   function bind(){
+    $("#jobsAll").onclick=()=>{UI.jobsAllOpen=!UI.jobsAllOpen;UI.jobsOpen={};saveUI();render()};
     $("#tierSel").onchange=e=>{S.tierRank=+e.target.value;commit();App.render()};
     $("#pl").onchange=e=>{S.partyLevel=Math.max(1,Math.min(20,+e.target.value||3));commit();render()};
     $("#ps").onchange=e=>{S.partySize=Math.max(1,+e.target.value||4);commit();render()};
@@ -5131,7 +5264,7 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").onclick=()=>{UI.jobView="dm";saveUI();initControls();render()};
     $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
   }
-  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
+  return {reloadTables,render,initControls,bind,dmCard,hookTitle,setOpen,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
 })();
 
 /* ================= GUILD UPGRADES ================= */
@@ -5228,7 +5361,7 @@ Don't change the perk's mechanics.`;
     ["Facilities","Services","Staff"].forEach(cat=>{if(c!=="All"&&c!==cat)return;section(cat,b=>T.catalog.filter(u=>u.cat===cat).forEach(u=>b.appendChild(upgradeCard(u,dm))))});
   }
   function upgradeCard(u,dm){
-    const g=G(),own=g.owned[u.id]||0,d=document.createElement("div");d.className="card"+(own?" owned":"");
+    const g=G(),own=g.owned[u.id]||0,d=document.createElement("div");d.className="card"+(own?" owned":"");d.dataset.upg=u.id;
     const lvls=u.levels.map((L,i)=>{const cost=priceOf(L),st=i<own?"owned":i===own?"next":"later",dim=st!=="owned"&&!canAfford(cost);
       return `<div class="lv ${st}${dim?" dim":""}"><span class="n">${ROMAN[i]}</span><span class="nm">${esc(L.name)} <span class="badge t${L.tier||0}">${TIERS[L.tier||0]}</span></span><span class="cost">${st==="owned"?"✓ Owned":fmt(cost)+" gp"}</span>
       <span class="perk">${esc(L.perk)}</span><span class="meta">${L.days?`${L.days} day${L.days>1?"s":""} to build`:u.cat==="Staff"?"Hired immediately":"Ready immediately"}${dm&&st==="next"?` · <button class="btn small primary" data-buy="${i}">${u.cat==="Staff"?(i?"Promote":"Hire"):"Buy"}</button>`:""}</span></div>`}).join("");
@@ -5329,8 +5462,8 @@ const Roster=(()=>{
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
   function render(){
     const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
-    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub!=="npcs";$("#rHint").hidden=sub!=="members";
-    renderEditor();if(sub==="npcs"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render();return}
+    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub==="members";$("#rHint").hidden=sub!=="members";
+    renderEditor();if(sub!=="members"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render(sub);return}
     $("#npcHost").innerHTML="";
     const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();
     $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
@@ -5338,12 +5471,12 @@ const Roster=(()=>{
     if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
     if(filter==="hall")list=list.filter(m=>m.kind!=="Active PC"&&m.status==="In the hall");
     if(!list.length){el.innerHTML=`<p class="muted">${C.roster.length?"No one matches this filter.":"The roster is empty."}</p>`;return}
-    list.forEach(m=>{const d=document.createElement("div");d.className="card";
+    list.forEach(m=>{const d=document.createElement("div");d.className="card";d.dataset.member=m.id;
       d.innerHTML=`<h3>${esc(m.name)}</h3>
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
-      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
         if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
@@ -5639,7 +5772,7 @@ Use official names for standard gear and magic items, add a few invented local g
       <label>Wealth <select id="mWealth">${opts(Object.keys(T.wealth),m.wealth)}</select></label>
       <label>Magic stock tier <select id="mTier"><option value="">Guild tier (${TIERS[gt]})</option>${TIERS.map((t,i)=>`<option value="${i}" ${m.tier===i?"selected":""}>${t}</option>`).join("")}</select></label>
       <label style="flex:1;min-width:260px">Custom shop idea (optional) <input id="mCustom" placeholder="e.g. a mushroom-folk tea house that also sells memories" value="${esc(m.custom)}"></label>
-      <button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI">Generate + Claude write-up</button>
+      <span class="btn-pair"><button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI" title="Generate, then have Claude write it up">+ Claude write-up</button></span>
     </div>
     <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
     <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
@@ -5690,7 +5823,7 @@ Use official names for standard gear and magic items, add a few invented local g
       if(a==="add"){const it=rollItem(s,new Set(s.stock.map(i=>i.name)));if(it){s.stock.push(it);sortStock(s.stock)}else toast("No new items left in this shop's tables")}
       if(a==="rm")s.stock.splice(+e.target.dataset.i,1);
       if(a==="keep")s.kept=!s.kept;
-      if(a==="del")C.shops.splice(C.shops.indexOf(s),1);
+      if(a==="del"){C.shops.splice(C.shops.indexOf(s),1);setTimeout(()=>toast("Shop deleted · Ctrl+Z to undo"),0)}
       commit();render()});
     return d}
   function sheetHTML(s){return `<div class="shopsheet"><div class="sh-type">${esc(typeName(s))}</div><div class="sh-name">${esc(s.name)}</div>${s.tagline?`<div class="sh-tag">“${esc(s.tagline)}”</div>`:""}
@@ -5945,8 +6078,8 @@ Return ONLY JSON:
   /* ---------- UI ---------- */
   const attSel=m=>`<select class="att" data-att="${m.id}">${ATT.map(a=>`<option${a===(m.attitude||"Neutral")?" selected":""}>${a}</option>`).join("")}</select>`;
   const attCls=a=>({Hostile:"t-hostile",Wary:"t-wary",Friendly:"leaf",Devoted:"gold"}[a]||"");
-  function profileHTML(m,dm=true){
-    const sb=m.sb;return `${m.ancestry||m.genre?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
+  function profileHTML(m,dm=true,noAnc=false){
+    const sb=m.sb;return `${!noAnc&&(m.ancestry||m.genre)?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
     ${m.look||m.voice||m.manner?`<div class="row">${esc(cap(m.look||""))}${m.look?". ":""}${m.voice?`<i>${esc(cap(m.voice))}</i>`:""}${m.manner?`; ${esc(m.manner)}`:""}.</div>`:""}
     ${m.public?`<div class="row"><b>Known for:</b> ${esc(m.public)}</div>`:""}
     ${m.want?`<div class="row"><b>Wants:</b> ${esc(m.want)}</div>`:""}
@@ -5988,31 +6121,34 @@ Return ONLY JSON:
       <button class="btn small" data-reseat="${t}">Re-roll seat</button><button class="btn small" data-newseat="${t}">Enter manually</button>${m?`<button class="btn small" data-vacate="${t}">Vacate</button>`:""}</div></td></tr>`}).join("")}</table>
       <p class="hint">Re-roll writes a new member with Claude (or fills one from the tables, with a prompt to copy). The old holder stays in your NPCs.</p>`;
     p.onclick=e=>{const t=e.target.dataset;
-      if(t.go){e.preventDefault();filt="all";q="";render();document.querySelector(`[data-npc="${t.go}"]`)?.scrollIntoView({behavior:"smooth"})}
+      if(t.go){e.preventDefault();App.flash(`[data-npc="${t.go}"]`)}
       else if(t.reseat)rerollSeat(t.reseat,e.target);
       else if(t.newseat){const m=generate({occ:"Adventurer",con:"Bystander",level:tierMidLevel(TIERS.indexOf(t.newseat))});Object.assign(m,{name:"",seat:t.newseat,want:"",secret:"",look:"",voice:"",manner:""});Roster.edit(m)}
       else if(t.vacate){const m=seatHolder(t.vacate);if(m){m.seat="";commit();render()}}};
     p.onchange=e=>{const t=e.target.dataset.seat;if(t&&e.target.value)seatNPC(t,e.target.value)};
     return p}
-  function render(){
+  let mode="npcs";
+  function render(m){if(m)mode=m;
     const h=$("#npcHost");if(!h)return;h.innerHTML="";
+    if(mode==="council"){h.appendChild(councilEl());const b=document.createElement("div");b.className="board";b.id="councilCards";bindAtt(b);
+      TIERS.map(seatHolder).filter(Boolean).forEach(m=>b.appendChild(card(m)));h.appendChild(b);return}
     const g=document.createElement("div");g.className="panel";
-    g.innerHTML=`<h2>Generate NPCs</h2><div class="controls" style="margin:0;background:none;border:0;padding:0">
+    g.innerHTML=`<h2>Generate NPCs</h2><div class="controls gen-row" style="margin:0;background:none;border:0;padding:0">
       <label>Occupation <select data-g="occ">${opt(Object.keys(T.occupations),gen.occ)}</select></label>
       <label>Connection <select data-g="con">${opt(Object.keys(T.connections),gen.con)}</select></label>
       <label>Genre <select data-g="genre">${opt(genreList(),gen.genre)}</select></label>
       <label>Archetype <select data-g="arch">${opt(Object.keys(T.archetypes),gen.arch)}</select></label>
       <label>Level <input data-g="level" type="number" min="1" max="20" placeholder="any" value="${esc(gen.level)}" style="width:70px"></label>
-      <button class="btn primary" id="npcRoll">Roll 3</button><button class="btn" id="npcNew">＋ New NPC</button></div>
-      <p class="hint" style="margin:6px 0 0">Blank fields roll weighted: common genres and low levels are most likely; over level 10 is rare and over 15 never happens.</p>
+      <button class="btn primary" id="npcRoll" title="Blank fields roll weighted: common genres and low levels are most likely; over level 10 is rare and over 15 never happens.">Roll 3</button><button class="btn" id="npcNew">＋ New NPC</button></div>
+      
       <div class="board" id="npcCands" style="margin-top:8px"></div>`;
     h.appendChild(g);cands.forEach(m=>g.querySelector("#npcCands").appendChild(card(m,true)));
     g.onchange=g.oninput=e=>{const k=e.target.dataset.g;if(k)gen[k]=e.target.value};
     g.querySelector("#npcRoll").onclick=()=>{cands=[0,1,2].map(()=>generate(genOpts()));render()};
     g.querySelector("#npcNew").onclick=()=>Roster.edit({id:uid(),kind:"NPC",status:"",name:"",occupation:"",connection:"",genre:"Tree-born",archetype:"Noncombatant",level:null,attitude:"Neutral",skills:[],role:"",player:"",assign:"",notes:""});
-    h.appendChild(councilEl());
+    if(filt==="council")filt="all";
     const f=document.createElement("div");f.className="controls";
-    f.innerHTML=`<div class="seg">${[["all","All"],["patron","Patrons"],["council","Council"],["rival","Rivals"],["pinned","Pinned"]].map(([k,l])=>`<button class="btn${filt===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div><input id="npcQ" placeholder="Search names, jobs, notes" value="${esc(q)}" style="width:240px">`;
+    f.innerHTML=`<div class="seg">${[["all","All"],["patron","Patrons"],["rival","Rivals"],["pinned","Pinned"]].map(([k,l])=>`<button class="btn${filt===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div><input id="npcQ" placeholder="Search names, jobs, notes" value="${esc(q)}" style="width:240px">`;
     f.onclick=e=>{if(e.target.dataset.f){filt=e.target.dataset.f;render()}};
     f.querySelector("#npcQ").oninput=e=>{q=e.target.value;drawList()};
     h.appendChild(f);const b=document.createElement("div");b.className="board";b.id="npcList";h.appendChild(b);bindAtt(b);drawList()}
@@ -6037,7 +6173,7 @@ Return ONLY JSON:
     return `<div class="council-notice notice"><div class="nhead">BY THE AUTHORITY OF THE TREE</div><div class="ntitle">The Council of Five</div><hr class="nrule">${L.map(([t,m])=>`<div class="cn-seat"><div class="nreward">${esc((T.council.seats[t]||{}).title||t)}</div><b>${esc(m.name)}</b>${m.guild?`, ${esc(m.guild)}`:""}<br><span>${esc(cap(m.look||""))}${m.look?". ":""}${esc(m.public||"")}</span></div>`).join("")}<hr class="nrule"><div class="sig">Petitions are heard at the Iron Seat each morning, snacks permitting.</div></div>`}
   const PRINT_CSS=`.npc-sheet h1{font:700 22px Cinzel,serif;text-align:center;margin:0 0 10px}.npc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.npc-c{border:1px solid #7a5a2e;border-radius:4px;padding:8px 10px;font-size:13.5px;line-height:1.3;break-inside:avoid;page-break-inside:avoid}.npc-c h3{margin:0;font:700 15px Cinzel,serif}.npc-c .lvl{font-size:12px;color:#5a3e1e;margin-bottom:3px}
   .council-notice{max-width:620px;margin:24px auto 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.council-notice .cn-seat{margin:9px 0;font-size:16px;line-height:1.35}.council-notice .nreward{font-size:16px}`;
-  return {reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
+  return {reset:()=>{filt="all";q=""},reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
 })();
 
 /* ================= FRIENDLY TABLE EDITOR (form view over any table JSON) ================= */
@@ -6194,7 +6330,7 @@ const App=(()=>{
   const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
-    $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
+    $$("#tab-print input[data-p]").forEach(i=>{i.checked=!!p[i.dataset.p];if(i.dataset.p==="full"||i.dataset.p==="offers"){i.disabled=!p.ledger;i.parentElement.classList.toggle("off",!p.ledger)}});
     $("#pNoticeCount").textContent=`(${finals} marked final)`;
     $("#printGo").textContent=FRAMED?"Download printable":"Print";
     const body=printBody();
@@ -6211,8 +6347,16 @@ const App=(()=>{
     $("#modelSel").value=known.includes(UI.model)?UI.model:"custom";$("#modelCustom").value=known.includes(UI.model)?"":UI.model;$("#modelCustom").hidden=known.includes(UI.model);
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
+    $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
+    $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
   }
+  async function renderBackups(){const el=$("#backupList");if(!el)return;let L=[];try{L=(await IDB.list()).sort((a,b)=>b.t-a.t)}catch(e){el.innerHTML='<p class="muted">Backups aren\'t available in this browser.</p>';return}
+    el.innerHTML=L.length?`<table class="ref backups">${L.map(b=>`<tr><td><b>${new Date(b.t).toLocaleString()}</b> <span class="muted">${esc(b.reason)}</span><br><span class="muted" style="font-size:14px">${esc(b.summary||"")}</span></td><td><button class="btn small" data-restore="${b.t}">Restore</button> <button class="btn small ghost" data-dl="${b.t}">Download</button></td></tr>`).join("")}</table>`:'<p class="muted">No backups yet.</p>';
+    el.onclick=async e=>{const t=+(e.target.dataset.restore||e.target.dataset.dl);if(!t)return;const b=L.find(x=>x.t===t);if(!b)return;
+      if(e.target.dataset.dl){saveFile(`yggdrasil-backup-${stamp()}.json`,b.data);return}
+      if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Replace current? Click again";return}
+      replaceCampaign(JSON.parse(b.data),"Before restoring a backup");commit();toast("Backup restored. The state before it was backed up too")}}
   let tblKey="jobs",draft=null;
   const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES,npcs:DEFAULT_NPC_TABLES}[tblKey]);
   function loadTblEditor(){
@@ -6229,8 +6373,10 @@ const App=(()=>{
   function bind(){
     $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
     $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
-    $("#saveCamp").onclick=$("#bannerSave").onclick=saveCampaign;
-    $("#loadCamp").onclick=()=>$("#fileIn").click();
+    $("#saveCamp").onclick=$("#bannerSave").onclick=()=>saveCampaign();
+    $("#undoBtn").onclick=undo;
+    $("#loadCamp").onclick=openCampaign;
+    $("#saveAsNew").onclick=()=>saveCampaign(true);$("#unlinkFile").onclick=unlinkFile;
     $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)loadCampaignFile(f);e.target.value=""};
     $("#tab-print").onchange=e=>{const k=e.target.dataset.p;if(!k)return;UI.print[k]=e.target.checked;saveUI();renderPrint()};
     $("#printGo").onclick=()=>{const b=printBody();if(!b){toast("Nothing to print yet");return}printHTML("Yggdrasil Handouts",b,printCSS())};
@@ -6251,18 +6397,50 @@ const App=(()=>{
     $("#copyTbl").onclick=()=>copyText($("#tblJson").value);
     $("#importPaste").onclick=()=>{try{importData(JSON.parse($("#importJson").value));$("#importJson").value=""}catch(e){toast("Invalid JSON: "+e.message)}};
     $("#newCamp").onclick=e=>{if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Really wipe this browser's copy? Click again";return}
-      replaceCampaign(newCampaign());commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
+      replaceCampaign(newCampaign(),"Before starting a new campaign");commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
+  }
+  /* ---------- go to + quick search ---------- */
+  function flash(sel){requestAnimationFrame(()=>{const el=document.querySelector(sel);if(!el)return;el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")})}
+  function go(tab,sel,prep){if(UI.tableMode&&!TABLE_TABS.includes(tab))UI.tableMode=false;UI.tab=tab;if(prep)prep();saveUI();render();flash(sel)}
+  function index(){const R=[];
+    C.jobs.forEach(h=>R.push({k:"Job",n:Jobs.hookTitle(h),d:`${h.objective} · ${h.patron.name}${h.final?" · Final":h.kept?" · Kept":""}`,
+      go:()=>go("jobs",`[data-job="${h.id}"]`,()=>{UI.jobView="dm";Jobs.setOpen(h,true);Jobs.initControls()})}));
+    C.roster.forEach(m=>{const mem=NPCs.isMember(m),sub=mem?"members":m.seat?"council":"npcs";
+      R.push({k:mem?m.kind:m.seat?`${m.seat} Seat`:"NPC",n:m.name||"(unnamed)",d:[m.title||m.occupation||m.role,m.ancestry,m.guild].filter(Boolean).join(" · "),
+        go:()=>go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=sub;NPCs.reset()})})});
+    C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
+    Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
+    [["jobs","Job Board"],["shop","Guild Upgrades"],["roster","Roster"],["market","Shop Generator"],["print","Print"],["settings","Settings & Tables"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
+    return R}
+  let qsItems=[],qsSel=0;
+  function qsOpen(){$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}
+  function qsClose(){$("#qs").hidden=true}
+  function qsDraw(){const q=$("#qsIn").value.toLowerCase().trim(),w=q.split(/\s+/).filter(Boolean);
+    let L=w.length?qsItems.filter(r=>{const s=(r.n+" "+r.d+" "+r.k).toLowerCase();return w.every(x=>s.includes(x))}):qsItems.filter(r=>r.k==="Tab"||r.k==="Job"&&/Final|Kept/.test(r.d));
+    if(q)L.sort((a,b)=>(b.n.toLowerCase().startsWith(q)-a.n.toLowerCase().startsWith(q))||(b.n.toLowerCase().includes(q)-a.n.toLowerCase().includes(q)));
+    L=L.slice(0,40);qsSel=Math.min(qsSel,Math.max(0,L.length-1));$("#qsRes")._L=L;
+    $("#qsRes").innerHTML=L.length?L.map((r,i)=>`<div class="qs-item${i===qsSel?" on":""}" data-i="${i}"><span class="badge">${esc(r.k)}</span> <b>${esc(r.n)}</b> <span class="muted">${esc(r.d)}</span></div>`).join(""):'<p class="muted" style="padding:8px 12px">Nothing matches.</p>';
+    $("#qsRes .qs-item.on")?.scrollIntoView({block:"nearest"})}
+  function qsPick(i){const r=$("#qsRes")._L[i];if(!r)return;qsClose();r.go()}
+  function bindSearch(){
+    $("#qsBtn").onclick=qsOpen;
+    $("#qs").onclick=e=>{if(e.target.id==="qs")qsClose();const it=e.target.closest(".qs-item");if(it)qsPick(+it.dataset.i)};
+    $("#qsIn").oninput=()=>{qsSel=0;qsDraw()};
+    $("#qsIn").onkeydown=e=>{const n=$("#qsRes")._L.length;
+      if(e.key==="ArrowDown"){e.preventDefault();qsSel=(qsSel+1)%Math.max(1,n);qsDraw()}else if(e.key==="ArrowUp"){e.preventDefault();qsSel=(qsSel-1+n)%Math.max(1,n);qsDraw()}
+      else if(e.key==="Enter"){e.preventDefault();qsPick(qsSel)}else if(e.key==="Escape")qsClose()};
+    window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#qs").hidden?qsOpen():qsClose()}else if(e.key==="Escape"&&!$("#qs").hidden)qsClose()});
   }
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
-    Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
+    Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
       try{downloads=await claude.use("downloads")}catch(e){downloads=null}
       render();
     }
   }
-  return {render,reloadAll,boot};
+  return {render,reloadAll,boot,flash};
 })();
 App.boot();
 

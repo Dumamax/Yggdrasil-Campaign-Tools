@@ -10,8 +10,8 @@ const Roster=(()=>{
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
   function render(){
     const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
-    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub!=="npcs";$("#rHint").hidden=sub!=="members";
-    renderEditor();if(sub==="npcs"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render();return}
+    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub==="members";$("#rHint").hidden=sub!=="members";
+    renderEditor();if(sub!=="members"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render(sub);return}
     $("#npcHost").innerHTML="";
     const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();
     $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
@@ -19,12 +19,12 @@ const Roster=(()=>{
     if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
     if(filter==="hall")list=list.filter(m=>m.kind!=="Active PC"&&m.status==="In the hall");
     if(!list.length){el.innerHTML=`<p class="muted">${C.roster.length?"No one matches this filter.":"The roster is empty."}</p>`;return}
-    list.forEach(m=>{const d=document.createElement("div");d.className="card";
+    list.forEach(m=>{const d=document.createElement("div");d.className="card";d.dataset.member=m.id;
       d.innerHTML=`<h3>${esc(m.name)}</h3>
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
-      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
         if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
