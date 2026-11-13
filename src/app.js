@@ -36,22 +36,50 @@ const App=(()=>{
   }
 
   /* ---------- print center ---------- */
-  function printBody(){const p=UI.print;let out="";
-    if(p.notices)out+=Jobs.noticesPrintHTML();
-    if(p.ledger)out+=(out?'<div class="pr-break"></div>':"")+Upgrades.ledgerHTML(p.full,p.offers);
-    if(p.cards){const c=Upgrades.cardsHTML();if(c)out+=(out?'<div class="pr-break"></div>':"")+c}
-    if(p.shops){const s=Shops.printHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
-    if(p.roster)out+=(out?'<div class="pr-break"></div>':"")+Roster.printHTML();
-    if(p.npcs){const s=NPCs.cheatHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
-    if(p.council){const s=NPCs.councilHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
+  /* print: every handout is its own section starting on a new page; players' handouts first, DM-only last.
+     Two-sided: a blank back is added after any section with an odd page count, so each section starts on a fresh sheet. */
+  const PAGE_H=10*96,PAGE_W=7.5*96; // US Letter with .5in margins, in CSS px
+  function printSections(){const p=UI.print,L=[];const add=(k,label,html,dm)=>{if(html)L.push({k,label,html,dm})};
+    if(p.notices)add("notices","Quest Notices",Jobs.noticesPrintHTML());
+    if(p.ledger)add("ledger","Builder's Ledger",Upgrades.ledgerHTML(p.full,p.offers));
+    if(p.cards)add("cards","Upgrade cards",Upgrades.cardsHTML());
+    if(p.shops)add("shops","Shop price lists",Shops.printHTML());
+    if(p.council)add("council","Council Notice",NPCs.councilHTML());
+    if(p.roster)add("roster","Roster sheet (DM)",Roster.printHTML(),true);
+    if(p.npcs)add("npcs","NPC cheat sheet (DM)",NPCs.cheatHTML(),true);
+    return L}
+  function measure(L){const m=document.createElement("div");m.style.cssText=`position:absolute;left:-99999px;top:0;width:${PAGE_W}px;visibility:hidden`;
+    m.innerHTML=`<style>${printCSS()}</style>`+L.map(s=>`<div class="pr-sec">${s.html}</div>`).join("");document.body.appendChild(m);
+    const secs=[...m.querySelectorAll(".pr-sec")];L.forEach((s,i)=>s.pages=paginate(secs[i]));m.remove();return L}
+  /* simulate page breaks: blocks that must not split get pushed whole to the next page */
+  function paginate(sec){const top0=sec.getBoundingClientRect().top,H=PAGE_H-(sec.querySelector(".pr-sheet")?52:0);
+    const atoms=[...sec.querySelectorAll(".pr-notice,.pr-shop,.pr-card,.npc-c,.cn-seat,.peddlers,.pr tbody,.pr-roster tr")].map(e=>{const r=e.getBoundingClientRect();return [r.top-top0,r.bottom-top0]}).sort((a,b)=>a[0]-b[0]);
+    let pages=1,start=0;
+    for(const [t,b] of atoms){if(b-start>H){if(t>start+1){start=t;pages++}while(b-start>H){start+=H;pages++}}}
+    while(sec.scrollHeight-start>H+2){start+=H;pages++}
+    return pages}
+  function printBody(preview){const L=measure(printSections());if(!L.length)return "";
+    const blank='<div class="pr-sec pr-blank"><span>This page is intentionally blank (two-sided printing).</span></div>';
+    let out="",total=0;L.forEach(s=>{
+      out+=`<div class="pr-sec${s.dm?" pr-dm":""}" data-label="${esc(s.label)} · about ${s.pages} page${s.pages>1?"s":""}">${s.html}</div>`;total+=s.pages;
+      if(UI.print.duplex&&s.pages%2&&s!==L[L.length-1]){out+=blank;total++}});
+    if(preview)$("#pPages").textContent=`About ${total} page${total>1?"s":""}${UI.print.duplex?` (${Math.ceil(total/2)} sheets)`:""}. Letter size; turn on "Background graphics" in the print dialog for the parchment.`;
     return out}
-  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
+  const printCSS=()=>PRINT_BASE+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
+  const PRINT_BASE=`@page{size:letter;margin:.5in}
+.pr-sec{break-before:page;page-break-before:always}.pr-sec:first-child{break-before:auto;page-break-before:auto}
+.pr-blank{height:9.5in;display:flex;align-items:center;justify-content:center;font:italic 12px Georgia,serif;color:#9a8a70}
+.pr-notice,.pr-shop,.pr-card,.npc-c,.cn-seat,.peddlers,.pr tbody,.pr tr{break-inside:avoid;page-break-inside:avoid}
+.pr h1,.pr h2,.prsub{break-after:avoid;page-break-after:avoid}
+@media screen{.preview .pr-sec{position:relative;padding-top:26px}.preview .pr-sec+.pr-sec{margin-top:22px;border-top:2px dashed #b89a6a}
+.preview .pr-sec::before{content:attr(data-label);position:absolute;top:5px;left:0;font:600 12px "Cinzel",serif;letter-spacing:.06em;color:#8a6a3a}
+.preview .pr-dm::before{color:#8a2a1a}.preview .pr-blank{height:120px;background:repeating-linear-gradient(135deg,#efe5cf 0 10px,#e8dcc0 10px 20px)}.preview .pr-blank::before{content:"Blank back page"}}`;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
     $$("#tab-print input[data-p]").forEach(i=>{i.checked=!!p[i.dataset.p];if(i.dataset.p==="full"||i.dataset.p==="offers"){i.disabled=!p.ledger;i.parentElement.classList.toggle("off",!p.ledger)}});
     $("#pNoticeCount").textContent=`(${finals} marked final)`;
     $("#printGo").textContent=FRAMED?"Download printable":"Print";
-    const body=printBody();
+    const body=printBody(true);if(!body)$("#pPages").textContent="";
     $("#preview").innerHTML=body?`<style>${printCSS().replace(/@media print\{[^}]*\}\}?/g,"")}</style>${body}`:'<p class="muted" style="color:#5a3e1e">Nothing selected yet. Mark jobs final on the Job Board, buy upgrades, or tick a section above.</p>';
   }
 

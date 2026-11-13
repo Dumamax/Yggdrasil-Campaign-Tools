@@ -99,8 +99,12 @@
         <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
         <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned)</label>
       </fieldset>
+      <fieldset><legend>Printing</legend>
+        <label class="inline" title="Adds a blank back page after any section with an odd page count, so every section starts on its own sheet"><input type="checkbox" data-p="duplex"> Two-sided</label>
+      </fieldset>
       <button class="btn primary" id="printGo">Print</button>
     </div>
+    <p class="hint" id="pPages" style="margin:-4px 0 10px"></p>
     <div class="preview" id="preview"></div>
   </section>
 
