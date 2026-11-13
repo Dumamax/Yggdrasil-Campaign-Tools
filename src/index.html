@@ -39,6 +39,7 @@
 </div>
 <main>
   <section id="tab-jobs">
+    <div class="standing-host"></div>
     <div class="controls">
       <label>Guild tier <select id="tierSel"></select></label>
       <label>Party level <input id="pl" type="number" min="1" max="20"></label>
@@ -53,6 +54,7 @@
   </section>
 
   <section id="tab-shop" hidden>
+    <div class="standing-host"></div>
     <div class="controls">
       <label>Treasury (gp) <input id="treasury" type="number" min="0" placeholder="—"></label>
       <button class="btn primary dmonly" id="rollOffers">Roll Peddlers</button>
@@ -94,6 +96,7 @@
         <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
         <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
         <label class="inline"><input type="checkbox" data-p="council"> Council Notice</label>
+        <label class="inline"><input type="checkbox" data-p="standing"> Guild Standing</label>
       </fieldset>
       <fieldset><legend>DM only</legend>
         <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
@@ -124,6 +127,10 @@
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Guild standing</h2>
+        <div id="cpSettings"></div>
       </div>
       <div class="panel">
         <h2>Display</h2>

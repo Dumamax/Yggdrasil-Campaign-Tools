@@ -101,18 +101,18 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
   function closedCard(h){
     const d=document.createElement("div");d.className="card closed"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
     d.innerHTML=`<h3 class="tog" data-act="toggle" title="Show details"><span class="chev" data-act="toggle">▸</span>${esc(hookTitle(h))}</h3>
-    <div class="badges"><span class="badge t${tierOf(h.rank)}">${rankName(h.rank)}</span><span class="badge">${h.size}</span>${h.world.genre?`<span class="badge"><i>${esc(h.world.genre)}</i></span>`:`<span class="badge">${esc(h.location)}</span>`}${h.bounty?'<span class="badge gold">Bounty</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}${h.expanded?'<span class="badge leaf">Prepped</span>':""}</div>
+    <div class="badges"><span class="badge t${tierOf(h.rank)}">${rankName(h.rank)}</span><span class="badge">${h.size}</span>${h.world.genre?`<span class="badge"><i>${esc(h.world.genre)}</i></span>`:`<span class="badge">${esc(h.location)}</span>`}${h.bounty?'<span class="badge gold">Bounty</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}${h.expanded?'<span class="badge leaf">Prepped</span>':""}${h.done?`<span class="badge ${h.done==="success"?"leaf":"red"}">${h.done==="success"?"✓ Completed":"✗ Failed"}</span>`:""}</div>
     <div class="row">${esc(cap(h.objective))}</div>
     <div class="row muted">${esc(h.patron.name)} · <span style="color:var(--gold)">${fmt(h.gold)} gp</span> + ${esc(h.incentive.item)}</div>
     <div class="actions"><button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button><button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
-      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="expand">${h.expanded?"Re-expand":"Expand"} with prep card</button><button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`;
+      <span class="act-end">${moreMenu(`${h.done?`<button class="btn small ghost" data-act="reopen">↺ Reopen job (removes its points)</button>`:`<button class="btn small ghost" data-act="complete">✓ Completed (+${Standing.jobPts(h)} ${esc(Standing.short())})</button><button class="btn small ghost" data-act="failed">✗ Failed</button>`}<button class="btn small ghost" data-act="expand">${h.expanded?"Re-expand":"Expand"} with prep card</button><button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`;
     d.addEventListener("click",ev=>onCardClick(h,ev));return d}
   function dmCard(h,compact){
     if(!compact&&!isOpen(h))return closedCard(h);
     const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
     const b=budget(h),t=tierOf(h.rank),x=h.expanded,wb=h.worldBlock;
     d.innerHTML=`<h3${compact?"":' class="tog" data-act="toggle" title="Collapse"'}>${compact?"":'<span class="chev" data-act="toggle">▾</span>'}${esc(hookTitle(h))}</h3>
-    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
+    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${Standing.jobPts(h)} ${esc(Standing.short())}</span>${h.done?`<span class="badge ${h.done==="success"?"leaf":"red"}">${h.done==="success"?"✓ Completed":"✗ Failed"}</span>`:""}${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
     ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}
@@ -125,7 +125,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small primary" data-act="expand">${x?"Re-expand":"Expand"}</button>
       <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
-      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
+      <span class="act-end">${moreMenu(`${h.done?`<button class="btn small ghost" data-act="reopen">↺ Reopen job (removes its points)</button>`:`<button class="btn small ghost" data-act="complete">✓ Completed (+${Standing.jobPts(h)} ${esc(Standing.short())})</button><button class="btn small ghost" data-act="failed">✗ Failed</button>`}<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
     d.addEventListener("click",ev=>onCardClick(h,ev));
     return d;
@@ -143,6 +143,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       else if(a==="usenpc"){const row=ev.target.parentElement;if(row.querySelector("select"))return;const L=NPCs.all();if(!L.length){toast("No saved NPCs yet");return}
         const sel=document.createElement("select");sel.innerHTML='<option value="">Choose an NPC…</option>'+L.map(m=>`<option value="${m.id}">${esc(m.name)}${m.title?` (${esc(m.title)})`:""}</option>`).join("");
         sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
+      else if(a==="complete")Standing.completeJob(h,true);
+      else if(a==="failed")Standing.completeJob(h,false);
+      else if(a==="reopen")Standing.reopenJob(h);
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
       else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1);setTimeout(()=>toast("Job deleted · Ctrl+Z to undo"),0)}
@@ -170,7 +173,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     w.querySelector('[data-act="copyn"]').onclick=()=>copyText(`${n.heading}\n${n.title}\n\n${n.body}\n\nReward: ${n.reward}\n${n.deadline} · Rank: ${rankName(h.rank)} or above\n~ ${n.signature}`);
     return w}
   function cardText(h){const x=h.expanded,b=budget(h);
-    let s=`${hookTitle(h)} [${rankName(h.rank)} · ${h.size} · rec. lvl ${recLevel(h.rank)} · +${h.contribution} contribution]
+    let s=`${hookTitle(h)} [${rankName(h.rank)} · ${h.size} · rec. lvl ${recLevel(h.rank)} · +${Standing.jobPts(h)} ${Standing.short()}]
 Where: ${h.location}${h.world.genre?` (${h.world.genre})`:""}: ${h.world.line}
 Patron: ${h.patron.name}, ${h.patron.arch} (${h.patron.cat}), ${h.patron.quirk}
 Job: ${cap(h.objective)}

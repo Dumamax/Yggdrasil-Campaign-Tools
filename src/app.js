@@ -10,13 +10,14 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";
-    const live=C.jobs.filter(h=>h.kept||h.final);
+    col("Guild standing",Standing.tablePanel());
+    const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
     const col=(title,inner)=>{const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>${title}</h2>`;if(typeof inner==="string")p.insertAdjacentHTML("beforeend",inner);else p.appendChild(inner);el.appendChild(p);return p};
     const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
     if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
@@ -45,6 +46,7 @@ const App=(()=>{
     if(p.cards)add("cards","Upgrade cards",Upgrades.cardsHTML());
     if(p.shops)add("shops","Shop price lists",Shops.printHTML());
     if(p.council)add("council","Council Notice",NPCs.councilHTML());
+    if(p.standing)add("standing","Guild Standing",Standing.printHTML());
     if(p.roster)add("roster","Roster sheet (DM)",Roster.printHTML(),true);
     if(p.npcs)add("npcs","NPC cheat sheet (DM)",NPCs.cheatHTML(),true);
     return L}
@@ -65,7 +67,7 @@ const App=(()=>{
       if(UI.print.duplex&&s.pages%2&&s!==L[L.length-1]){out+=blank;total++}});
     if(preview)$("#pPages").textContent=`About ${total} page${total>1?"s":""}${UI.print.duplex?` (${Math.ceil(total/2)} sheets)`:""}. Letter size; ${UI.print.ink?"black & white, no backgrounds.":"turn on \"Background graphics\" in the print dialog for the parchment."}`;
     return UI.print.ink?`<div class="ink">${out}</div>`:out}
-  const printCSS=()=>PRINT_BASE+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
+  const printCSS=()=>PRINT_BASE+Standing.PRINT_CSS+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   const PRINT_BASE=`@page{size:letter;margin:.5in}
 .pr-sec{break-before:page;page-break-before:always}.pr-sec:first-child{break-before:auto;page-break-before:auto}
 .pr-blank{height:9.5in;display:flex;align-items:center;justify-content:center;font:italic 12px Georgia,serif;color:#9a8a70}
@@ -110,6 +112,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
+    const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
   }
