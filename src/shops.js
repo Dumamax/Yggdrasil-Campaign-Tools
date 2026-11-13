@@ -50,7 +50,7 @@ const Shops=(()=>{
 
   /* ---------- Claude ---------- */
   function prompt(s){const w=T.wealth[s.wealth]||{},n=w.itemCount||[8,12];return `You are helping a DM prep a shop for a D&D 5e campaign.
-Setting: one universal World Tree (Yggdrasil) grows through the planes. A bazaar city sits at its base, more lives inside the Tree, its Trunk links the worlds, and its branches rise into worlds of every genre. Tone: whimsical and strange with a hopeful heart. Currency is cp/sp/gp/pp; 1 gp is about a day of modest living; use PHB/DMG prices. The party's guild is ${TIERS[s.tier]} tier, so any magic items should be ${allowedRarities(s.tier).join(" or ")||"uncommon"}.
+Setting: one universal World Tree (Yggdrasil) grows through the planes. A bazaar city sits at its base, more lives inside the Tree, its Roots link the worlds, and its branches rise into worlds of every genre. Tone: whimsical and strange with a hopeful heart. Currency is cp/sp/gp/pp; 1 gp is about a day of modest living; use PHB/DMG prices. The party's guild is ${TIERS[s.tier]} tier, so any magic items should be ${allowedRarities(s.tier).join(" or ")||"uncommon"}.
 
 SHOP REQUEST
 Type: ${s.type}${s.custom?`\nThe DM's idea (follow it closely; it overrides the type): ${s.custom}`:""}

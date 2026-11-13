@@ -294,7 +294,7 @@ table.te-matrix .te-txt{min-width:160px}
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=2;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=3;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -333,7 +333,9 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
-function normalize(c){const n=newCampaign();const o=Object.assign(n,c||{});
+/* v3: "The Trunk" was renamed "The Roots" */
+function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
+function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
   o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
@@ -451,7 +453,7 @@ async function printHTML(title,body,css){
 
 /* Job Board default tables (content v3: expanded quirks, places, items, names) */
 const DEFAULT_JOB_TABLES={
- "version": 3,
+ "version": 4,
  "tiers": [
   "Iron",
   "Bronze",
@@ -577,7 +579,7 @@ const DEFAULT_JOB_TABLES={
   "names": [
    "The City (base bazaar)",
    "Inside the Tree",
-   "The Trunk",
+   "The Roots",
    "A nearby world",
    "A distant world",
    "A strange, far-flung world"
@@ -1329,7 +1331,7 @@ const DEFAULT_JOB_TABLES={
      "the police have a 'weird stuff' division",
      "streaming fame can make you powerful, literally",
      "nobody believes the party is from another world",
-     "cellphones work in the Trunk, sort of",
+     "cellphones work in the Roots, sort of",
      "the vending machines are haunted"
     ],
     "fill": {
@@ -1515,7 +1517,7 @@ const DEFAULT_JOB_TABLES={
     ]
    }
   },
-  "The Trunk": {
+  "The Roots": {
    "quirks": [
     "paths shift when no one is watching",
     "chalk waymarks sometimes rewrite themselves",
@@ -1529,12 +1531,12 @@ const DEFAULT_JOB_TABLES={
    ],
    "fill": {
     "spot": [
-     "a forgotten trunk waystation",
+     "a forgotten root waystation",
      "a crossroads of three branches",
      "a knot-hollow off the main path"
     ],
     "pests": [
-     "trunk-mites",
+     "root-mites",
      "lost wanderers turned feral",
      "gray oozes"
     ],
@@ -1633,7 +1635,7 @@ const DEFAULT_JOB_TABLES={
    "reality is thinning near the branch",
    "a missing heir and a contested throne",
    "an inquisition hunting outsiders",
-   "a bridge-world collapsing into the Trunk",
+   "a bridge-world collapsing into the Roots",
    "a disease that turns people to glass",
    "the local gods have gone silent",
    "a heist targeting the Tree itself"
@@ -1882,7 +1884,7 @@ const DEFAULT_JOB_TABLES={
    "bring back {count} {ingredient} before the season ends",
    "collect a debt of {item} from {spot}",
    "find a replacement for {item}, lost at {spot}",
-   "recover a package that fell through the Trunk near {spot}"
+   "recover a package that fell through the Roots near {spot}"
   ],
   "Extermination": [
    "clear {pests} out of {spot}",
@@ -1899,7 +1901,7 @@ const DEFAULT_JOB_TABLES={
    "get {person} to {spot} before their rivals do",
    "escort a wagon of {livestock} through {spot}",
    "protect {person} for one very long night",
-   "see {person} safely home through the Trunk"
+   "see {person} safely home through the Roots"
   ],
   "Investigation": [
    "find out why {mystery}",
@@ -2710,7 +2712,7 @@ const DEFAULT_JOB_TABLES={
    ],
    "uncommon": [
     "A map or secret route",
-    "A shortcut through the Trunk",
+    "A shortcut through the Roots",
     "The weakness of a monster the party will meet",
     "A list of who's hiring in three worlds",
     "The real name of a fey"
@@ -3161,7 +3163,7 @@ const DEFAULT_JOB_TABLES={
 
 /* Guild Upgrade default tables (content v3) */
 const DEFAULT_UPG_TABLES={
- "version": 3,
+ "version": 4,
  "goldBaseByLevel": [
   0,
   30,
@@ -3857,16 +3859,16 @@ const DEFAULT_UPG_TABLES={
   {
    "id": "trunk-guides",
    "cat": "Services",
-   "name": "Trunk Guides",
+   "name": "Root Guides",
    "types": "P",
-   "flavor": "Folk who know the Trunk's shortcuts, and which ones bite.",
+   "flavor": "Folk who know the Roots' shortcuts, and which ones bite.",
    "levels": [
     {
      "name": "Pathfinder",
      "tier": 0,
      "jobs": 2,
      "days": 1,
-     "perk": "The party never gets lost in the Trunk."
+     "perk": "The party never gets lost in the Roots."
     },
     {
      "name": "Escort",
@@ -4272,7 +4274,7 @@ const DEFAULT_UPG_TABLES={
    "a branch-merchant who owes Mordecai a favor",
    "off-season rates in the carpenters' quarter",
    "a contractor who wants the guild's name on their portfolio",
-   "materials 'found' after a Trunk storm",
+   "materials 'found' after a Roots storm",
    "a guild that just went bankrupt",
    "an overbooked contractor offering a discount to clear the calendar",
    "a builder who owes the party a favor from an old job",
@@ -4908,7 +4910,7 @@ const DEFAULT_UPG_TABLES={
   "A Council inspector wants paperwork nobody filed.",
   "The contractor is secretly using the job to smuggle something.",
   "The Tree reshapes the room overnight: better than planned, but different.",
-  "A materials shipment goes missing in the Trunk.",
+  "A materials shipment goes missing in the Roots.",
   "Mordecai 'improves' the plans without telling anyone.",
   "The builders are fey and want payment in a secret instead of gold.",
   "A neighboring guild files a noise complaint with the Council.",
@@ -4945,7 +4947,7 @@ const Jobs=(()=>{
   function rollGenre(r){const f=T.fantasyShare.iron+(T.fantasyShare.platinum-T.fantasyShare.iron)*(r/14);
     const grp=Math.random()<f?T.genres.fantasy:T.genres.other;return wpick(Object.entries(grp).map(([k,v])=>[k,v.w]))}
   function rollWorld(r,loc){const lc=T.locales[loc];
-    if(lc)return {genre:null,line:`${loc==="The Trunk"?"The trunk between worlds":"Home ground"}, where ${pickFresh(lc.quirks,"lq:"+loc)}`};
+    if(lc)return {genre:null,line:`${loc==="The Roots"?"The Roots between worlds":"Home ground"}, where ${pickFresh(lc.quirks,"lq:"+loc)}`};
     const g=rollGenre(r),gd=genreData(g);return {genre:g,line:`${cap(pickFresh(gd.places,"place:"+g))}, where ${pickFresh(gd.quirks,"quirk:"+g)}`}}
   /* names: a small recurring cast plus a large generated pool; avoids names already in play */
   function genName(){const N=T.names||{};const used=new Set([...C.roster.map(m=>m.name),...C.jobs.map(h=>h.patron&&h.patron.name)]);
@@ -5418,7 +5420,7 @@ ${t}`:""}`;
 
 /* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
 const DEFAULT_SHOP_TABLES={
- version:1,
+ version:2,
  quickTypes:["General Store","Blacksmith & Armorer","Weaponsmith & Fletcher","Alchemist & Apothecary","Magic Curios","Tavern & Inn","Black Market","Cartographer & Planar Guide"],
  namePatterns:["The {adj} {noun}","{owner}'s {kind}","The {noun} & {noun2}","{adj} {noun} {kind}","{owner} & Kin, {kind}","The {noun} Under the {place}","{kind} of the {adj} {noun}"],
  adjectives:["Crooked","Gilded","Humming","Sleepy","Rootbound","Lopsided","Second-Hand","Patient","Copper","Mossy","Honest","Wandering","Thrice-Blessed","Upside-Down","Lantern-Lit","Quiet","Bramble","Velvet","Stubborn","Twelfth"],
@@ -5433,7 +5435,7 @@ const DEFAULT_SHOP_TABLES={
  places:{
   "The City (base bazaar)":{exterior:["a striped awning wedged between two bigger stalls","a narrow storefront built into a root that broke through the street","a cart that stopped moving years ago and grew a porch","a tall, skinny shop with a crooked chimney and a hand-painted sign","a stall on stilts above the bazaar crowd, reached by rope ladder"],sensory:["street-food smoke and haggling drift in from outside","bells from the Tree's entrance ring every hour","a busker plays the same three songs just outside the door","sap-sweet air from the Tree mixes with lamp oil"]},
   "Inside the Tree":{exterior:["a doorway carved straight into living heartwood","a hollow knot fitted with a round glass door","a shop grown, not built, from a bulging burl","a stairwell landing curtained off with hanging moss","a lantern-lit alcove where the bark folds back like a cloak"],sensory:["the wood creaks softly, like the Tree is listening","glowing sap trickles in channels along the walls","the floor is warm, and faintly pulses","distant roots groan as they shift between planes"]},
-  "The Trunk":{exterior:["a stall bolted to the Trunk's bark on a swaying platform","a converted ferry cabin moored to a branch-junction","a waystation shop where three worlds' roads meet","a shack whose door opens onto a different weather each day","a booth hung from chains over the gap between worlds"],sensory:["wind from three different worlds blows through at once","the light keeps changing color as branches turn overhead","travelers' languages babble in every direction","the whole shop sways gently, and nobody else seems to notice"]},
+  "The Roots":{exterior:["a stall bolted to the Roots' bark on a swaying platform","a converted ferry cabin moored to a branch-junction","a waystation shop where three worlds' roads meet","a shack whose door opens onto a different weather each day","a booth hung from chains over the gap between worlds"],sensory:["wind from three different worlds blows through at once","the light keeps changing color as branches turn overhead","travelers' languages babble in every direction","the whole shop sways gently, and nobody else seems to notice"]},
   "A world (any genre)":{exterior:["a shopfront that matches the local style, with a tiny Tree-leaf sigil by the door","a market stall run by an obvious off-worlder","a respectable shop with a back room that smells of sap","a trading post at the edge of the local Branch-gate","a shop that is very clearly bigger on the inside"],sensory:["local music and Tree-traders' chatter overlap","the air has the world's usual smell, plus something green","locals eye the off-world goods with suspicion and envy","a door in the back leads somewhere that is definitely not here"]}
  },
  details:["a cat-sized beetle sleeps on the counter and must not be woken","every item has a tiny handwritten tag with a pun","a bell over the door announces each customer by name, often wrongly","a jar by the register holds coins from a dozen worlds","the shelves rearrange themselves slightly when no one is looking","a portrait of the founder whose eyes follow gold, not people","a 'You break it, you've adopted it' sign","a lost-and-found bin that seems to contain things not yet lost","a guest book signed by adventurers, some famous, some deceased","the scales on the counter weigh honesty as well as goods"],
@@ -5496,7 +5498,7 @@ const DEFAULT_SHOP_TABLES={
    stock:[{name:"Loaf of bread",price:0.02,desc:"Crusty and warm."},{name:"Honey cake",price:0.1,desc:"Sticky, golden, beloved."},{name:"Meat pie",price:0.05,desc:"Mystery meat, excellent gravy."},{name:"Sap-candy (bag)",price:0.1,desc:"Tree-sap sweets that crackle on the tongue."},{name:"Wheel of cheese",price:1,desc:"Sharp, aged, enormous."},{name:"Trail rations (5 days)",price:2.5,desc:"Dense, filling, keeps forever."},{name:"Spiced sausages (string)",price:0.3,desc:"Smoky and hot."},{name:"Celebration cake",price:5,desc:"Custom message included."},{name:"Branch-world fruit",price:0.2,desc:"Tastes like music. Odd."},{name:"Picnic basket",price:2,desc:"Everything for a party of four."},{name:"Cook's utensils",price:1,desc:"Pans, ladles, and a cleaver."}]},
   "Cartographer & Planar Guide":{keywords:["map","cartograph","guide","planar","travel","branch","navigation","portal"],kinds:["Maps","Charts","Wayfinding","Branch-Guides"],nouns:["Compass","Branch","Atlas","Star","Route","Waypoint"],roles:["Cartographer","Planar guide","Map-runner","Tea-maker"],magic:0.15,
    interiors:["maps cover every surface, some of them updating themselves","a huge model of the Tree turns slowly in the center of the room","pins and string mark routes between worlds across the walls"],
-   stock:[{name:"City map",price:1,desc:"Shows the bazaar and the Tree's entrance."},{name:"Map of the inner roots",price:15,desc:"Accurate as of last week."},{name:"Trunk ferry schedule",price:0.1,desc:"Mostly accurate."},{name:"Branch-world chart (nearby)",price:25,desc:"Paths to one nearby world."},{name:"Branch-world chart (distant)",price:100,desc:"Routes to a far world, hand-drawn."},{name:"Guide hire (per day)",price:5,desc:"Knows shortcuts nobody else does."},{name:"Cartographer's tools",price:15,desc:"Compass, rulers, and ink."},{name:"Compass",price:5,desc:"Points toward the Tree from any world."},{name:"World-weather almanac",price:3,desc:"What to pack for twenty worlds."},{name:"Map-copying service",price:2,desc:"Copies any map you bring in."},{name:"Phrasebook (a branch-world tongue)",price:5,desc:"Hello, thank you, run."}]},
+   stock:[{name:"City map",price:1,desc:"Shows the bazaar and the Tree's entrance."},{name:"Map of the inner roots",price:15,desc:"Accurate as of last week."},{name:"Roots ferry schedule",price:0.1,desc:"Mostly accurate."},{name:"Branch-world chart (nearby)",price:25,desc:"Paths to one nearby world."},{name:"Branch-world chart (distant)",price:100,desc:"Routes to a far world, hand-drawn."},{name:"Guide hire (per day)",price:5,desc:"Knows shortcuts nobody else does."},{name:"Cartographer's tools",price:15,desc:"Compass, rulers, and ink."},{name:"Compass",price:5,desc:"Points toward the Tree from any world."},{name:"World-weather almanac",price:3,desc:"What to pack for twenty worlds."},{name:"Map-copying service",price:2,desc:"Copies any map you bring in."},{name:"Phrasebook (a branch-world tongue)",price:5,desc:"Hello, thank you, run."}]},
   "Black Market":{keywords:["black market","smuggl","fence","illegal","thieves","contraband","shady","stolen"],kinds:["Back Room","Exchange","Fencing","Rarities"],nouns:["Shadow","Rat","Mask","Knife","Crow","Key"],roles:["Fence","Lookout","Muscle","'Accountant'"],magic:0.3,
    interiors:["a dim cellar behind a fake wall, lit by one shaded lamp","crates with other people's names still on them","everyone keeps their hood up, including the furniture"],
    stock:[{name:"Basic poison (vial)",price:80,desc:"No questions asked."},{name:"Thieves' tools",price:20,desc:"Slightly used."},{name:"Forged guild seal",price:50,desc:"Passes casual inspection."},{name:"Stolen jewelry",price:40,desc:"'Inherited.'"},{name:"Smoke bomb",price:5,desc:"Pop, cough, gone."},{name:"Fake identity papers",price:25,desc:"With a backstory included."},{name:"Map of guard patrols",price:15,desc:"Updated weekly."},{name:"Contraband from a quarantined world",price:100,desc:"Do not open indoors."},{name:"Unlabeled potion",price:30,desc:"Probably healing. Probably."},{name:"Information (a secret)",price:10,desc:"Prices vary by who it's about."},{name:"Assassin's blood (vial)",price:150,desc:"Very much illegal."}]},
@@ -5558,7 +5560,7 @@ const Shops=(()=>{
 
   /* ---------- Claude ---------- */
   function prompt(s){const w=T.wealth[s.wealth]||{},n=w.itemCount||[8,12];return `You are helping a DM prep a shop for a D&D 5e campaign.
-Setting: one universal World Tree (Yggdrasil) grows through the planes. A bazaar city sits at its base, more lives inside the Tree, its Trunk links the worlds, and its branches rise into worlds of every genre. Tone: whimsical and strange with a hopeful heart. Currency is cp/sp/gp/pp; 1 gp is about a day of modest living; use PHB/DMG prices. The party's guild is ${TIERS[s.tier]} tier, so any magic items should be ${allowedRarities(s.tier).join(" or ")||"uncommon"}.
+Setting: one universal World Tree (Yggdrasil) grows through the planes. A bazaar city sits at its base, more lives inside the Tree, its Roots link the worlds, and its branches rise into worlds of every genre. Tone: whimsical and strange with a hopeful heart. Currency is cp/sp/gp/pp; 1 gp is about a day of modest living; use PHB/DMG prices. The party's guild is ${TIERS[s.tier]} tier, so any magic items should be ${allowedRarities(s.tier).join(" or ")||"uncommon"}.
 
 SHOP REQUEST
 Type: ${s.type}${s.custom?`\nThe DM's idea (follow it closely; it overrides the type): ${s.custom}`:""}
@@ -5689,7 +5691,7 @@ const TableEditor=(()=>{
   const HINTS={jobTypes:"How often each job type appears at each tier. Bigger number = more common; 0 = never.",
     sizes:"How often each job size appears per tier, plus its gold multiplier and contribution value.",locations:"Where jobs happen, weighted per tier.",
     fantasyShare:"Share of fantasy-flavored worlds at Iron vs. Platinum (0 to 1).",genres:"World genres: weight, places, quirks, and fill-in words used in job text.",
-    locales:"Home-ground locations (the city, inside the Tree, the Trunk) and their quirks.",worldBlock:"Extra world details rolled on demand.",
+    locales:"Home-ground locations (the city, inside the Tree, the Roots) and their quirks.",worldBlock:"Extra world details rolled on demand.",
     patrons:"Patron categories → archetypes → which kinds of incentive each gives.",objectives:"Job text templates per job type. Words in {braces} are filled from the fill-in lists.",
     fill:"Fill-in word lists used by the {braces} in job text.",complications:"Complications that can be rolled.",goldBaseByLevel:"Gold for a Standard job (whole party), by party level.",
     rarityByTier:"Which incentive rarities each tier can roll.",items:"Incentive items by kind and rarity.",xpBudget:"XP per character for Low / Moderate / High encounters, by level.",

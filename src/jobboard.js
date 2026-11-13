@@ -10,7 +10,7 @@ const Jobs=(()=>{
   function rollGenre(r){const f=T.fantasyShare.iron+(T.fantasyShare.platinum-T.fantasyShare.iron)*(r/14);
     const grp=Math.random()<f?T.genres.fantasy:T.genres.other;return wpick(Object.entries(grp).map(([k,v])=>[k,v.w]))}
   function rollWorld(r,loc){const lc=T.locales[loc];
-    if(lc)return {genre:null,line:`${loc==="The Trunk"?"The trunk between worlds":"Home ground"}, where ${pickFresh(lc.quirks,"lq:"+loc)}`};
+    if(lc)return {genre:null,line:`${loc==="The Roots"?"The Roots between worlds":"Home ground"}, where ${pickFresh(lc.quirks,"lq:"+loc)}`};
     const g=rollGenre(r),gd=genreData(g);return {genre:g,line:`${cap(pickFresh(gd.places,"place:"+g))}, where ${pickFresh(gd.quirks,"quirk:"+g)}`}}
   /* names: a small recurring cast plus a large generated pool; avoids names already in play */
   function genName(){const N=T.names||{};const used=new Set([...C.roster.map(m=>m.name),...C.jobs.map(h=>h.patron&&h.patron.name)]);

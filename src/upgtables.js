@@ -1,6 +1,6 @@
 /* Guild Upgrade default tables (content v3) */
 const DEFAULT_UPG_TABLES={
- "version": 3,
+ "version": 4,
  "goldBaseByLevel": [
   0,
   30,
@@ -696,16 +696,16 @@ const DEFAULT_UPG_TABLES={
   {
    "id": "trunk-guides",
    "cat": "Services",
-   "name": "Trunk Guides",
+   "name": "Root Guides",
    "types": "P",
-   "flavor": "Folk who know the Trunk's shortcuts, and which ones bite.",
+   "flavor": "Folk who know the Roots' shortcuts, and which ones bite.",
    "levels": [
     {
      "name": "Pathfinder",
      "tier": 0,
      "jobs": 2,
      "days": 1,
-     "perk": "The party never gets lost in the Trunk."
+     "perk": "The party never gets lost in the Roots."
     },
     {
      "name": "Escort",
@@ -1111,7 +1111,7 @@ const DEFAULT_UPG_TABLES={
    "a branch-merchant who owes Mordecai a favor",
    "off-season rates in the carpenters' quarter",
    "a contractor who wants the guild's name on their portfolio",
-   "materials 'found' after a Trunk storm",
+   "materials 'found' after a Roots storm",
    "a guild that just went bankrupt",
    "an overbooked contractor offering a discount to clear the calendar",
    "a builder who owes the party a favor from an old job",
@@ -1747,7 +1747,7 @@ const DEFAULT_UPG_TABLES={
   "A Council inspector wants paperwork nobody filed.",
   "The contractor is secretly using the job to smuggle something.",
   "The Tree reshapes the room overnight: better than planned, but different.",
-  "A materials shipment goes missing in the Trunk.",
+  "A materials shipment goes missing in the Roots.",
   "Mordecai 'improves' the plans without telling anyone.",
   "The builders are fey and want payment in a secret instead of gold.",
   "A neighboring guild files a noise complaint with the Council.",

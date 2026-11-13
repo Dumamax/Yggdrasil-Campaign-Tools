@@ -1,6 +1,6 @@
 /* Job Board default tables (content v3: expanded quirks, places, items, names) */
 const DEFAULT_JOB_TABLES={
- "version": 3,
+ "version": 4,
  "tiers": [
   "Iron",
   "Bronze",
@@ -126,7 +126,7 @@ const DEFAULT_JOB_TABLES={
   "names": [
    "The City (base bazaar)",
    "Inside the Tree",
-   "The Trunk",
+   "The Roots",
    "A nearby world",
    "A distant world",
    "A strange, far-flung world"
@@ -878,7 +878,7 @@ const DEFAULT_JOB_TABLES={
      "the police have a 'weird stuff' division",
      "streaming fame can make you powerful, literally",
      "nobody believes the party is from another world",
-     "cellphones work in the Trunk, sort of",
+     "cellphones work in the Roots, sort of",
      "the vending machines are haunted"
     ],
     "fill": {
@@ -1064,7 +1064,7 @@ const DEFAULT_JOB_TABLES={
     ]
    }
   },
-  "The Trunk": {
+  "The Roots": {
    "quirks": [
     "paths shift when no one is watching",
     "chalk waymarks sometimes rewrite themselves",
@@ -1078,12 +1078,12 @@ const DEFAULT_JOB_TABLES={
    ],
    "fill": {
     "spot": [
-     "a forgotten trunk waystation",
+     "a forgotten root waystation",
      "a crossroads of three branches",
      "a knot-hollow off the main path"
     ],
     "pests": [
-     "trunk-mites",
+     "root-mites",
      "lost wanderers turned feral",
      "gray oozes"
     ],
@@ -1182,7 +1182,7 @@ const DEFAULT_JOB_TABLES={
    "reality is thinning near the branch",
    "a missing heir and a contested throne",
    "an inquisition hunting outsiders",
-   "a bridge-world collapsing into the Trunk",
+   "a bridge-world collapsing into the Roots",
    "a disease that turns people to glass",
    "the local gods have gone silent",
    "a heist targeting the Tree itself"
@@ -1431,7 +1431,7 @@ const DEFAULT_JOB_TABLES={
    "bring back {count} {ingredient} before the season ends",
    "collect a debt of {item} from {spot}",
    "find a replacement for {item}, lost at {spot}",
-   "recover a package that fell through the Trunk near {spot}"
+   "recover a package that fell through the Roots near {spot}"
   ],
   "Extermination": [
    "clear {pests} out of {spot}",
@@ -1448,7 +1448,7 @@ const DEFAULT_JOB_TABLES={
    "get {person} to {spot} before their rivals do",
    "escort a wagon of {livestock} through {spot}",
    "protect {person} for one very long night",
-   "see {person} safely home through the Trunk"
+   "see {person} safely home through the Roots"
   ],
   "Investigation": [
    "find out why {mystery}",
@@ -2259,7 +2259,7 @@ const DEFAULT_JOB_TABLES={
    ],
    "uncommon": [
     "A map or secret route",
-    "A shortcut through the Trunk",
+    "A shortcut through the Roots",
     "The weakness of a monster the party will meet",
     "A list of who's hiring in three worlds",
     "The real name of a fey"

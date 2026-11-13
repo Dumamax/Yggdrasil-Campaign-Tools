@@ -1,5 +1,5 @@
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=2;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=3;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -38,7 +38,9 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
-function normalize(c){const n=newCampaign();const o=Object.assign(n,c||{});
+/* v3: "The Trunk" was renamed "The Roots" */
+function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
+function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
   o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}

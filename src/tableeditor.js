@@ -12,7 +12,7 @@ const TableEditor=(()=>{
   const HINTS={jobTypes:"How often each job type appears at each tier. Bigger number = more common; 0 = never.",
     sizes:"How often each job size appears per tier, plus its gold multiplier and contribution value.",locations:"Where jobs happen, weighted per tier.",
     fantasyShare:"Share of fantasy-flavored worlds at Iron vs. Platinum (0 to 1).",genres:"World genres: weight, places, quirks, and fill-in words used in job text.",
-    locales:"Home-ground locations (the city, inside the Tree, the Trunk) and their quirks.",worldBlock:"Extra world details rolled on demand.",
+    locales:"Home-ground locations (the city, inside the Tree, the Roots) and their quirks.",worldBlock:"Extra world details rolled on demand.",
     patrons:"Patron categories → archetypes → which kinds of incentive each gives.",objectives:"Job text templates per job type. Words in {braces} are filled from the fill-in lists.",
     fill:"Fill-in word lists used by the {braces} in job text.",complications:"Complications that can be rolled.",goldBaseByLevel:"Gold for a Standard job (whole party), by party level.",
     rarityByTier:"Which incentive rarities each tier can roll.",items:"Incentive items by kind and rarity.",xpBudget:"XP per character for Low / Moderate / High encounters, by level.",
