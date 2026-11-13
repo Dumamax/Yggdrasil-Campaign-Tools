@@ -1,6 +1,6 @@
 /* Guild Upgrade default tables (content v3) */
 const DEFAULT_UPG_TABLES={
- "version": 4,
+ "version": 5,
  "goldBaseByLevel": [
   0,
   30,
@@ -1293,7 +1293,7 @@ const DEFAULT_UPG_TABLES={
      "cat": "Facilities",
      "jobs": 1,
      "days": 3,
-     "perk": "First responders: Council-assigned jobs pay a bigger guild fee (+50%) and, once Contribution Points exist, extra contribution."
+     "perk": "First responders: Council-assigned jobs pay a bigger guild fee (+50%) and earn extra guild standing points (+50% by default)."
     },
     {
      "name": "Sturdy Stables",

@@ -300,6 +300,21 @@ body.mobile .print-opts{align-items:stretch}
 body.mobile .print-opts fieldset{width:100%}
 body.mobile #mQuick{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow:visible}
 body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-height:1.15;min-height:40px;font-size:14px;padding:6px 8px}
+/* guild standing */
+.standing{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.st-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.st-rank{font:700 18px "Cinzel",serif;color:var(--gold)}
+.st-next{color:var(--mute)}.st-next b{color:#9fd08a}
+.st-btns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.cp-bar{height:8px;border-radius:5px;background:#16130f;border:1px solid var(--line);margin-top:8px;overflow:hidden}
+.cp-bar span{display:block;height:100%;background:linear-gradient(90deg,#8a6a2a,var(--gold));border-radius:5px;transition:width .4s}
+.cp-bar.ready span{background:linear-gradient(90deg,#5d8a3a,#9fd08a);box-shadow:0 0 10px rgba(159,208,138,.6)}
+.st-form{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.st-log{margin-top:10px;max-height:340px;overflow:auto}
+.st-log td:last-child{white-space:nowrap;text-align:right}
+.badge.red{border-color:var(--red);color:var(--red)}
+body.mobile .st-btns{margin-left:0;width:100%}body.mobile .st-btns .btn{flex:1;min-height:38px}
+body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-form>label[style]{grid-column:1/-1}body.mobile .st-form select,body.mobile .st-form input{width:100%}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -348,6 +363,7 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
 </div>
 <main>
   <section id="tab-jobs">
+    <div class="standing-host"></div>
     <div class="controls">
       <label>Guild tier <select id="tierSel"></select></label>
       <label>Party level <input id="pl" type="number" min="1" max="20"></label>
@@ -362,6 +378,7 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
   </section>
 
   <section id="tab-shop" hidden>
+    <div class="standing-host"></div>
     <div class="controls">
       <label>Treasury (gp) <input id="treasury" type="number" min="0" placeholder="—"></label>
       <button class="btn primary dmonly" id="rollOffers">Roll Peddlers</button>
@@ -403,6 +420,7 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
         <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
         <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
         <label class="inline"><input type="checkbox" data-p="council"> Council Notice</label>
+        <label class="inline"><input type="checkbox" data-p="standing"> Guild Standing</label>
       </fieldset>
       <fieldset><legend>DM only</legend>
         <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
@@ -433,6 +451,10 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Guild standing</h2>
+        <div id="cpSettings"></div>
       </div>
       <div class="panel">
         <h2>Display</h2>
@@ -479,7 +501,7 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=4;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=5;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -510,12 +532,16 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 const FRAMED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 
 /* ---------- campaign state (the thing that gets saved to file) ---------- */
-const DEFAULT_SETTINGS={tierRank:0,partyLevel:3,partySize:4,
+const DEFAULT_CP={name:"Contribution Points",short:"pts",
+  stepJobs:{Iron:4,Bronze:5,Silver:6,Gold:7,Platinum:8},
+  deeds:{Minor:0.5,Notable:1,Major:3,Legendary:8},
+  councilBonus:50,failPct:0};
+const DEFAULT_SETTINGS={cp:null,tierRank:0,partyLevel:3,partySize:4,
   mapping:{Iron:[3,5],Bronze:[6,8],Silver:[9,12],Gold:[13,16],Platinum:[17,20]},
   jobComp:30,hMin:6,hMax:8,feePct:25,offerCount:3,buildComp:10,revive:50};
 function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:clone(DEFAULT_SETTINGS),
   tables:{jobs:null,upgrades:null,prices:null,shops:null,npcs:null},jobs:[],shops:[],
-  guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
+  guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[],cp:{pts:0,log:[]}},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
 /* v3: "The Trunk" was renamed "The Roots" */
@@ -523,6 +549,8 @@ function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(J
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
   o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
+  /* v5: guild standing (points toward the next rank) */
+  o.guild.cp=Object.assign({pts:0,log:[]},o.guild.cp||{});const sc=o.settings.cp||{};o.settings.cp=Object.assign(clone(DEFAULT_CP),sc,{stepJobs:Object.assign(clone(DEFAULT_CP.stepJobs),sc.stepJobs||{}),deeds:Object.assign(clone(DEFAULT_CP.deeds),sc.deeds||{})});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
@@ -3392,7 +3420,7 @@ const DEFAULT_JOB_TABLES={
 
 /* Guild Upgrade default tables (content v3) */
 const DEFAULT_UPG_TABLES={
- "version": 4,
+ "version": 5,
  "goldBaseByLevel": [
   0,
   30,
@@ -4685,7 +4713,7 @@ const DEFAULT_UPG_TABLES={
      "cat": "Facilities",
      "jobs": 1,
      "days": 3,
-     "perk": "First responders: Council-assigned jobs pay a bigger guild fee (+50%) and, once Contribution Points exist, extra contribution."
+     "perk": "First responders: Council-assigned jobs pay a bigger guild fee (+50%) and earn extra guild standing points (+50% by default)."
     },
     {
      "name": "Sturdy Stables",
@@ -5267,18 +5295,18 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
   function closedCard(h){
     const d=document.createElement("div");d.className="card closed"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
     d.innerHTML=`<h3 class="tog" data-act="toggle" title="Show details"><span class="chev" data-act="toggle">▸</span>${esc(hookTitle(h))}</h3>
-    <div class="badges"><span class="badge t${tierOf(h.rank)}">${rankName(h.rank)}</span><span class="badge">${h.size}</span>${h.world.genre?`<span class="badge"><i>${esc(h.world.genre)}</i></span>`:`<span class="badge">${esc(h.location)}</span>`}${h.bounty?'<span class="badge gold">Bounty</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}${h.expanded?'<span class="badge leaf">Prepped</span>':""}</div>
+    <div class="badges"><span class="badge t${tierOf(h.rank)}">${rankName(h.rank)}</span><span class="badge">${h.size}</span>${h.world.genre?`<span class="badge"><i>${esc(h.world.genre)}</i></span>`:`<span class="badge">${esc(h.location)}</span>`}${h.bounty?'<span class="badge gold">Bounty</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}${h.expanded?'<span class="badge leaf">Prepped</span>':""}${h.done?`<span class="badge ${h.done==="success"?"leaf":"red"}">${h.done==="success"?"✓ Completed":"✗ Failed"}</span>`:""}</div>
     <div class="row">${esc(cap(h.objective))}</div>
     <div class="row muted">${esc(h.patron.name)} · <span style="color:var(--gold)">${fmt(h.gold)} gp</span> + ${esc(h.incentive.item)}</div>
     <div class="actions"><button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button><button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
-      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="expand">${h.expanded?"Re-expand":"Expand"} with prep card</button><button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`;
+      <span class="act-end">${moreMenu(`${h.done?`<button class="btn small ghost" data-act="reopen">↺ Reopen job (removes its points)</button>`:`<button class="btn small ghost" data-act="complete">✓ Completed (+${Standing.jobPts(h)} ${esc(Standing.short())})</button><button class="btn small ghost" data-act="failed">✗ Failed</button>`}<button class="btn small ghost" data-act="expand">${h.expanded?"Re-expand":"Expand"} with prep card</button><button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`;
     d.addEventListener("click",ev=>onCardClick(h,ev));return d}
   function dmCard(h,compact){
     if(!compact&&!isOpen(h))return closedCard(h);
     const d=document.createElement("div");d.className="card"+(h.final?" final":h.kept?" kept":"");d.dataset.job=h.id;
     const b=budget(h),t=tierOf(h.rank),x=h.expanded,wb=h.worldBlock;
     d.innerHTML=`<h3${compact?"":' class="tog" data-act="toggle" title="Collapse"'}>${compact?"":'<span class="chev" data-act="toggle">▾</span>'}${esc(hookTitle(h))}</h3>
-    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${h.contribution} contribution</span>${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
+    <div class="badges"><span class="badge t${t}">${rankName(h.rank)}</span><span class="badge">${h.size} · ${esc(T.sizes.blurb[h.size]||"")}</span><span class="badge">Rec. lvl ${recLevel(h.rank)}</span><span class="badge">+${Standing.jobPts(h)} ${esc(Standing.short())}</span>${h.done?`<span class="badge ${h.done==="success"?"leaf":"red"}">${h.done==="success"?"✓ Completed":"✗ Failed"}</span>`:""}${h.bounty?'<span class="badge gold">Bounty +20%</span>':""}${h.final?'<span class="badge leaf">Final</span>':""}</div>
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
     ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}
@@ -5291,7 +5319,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small primary" data-act="expand">${x?"Re-expand":"Expand"}</button>
       <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
-      <span class="act-end">${moreMenu(`<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
+      <span class="act-end">${moreMenu(`${h.done?`<button class="btn small ghost" data-act="reopen">↺ Reopen job (removes its points)</button>`:`<button class="btn small ghost" data-act="complete">✓ Completed (+${Standing.jobPts(h)} ${esc(Standing.short())})</button><button class="btn small ghost" data-act="failed">✗ Failed</button>`}<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
     d.addEventListener("click",ev=>onCardClick(h,ev));
     return d;
@@ -5309,6 +5337,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       else if(a==="usenpc"){const row=ev.target.parentElement;if(row.querySelector("select"))return;const L=NPCs.all();if(!L.length){toast("No saved NPCs yet");return}
         const sel=document.createElement("select");sel.innerHTML='<option value="">Choose an NPC…</option>'+L.map(m=>`<option value="${m.id}">${esc(m.name)}${m.title?` (${esc(m.title)})`:""}</option>`).join("");
         sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
+      else if(a==="complete")Standing.completeJob(h,true);
+      else if(a==="failed")Standing.completeJob(h,false);
+      else if(a==="reopen")Standing.reopenJob(h);
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
       else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1);setTimeout(()=>toast("Job deleted · Ctrl+Z to undo"),0)}
@@ -5336,7 +5367,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     w.querySelector('[data-act="copyn"]').onclick=()=>copyText(`${n.heading}\n${n.title}\n\n${n.body}\n\nReward: ${n.reward}\n${n.deadline} · Rank: ${rankName(h.rank)} or above\n~ ${n.signature}`);
     return w}
   function cardText(h){const x=h.expanded,b=budget(h);
-    let s=`${hookTitle(h)} [${rankName(h.rank)} · ${h.size} · rec. lvl ${recLevel(h.rank)} · +${h.contribution} contribution]
+    let s=`${hookTitle(h)} [${rankName(h.rank)} · ${h.size} · rec. lvl ${recLevel(h.rank)} · +${Standing.jobPts(h)} ${Standing.short()}]
 Where: ${h.location}${h.world.genre?` (${h.world.genre})`:""}: ${h.world.line}
 Patron: ${h.patron.name}, ${h.patron.arch} (${h.patron.cat}), ${h.patron.quirk}
 Job: ${cap(h.objective)}
@@ -5365,6 +5396,109 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
   }
   return {reloadTables,render,initControls,bind,dmCard,hookTitle,setOpen,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
+})();
+
+/* ===== Guild Standing: points toward the next guild rank (name is configurable in Settings) =====
+   Unit: a Standard job at the guild's current rank is worth 3 × (rank index + 1) points (same as the Job Board's job values),
+   so deeds and step costs are set in "Standard jobs" and scale up automatically with the guild. */
+const Standing=(()=>{
+  const cfg=()=>S.cp;
+  const G=()=>C.guild.cp;
+  const N=()=>esc(cfg().name),U=()=>esc(cfg().short);
+  const unit=r=>3*(r+1);
+  const MAX=TIERS.length*3-1;
+  const need=(r=S.tierRank)=>r>=MAX?null:Math.round(unit(r)*(cfg().stepJobs[TIERS[tierOf(r)]]??4));
+  const deedPts=(size,r=S.tierRank)=>Math.max(1,Math.round(unit(r)*(cfg().deeds[size]??1)));
+  const bellTower=()=>(C.guild.uniques||[]).some(u=>/bell tower/i.test(u.name||""));
+  function jobPts(h){let p=h.contribution||0;if(h.patron?.cat==="Council"&&bellTower())p=Math.round(p*(1+(cfg().councilBonus||0)/100));return p}
+  function log(kind,label,pts,extra){const e=Object.assign({id:uid(),t:Date.now(),kind,label,pts,rank:S.tierRank},extra||{});G().log.unshift(e);G().pts=Math.max(0,G().pts+pts);return e}
+  const ready=()=>need()!=null&&G().pts>=need();
+
+  /* ---- actions ---- */
+  function completeJob(h,ok=true){if(h.done)return;h.done=ok?"success":"failed";h.doneAt=Date.now();h.kept=true;
+    const p=ok?jobPts(h):Math.round(jobPts(h)*(cfg().failPct||0)/100);
+    log("Job",`${ok?"Completed":"Failed"}: ${Jobs.hookTitle(h)} (${h.patron?.name||"patron"})`,p,{jobId:h.id});
+    toast(p?`+${p} ${cfg().short}${ok?"":" (failed job)"}${ready()?` · Ready to rise to ${rankName(S.tierRank+1)}!`:""}`:"Job marked failed")}
+  function reopenJob(h){const i=G().log.findIndex(e=>e.jobId===h.id&&e.kind==="Job");if(i>=0){G().pts=Math.max(0,G().pts-G().log[i].pts);G().log.splice(i,1)}delete h.done;delete h.doneAt}
+  function promote(){const n=need();if(n==null)return;const from=rankName(S.tierRank);G().pts=Math.max(0,G().pts-n);S.tierRank++;
+    log("Promotion",`Rose from ${from} to ${rankName(S.tierRank)}`,0);commit();App.reloadAll();toast(`The guild is now ${rankName(S.tierRank)}!`)}
+  function demote(){if(S.tierRank<=0)return;const from=rankName(S.tierRank);S.tierRank--;log("Demotion",`Dropped from ${from} to ${rankName(S.tierRank)}`,0);commit();App.reloadAll()}
+
+  /* ---- UI: standing strip (Job Board, Guild Upgrades) ---- */
+  let openLog=false,form=null;
+  function bar(){const n=need(),p=G().pts,pct=n?Math.min(100,p/n*100):100;
+    return `<div class="cp-bar${ready()?" ready":""}"><span style="width:${pct}%"></span></div>`}
+  function strip(host){if(!host)return;const n=need(),p=G().pts;
+    host.innerHTML=`<div class="standing">
+      <div class="st-head"><span class="st-rank">${rankName(S.tierRank)}</span>
+        <span class="st-next">${n==null?"Highest rank reached":ready()?`<b>Ready to rise to ${rankName(S.tierRank+1)}</b>`:`${fmt(p)} / ${fmt(n)} ${U()} to ${rankName(S.tierRank+1)}`}</span>
+        <span class="st-btns">${ready()?'<button class="btn small primary" data-st="promote">Promote guild</button>':""}<button class="btn small" data-st="deed">＋ Log deed</button><button class="btn small ghost" data-st="log">${openLog?"Hide":"History"}</button></span></div>
+      ${bar()}
+      ${form?formHTML():""}${openLog?logHTML():""}</div>`;
+    host.onclick=onClick;host.onsubmit=onSubmit}
+  function formHTML(){const r=S.tierRank;return `<form class="st-form">
+    <label>Kind <select name="kind"><option>Community contribution</option><option>Act of heroism</option><option>Council recognition</option><option>Other</option></select></label>
+    <label>Size <select name="size">${Object.keys(cfg().deeds).map(k=>`<option value="${k}"${k==="Notable"?" selected":""}>${k} (+${deedPts(k,r)})</option>`).join("")}<option value="custom">Custom…</option></select></label>
+    <label class="st-custom" hidden>${U()} <input name="pts" type="number" step="1" value="${deedPts("Notable",r)}"></label>
+    <label style="flex:1;min-width:200px">What happened <input name="label" placeholder="e.g. Rebuilt the Lantern Market after the fire" required></label>
+    <span class="st-btns"><button class="btn primary small">Add</button><button type="button" class="btn small ghost" data-st="cancel">Cancel</button></span></form>`}
+  function logHTML(){const L=G().log;
+    return `<div class="st-log">${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td><span class="badge${e.kind==="Promotion"?" leaf":e.kind==="Demotion"?" red":""}">${esc(e.kind)}</span> ${esc(e.label)}<br><span class="muted" style="font-size:13px">${new Date(e.t).toLocaleDateString()} · at ${rankName(e.rank)}</span></td><td>${e.pts?`${e.pts>0?"+":""}${fmt(e.pts)}`:""} <button class="btn small ghost danger" data-st="del" data-id="${e.id}" title="Remove this entry (its points too)">✕</button></td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Complete jobs on the Job Board or log a deed.</p>'}
+      <div class="actions" style="margin-top:6px"><button class="btn small ghost" data-st="adjust">± Adjust ${U()}</button>${S.tierRank>0?'<button class="btn small ghost danger" data-st="demote">Lower guild rank</button>':""}</div></div>`}
+  function onClick(e){const a=e.target.closest("[data-st]")?.dataset.st;
+    if(e.target.name==="size"||e.target.closest?.(".st-form")&&!a){return}
+    if(!a)return;
+    if(a==="promote")return promote();
+    if(a==="deed"){form=!form;rerender();return}
+    if(a==="cancel"){form=null;rerender();return}
+    if(a==="log"){openLog=!openLog;rerender();return}
+    if(a==="demote"){if(confirmTwice(e.target,"Lower the rank? Click again"))demote();return}
+    if(a==="adjust"){const v=prompt(`Add or remove ${cfg().short} (negative to remove):`,"0");const n=Math.round(+v);if(!v||!n)return;const why=prompt("Reason (optional):","DM adjustment")||"DM adjustment";log("Adjust",why,n);commit();rerender();return}
+    if(a==="del"){const i=G().log.findIndex(x=>x.id===e.target.dataset.id);if(i<0)return;const x=G().log[i];
+      if(x.kind==="Promotion"||x.kind==="Demotion"){G().log.splice(i,1)}else{G().pts=Math.max(0,G().pts-x.pts);G().log.splice(i,1);if(x.jobId){const h=C.jobs.find(j=>j.id===x.jobId);if(h){delete h.done;delete h.doneAt}}}
+      commit();App.render();toast("Entry removed · Ctrl+Z to undo");return}}
+  function onSubmit(e){e.preventDefault();const f=new FormData(e.target),size=f.get("size"),pts=size==="custom"?Math.round(+f.get("pts")||0):deedPts(size);
+    log("Deed",`${f.get("kind")}: ${String(f.get("label")).trim()}${size==="custom"?"":` (${size})`}`,pts);form=null;commit();App.render();
+    toast(`+${pts} ${cfg().short}${ready()?` · Ready to rise to ${rankName(S.tierRank+1)}!`:""}`)}
+  document.addEventListener("change",e=>{if(e.target.name==="size"&&e.target.closest(".st-form")){const c=e.target.closest(".st-form").querySelector(".st-custom");c.hidden=e.target.value!=="custom"}});
+  function confirmTwice(b,msg){if(b.dataset.sure)return true;b.dataset.sure=1;b.textContent=msg;return false}
+  function rerender(){$$(".standing-host").forEach(strip)}
+  function render(){rerender()}
+
+  /* ---- Table Mode panel ---- */
+  function tablePanel(){const d=document.createElement("div");d.className="standing-host";strip(d);return d}
+
+  /* ---- Print: player-facing Guild Standing ---- */
+  function printHTML(){const n=need(),p=G().pts,deeds=G().log.filter(e=>e.kind!=="Adjust").slice(0,14);
+    return `<div class="pr pr-sheet pr-standing"><h1>Guild Standing</h1><div class="prsub">Recorded by the Council of Five</div>
+      <div class="ps-rank">${rankName(S.tierRank)}</div>
+      ${n==null?'<p class="ps-next">The highest standing in the Tree.</p>':`<div class="ps-bar"><span style="width:${Math.min(100,p/n*100)}%"></span></div><p class="ps-next">${p>=n?`Eligible to rise to ${rankName(S.tierRank+1)}, pending the Council's seal`:`${fmt(p)} of ${fmt(n)} ${N()} toward ${rankName(S.tierRank+1)}`}</p>`}
+      <h2>Recent deeds</h2>${deeds.length?`<table>${deeds.map(e=>`<tr><td class="nm" style="width:22%">${new Date(e.t).toLocaleDateString()}</td><td>${esc(e.label)}</td><td class="c">${e.pts?`+${fmt(e.pts)}`:"★"}</td></tr>`).join("")}</table>`:'<p class="ps-next">No deeds recorded yet. The Council is waiting.</p>'}
+      <div class="foot">Guilds rise through completed work, service to the community, and acts of heroism.</div></div>`}
+  const PRINT_CSS=`.pr-standing .ps-rank{font:700 34px "IM Fell English SC",serif;text-align:center;margin:10px 0 6px;color:#5a1e10}
+.pr-standing .ps-bar{height:16px;border:2px solid #5a3e1e;border-radius:9px;margin:4px 40px;overflow:hidden}.pr-standing .ps-bar span{display:block;height:100%;background:#8a6a3a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr-standing .ps-next{text-align:center;font-style:italic;margin:6px 0}
+.ink .pr-standing .ps-bar span{background:repeating-linear-gradient(45deg,#111 0 2px,transparent 2px 6px)!important}`;
+
+  /* ---- Settings ---- */
+  function settingsHTML(){const c=cfg();return `
+    <div class="controls" style="margin:0;background:none;border:0;padding:0">
+      <label>Name <input id="cpName" value="${esc(c.name)}" style="width:200px"></label>
+      <label>Short label <input id="cpShort" value="${esc(c.short)}" style="width:80px"></label>
+      <label title="Bonus for Council patrons' jobs when the guild owns the Bell Tower">Bell Tower bonus % <input id="cpBell" type="number" value="${c.councilBonus}" style="width:80px"></label>
+      <label title="Share of a job's points still earned when it fails">Failed job % <input id="cpFail" type="number" value="${c.failPct}" style="width:80px"></label></div>
+    <p class="hint" style="margin:10px 0 4px">Standard jobs (at the guild's current rank) needed to rise one step, per tier:</p>
+    <div class="controls" style="margin:0;background:none;border:0;padding:0">${TIERS.map(t=>`<label>${t} <input data-step="${t}" type="number" step="0.5" min="0.5" value="${c.stepJobs[t]}" style="width:70px"></label>`).join("")}</div>
+    <p class="hint" style="margin:10px 0 4px">Deed sizes, in Standard jobs:</p>
+    <div class="controls" style="margin:0;background:none;border:0;padding:0">${Object.keys(c.deeds).map(k=>`<label>${k} <input data-deed="${k}" type="number" step="0.5" min="0" value="${c.deeds[k]}" style="width:70px"></label>`).join("")}</div>
+    <p class="hint">Right now one Standard job is worth ${unit(S.tierRank)} ${U()}, and the next step costs ${need()==null?"nothing (top rank)":fmt(need())+" "+U()}. Job values come from Settings → Tables → Job Board (sizes → contribution).</p>`}
+  function bindSettings(host){host.onchange=e=>{const c=cfg(),t=e.target;
+    if(t.id==="cpName")c.name=t.value.trim()||DEFAULT_CP.name;else if(t.id==="cpShort")c.short=t.value.trim()||DEFAULT_CP.short;
+    else if(t.id==="cpBell")c.councilBonus=+t.value||0;else if(t.id==="cpFail")c.failPct=Math.max(0,Math.min(100,+t.value||0));
+    else if(t.dataset.step)c.stepJobs[t.dataset.step]=Math.max(0.5,+t.value||1);else if(t.dataset.deed)c.deeds[t.dataset.deed]=Math.max(0,+t.value||0);else return;
+    commit();host.innerHTML=settingsHTML()}}
+
+  return {need,jobPts,completeJob,reopenJob,render,strip,tablePanel,printHTML,PRINT_CSS,settingsHTML,bindSettings,promote,ready,name:()=>cfg().name,short:()=>cfg().short};
 })();
 
 /* ================= GUILD UPGRADES ================= */
@@ -6392,13 +6526,14 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";
-    const live=C.jobs.filter(h=>h.kept||h.final);
+    col("Guild standing",Standing.tablePanel());
+    const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
     const col=(title,inner)=>{const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>${title}</h2>`;if(typeof inner==="string")p.insertAdjacentHTML("beforeend",inner);else p.appendChild(inner);el.appendChild(p);return p};
     const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
     if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
@@ -6427,6 +6562,7 @@ const App=(()=>{
     if(p.cards)add("cards","Upgrade cards",Upgrades.cardsHTML());
     if(p.shops)add("shops","Shop price lists",Shops.printHTML());
     if(p.council)add("council","Council Notice",NPCs.councilHTML());
+    if(p.standing)add("standing","Guild Standing",Standing.printHTML());
     if(p.roster)add("roster","Roster sheet (DM)",Roster.printHTML(),true);
     if(p.npcs)add("npcs","NPC cheat sheet (DM)",NPCs.cheatHTML(),true);
     return L}
@@ -6447,7 +6583,7 @@ const App=(()=>{
       if(UI.print.duplex&&s.pages%2&&s!==L[L.length-1]){out+=blank;total++}});
     if(preview)$("#pPages").textContent=`About ${total} page${total>1?"s":""}${UI.print.duplex?` (${Math.ceil(total/2)} sheets)`:""}. Letter size; ${UI.print.ink?"black & white, no backgrounds.":"turn on \"Background graphics\" in the print dialog for the parchment."}`;
     return UI.print.ink?`<div class="ink">${out}</div>`:out}
-  const printCSS=()=>PRINT_BASE+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
+  const printCSS=()=>PRINT_BASE+Standing.PRINT_CSS+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   const PRINT_BASE=`@page{size:letter;margin:.5in}
 .pr-sec{break-before:page;page-break-before:always}.pr-sec:first-child{break-before:auto;page-break-before:auto}
 .pr-blank{height:9.5in;display:flex;align-items:center;justify-content:center;font:italic 12px Georgia,serif;color:#9a8a70}
@@ -6492,6 +6628,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
+    const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
   }

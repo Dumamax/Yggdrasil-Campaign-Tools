@@ -290,3 +290,18 @@ body.mobile .print-opts{align-items:stretch}
 body.mobile .print-opts fieldset{width:100%}
 body.mobile #mQuick{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow:visible}
 body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-height:1.15;min-height:40px;font-size:14px;padding:6px 8px}
+/* guild standing */
+.standing{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.st-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.st-rank{font:700 18px "Cinzel",serif;color:var(--gold)}
+.st-next{color:var(--mute)}.st-next b{color:#9fd08a}
+.st-btns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.cp-bar{height:8px;border-radius:5px;background:#16130f;border:1px solid var(--line);margin-top:8px;overflow:hidden}
+.cp-bar span{display:block;height:100%;background:linear-gradient(90deg,#8a6a2a,var(--gold));border-radius:5px;transition:width .4s}
+.cp-bar.ready span{background:linear-gradient(90deg,#5d8a3a,#9fd08a);box-shadow:0 0 10px rgba(159,208,138,.6)}
+.st-form{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.st-log{margin-top:10px;max-height:340px;overflow:auto}
+.st-log td:last-child{white-space:nowrap;text-align:right}
+.badge.red{border-color:var(--red);color:var(--red)}
+body.mobile .st-btns{margin-left:0;width:100%}body.mobile .st-btns .btn{flex:1;min-height:38px}
+body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-form>label[style]{grid-column:1/-1}body.mobile .st-form select,body.mobile .st-form input{width:100%}
