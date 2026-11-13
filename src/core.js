@@ -54,7 +54,7 @@ const UNDO=[];let lastSnap=JSON.stringify(C);
 function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
 function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
 function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
-function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
+function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
 
 /* tiers */
 const tierOf=r=>Math.floor(r/3);
@@ -74,18 +74,53 @@ async function saveFile(filename,data,mime){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
 }
 function stamp(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`}
-async function saveCampaign(){
-  C.savedAt=new Date().toISOString();
-  const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,JSON.stringify(C,null,1));
-  if(ok){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast("Campaign saved to file")}
+/* IndexedDB: linked file handle + rolling backups (this browser only) */
+const IDB=(()=>{let dbp;const db=()=>dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open("ygh",1);
+    r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("kv");d.createObjectStore("backups",{keyPath:"t"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  const tx=async(st,mode,fn)=>{const d=await db();return new Promise((res,rej)=>{const t=d.transaction(st,mode),r=fn(t.objectStore(st));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})};
+  return {get:k=>tx("kv","readonly",s=>s.get(k)),set:(k,v)=>tx("kv","readwrite",s=>s.put(v,k)),del:k=>tx("kv","readwrite",s=>s.delete(k)),
+    list:()=>tx("backups","readonly",s=>s.getAll()),put:b=>tx("backups","readwrite",s=>s.put(b)),drop:t=>tx("backups","readwrite",s=>s.delete(t))}})();
+const BACKUP_KEEP=25;
+async function backup(reason){try{const data=JSON.stringify(C),p=C.roster.filter(m=>m.kind!=="NPC").length,n=C.roster.length-p,
+    summary=`${C.jobs.length} jobs · ${p} members · ${n} NPCs · ${C.shops.length} shops · treasury ${C.guild.treasury==null?"—":fmt(C.guild.treasury)+" gp"}`;
+  const L=(await IDB.list()).sort((a,b)=>a.t-b.t);if(L.length&&L[L.length-1].data===data)return;
+  await IDB.put({t:Date.now(),reason,data,summary});
+  for(const b of L.slice(0,Math.max(0,L.length+1-BACKUP_KEEP)))await IDB.drop(b.t)}catch(e){}}
+let backupAt=lsGet("ygh.backupAt",0);
+setInterval(()=>{if(dirty&&Date.now()-backupAt>5*60e3){backupAt=Date.now();lsSet("ygh.backupAt",backupAt);backup("Auto (every 5 min of changes)")}},60e3);
+/* linked campaign file (Chrome / Edge): pick once, then Save overwrites it */
+const FS_OK=!FRAMED&&!!window.showSaveFilePicker;
+let fileHandle=null;
+const FILE_TYPES=[{description:"Guild Hall campaign",accept:{"application/json":[".json"]}}];
+async function linkHandle(h){fileHandle=h;try{await IDB.set("fileHandle",h)}catch(e){}banner()}
+async function unlinkFile(){fileHandle=null;try{await IDB.del("fileHandle")}catch(e){}banner();App.render();toast("Unlinked: Save will ask where to save next time")}
+async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"}))!=="granted"&&(await h.requestPermission({mode:"readwrite"}))!=="granted")throw new Error("permission");
+  const w=await h.createWritable();await w.write(text);await w.close()}
+function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
+async function saveCampaign(asNew){
+  C.savedAt=new Date().toISOString();const text=JSON.stringify(C,null,1);
+  if(FS_OK){
+    try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
+    catch(e){toast(`Couldn't write ${fileHandle.name}; choose where to save`)}
+    try{const h=await showSaveFilePicker({suggestedName:"yggdrasil-campaign.json",types:FILE_TYPES});await writeHandle(h,text);await linkHandle(h);markSaved(`Saved to ${h.name}. Ctrl+S updates this file from now on`)}
+    catch(e){if(e.name!=="AbortError")toast("Save failed: "+e.message)}
+    return}
+  const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,text);
+  if(ok)markSaved("Campaign saved to file");
 }
+async function openCampaign(){
+  if(!FS_OK){$("#fileIn").click();return}
+  try{const [h]=await showOpenFilePicker({types:FILE_TYPES});const d=JSON.parse(await (await h.getFile()).text());
+    importData(d);if(d&&d.app===APP_ID){await linkHandle(h);toast(`Loaded ${h.name}. Save updates this file`)}}
+  catch(e){if(e.name!=="AbortError")toast(e instanceof SyntaxError?"That file isn't valid JSON":"Couldn't open: "+e.message)}}
+(async()=>{if(FS_OK)try{fileHandle=(await IDB.get("fileHandle"))||null;banner()}catch(e){}})();
 function loadCampaignFile(file){
   const r=new FileReader();
   r.onload=()=>{try{importData(JSON.parse(r.result))}catch(e){toast("That file isn't valid JSON")}};
   r.readAsText(file);
 }
 function importData(d){
-  if(d&&d.app===APP_ID){replaceCampaign(d);dirty=false;lsSet("ygh.dirty",false);banner();toast("Campaign loaded");return}
+  if(d&&d.app===APP_ID){if(fileHandle){fileHandle=null;IDB.del("fileHandle").catch(()=>{})}replaceCampaign(d);dirty=false;lsSet("ygh.dirty",false);banner();toast("Campaign loaded");return}
   if(d&&d.source==="job-board"){ // export from the old standalone Job Board
     const have=new Set(C.jobs.map(h=>h.id));(d.hooks||[]).forEach(h=>{if(!have.has(h.id))C.jobs.push(h)});
     if(d.settings){["tierRank","partyLevel","partySize","mapping","hMin","hMax"].forEach(k=>{if(d.settings[k]!=null)S[k]=d.settings[k]});if(d.settings.compChance!=null)S.jobComp=d.settings.compChance}
@@ -100,8 +135,10 @@ function importData(d){
 function banner(){
   const b=$("#banner");if(!b)return;
   b.classList.toggle("show",dirty);
-  $("#bannerText").textContent=C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  $("#bannerText").textContent=fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
+document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false}));
 window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();
   if(k==="s"){e.preventDefault();saveCampaign()}
   else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});

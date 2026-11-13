@@ -174,3 +174,30 @@ table.ref td:first-child{min-width:11em}
   main{padding:12px 14px 40px}
   .board,.tm-grid{grid-template-columns:1fr}
 }
+/* compact job cards + overflow menu */
+.tog{cursor:pointer;user-select:none}
+.tog:hover{color:#f0c463}
+.chev{display:inline-block;width:1.1em;color:var(--mute);font-size:14px}
+.card.closed{gap:4px}
+details.more{position:relative}
+details.more>summary{list-style:none;font-size:18px;line-height:1;padding:2px 10px}
+details.more>summary::-webkit-details-marker{display:none}
+details.more[open]>summary{border-color:var(--line);color:var(--ink)}
+details.more .menu{position:absolute;right:0;top:calc(100% + 4px);z-index:15;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px;display:flex;flex-direction:column;min-width:220px;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+details.more .menu .btn{text-align:left;padding:6px 10px;font-size:15px}
+/* quick search */
+.qs{position:fixed;inset:0;z-index:50;background:rgba(10,8,6,.6);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
+.qs-box{width:min(640px,92vw);background:var(--panel);border:1px solid var(--gold);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.6);overflow:hidden}
+.qs-box input{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px 16px;font-size:19px;background:transparent}
+.qs-box input:focus{box-shadow:none}
+.qs-res{max-height:55vh;overflow:auto;padding:4px}
+.qs-item{padding:7px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qs-item.on,.qs-item:hover{background:var(--panel2)}
+.qs-item.on{box-shadow:inset 3px 0 0 var(--gold)}
+.qs-foot{font-size:13px;padding:6px 14px;border-top:1px solid var(--line)}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,30%{box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(214,168,74,.5)}100%{box-shadow:none}}
+/* NPC generator on one row, backups */
+.gen-row select{max-width:150px}
+table.backups td:last-child{white-space:nowrap}
+.te-mini .te-num{width:76px}

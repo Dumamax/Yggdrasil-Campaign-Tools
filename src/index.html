@@ -17,6 +17,7 @@
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
+    <button class="btn ghost" id="qsBtn" title="Search everything (Ctrl+K)">⌕ Search</button>
     <button class="btn ghost" id="undoBtn" title="Undo last change (Ctrl+Z)" disabled>↶ Undo</button>
     <button class="btn" id="tmToggle">Table Mode</button>
     <button class="btn primary" id="saveCamp" title="Save Campaign (Ctrl+S)">Save Campaign</button>
@@ -42,6 +43,7 @@
       <label>Party level <input id="pl" type="number" min="1" max="20"></label>
       <label>Party size <input id="ps" type="number" min="1" max="8"></label>
       <button class="btn primary" id="rollBtn">Roll the Board</button>
+      <button class="btn ghost" id="jobsAll" title="Show or hide details on every card">Open all</button>
       <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">DM view</button><button class="btn" id="vNotice">Notice view</button></div>
     </div>
     <div id="jobBoard" class="board"></div>
@@ -61,7 +63,7 @@
 
   <section id="tab-roster" hidden>
     <div class="controls">
-      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button></div>
+      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button><button class="btn" data-sub="council">Council</button></div>
       <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
@@ -107,7 +109,11 @@
         <h2>Campaign file</h2>
         <p class="hint">The campaign file is the source of truth: jobs, upgrades, treasury, roster, write-ups, and any custom tables. The page also keeps a working copy in this browser, but save a file after each prep session and keep the files somewhere safe (Drive, Dropbox, USB).</p>
         <p class="row" id="lastSaved"></p>
-        <div class="actions"><button class="btn primary" onclick="saveCampaign()">Save Campaign</button><button class="btn" onclick="$('#fileIn').click()">Load Campaign</button><button class="btn danger" id="newCamp">Start a new campaign</button></div>
+        <p class="row" id="linkedFile"></p>
+        <div class="actions"><button class="btn primary" onclick="saveCampaign()">Save Campaign</button><button class="btn" id="saveAsNew">Save as new file…</button><button class="btn" onclick="openCampaign()">Load Campaign</button><button class="btn ghost" id="unlinkFile" hidden>Unlink file</button><button class="btn danger" id="newCamp">Start a new campaign</button></div>
+        <h2 style="margin-top:14px">Backups in this browser</h2>
+        <p class="hint">Taken automatically when you save, before loading a file or restoring, and every 5 minutes while you have unsaved changes (last 25 kept). They live in this browser only, so they're a safety net, not a replacement for the campaign file.</p>
+        <div id="backupList"></div>
         <h2 style="margin-top:14px">Import pasted data</h2>
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
@@ -149,6 +155,7 @@
   </section>
 </main>
 <div id="printArea"></div>
+<div class="qs" id="qs" hidden><div class="qs-box" role="dialog" aria-label="Search"><input id="qsIn" placeholder="Search jobs, people, shops, upgrades…" autocomplete="off"><div id="qsRes" class="qs-res"></div><div class="qs-foot muted">↑↓ to move · Enter to open · Esc to close</div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 /*SCRIPTS*/

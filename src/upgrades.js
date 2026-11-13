@@ -92,7 +92,7 @@ Don't change the perk's mechanics.`;
     ["Facilities","Services","Staff"].forEach(cat=>{if(c!=="All"&&c!==cat)return;section(cat,b=>T.catalog.filter(u=>u.cat===cat).forEach(u=>b.appendChild(upgradeCard(u,dm))))});
   }
   function upgradeCard(u,dm){
-    const g=G(),own=g.owned[u.id]||0,d=document.createElement("div");d.className="card"+(own?" owned":"");
+    const g=G(),own=g.owned[u.id]||0,d=document.createElement("div");d.className="card"+(own?" owned":"");d.dataset.upg=u.id;
     const lvls=u.levels.map((L,i)=>{const cost=priceOf(L),st=i<own?"owned":i===own?"next":"later",dim=st!=="owned"&&!canAfford(cost);
       return `<div class="lv ${st}${dim?" dim":""}"><span class="n">${ROMAN[i]}</span><span class="nm">${esc(L.name)} <span class="badge t${L.tier||0}">${TIERS[L.tier||0]}</span></span><span class="cost">${st==="owned"?"✓ Owned":fmt(cost)+" gp"}</span>
       <span class="perk">${esc(L.perk)}</span><span class="meta">${L.days?`${L.days} day${L.days>1?"s":""} to build`:u.cat==="Staff"?"Hired immediately":"Ready immediately"}${dm&&st==="next"?` · <button class="btn small primary" data-buy="${i}">${u.cat==="Staff"?(i?"Promote":"Hire"):"Buy"}</button>`:""}</span></div>`}).join("");

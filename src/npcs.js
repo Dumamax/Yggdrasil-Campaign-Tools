@@ -153,31 +153,34 @@ Return ONLY JSON:
       <button class="btn small" data-reseat="${t}">Re-roll seat</button><button class="btn small" data-newseat="${t}">Enter manually</button>${m?`<button class="btn small" data-vacate="${t}">Vacate</button>`:""}</div></td></tr>`}).join("")}</table>
       <p class="hint">Re-roll writes a new member with Claude (or fills one from the tables, with a prompt to copy). The old holder stays in your NPCs.</p>`;
     p.onclick=e=>{const t=e.target.dataset;
-      if(t.go){e.preventDefault();filt="all";q="";render();document.querySelector(`[data-npc="${t.go}"]`)?.scrollIntoView({behavior:"smooth"})}
+      if(t.go){e.preventDefault();App.flash(`[data-npc="${t.go}"]`)}
       else if(t.reseat)rerollSeat(t.reseat,e.target);
       else if(t.newseat){const m=generate({occ:"Adventurer",con:"Bystander",level:tierMidLevel(TIERS.indexOf(t.newseat))});Object.assign(m,{name:"",seat:t.newseat,want:"",secret:"",look:"",voice:"",manner:""});Roster.edit(m)}
       else if(t.vacate){const m=seatHolder(t.vacate);if(m){m.seat="";commit();render()}}};
     p.onchange=e=>{const t=e.target.dataset.seat;if(t&&e.target.value)seatNPC(t,e.target.value)};
     return p}
-  function render(){
+  let mode="npcs";
+  function render(m){if(m)mode=m;
     const h=$("#npcHost");if(!h)return;h.innerHTML="";
+    if(mode==="council"){h.appendChild(councilEl());const b=document.createElement("div");b.className="board";b.id="councilCards";bindAtt(b);
+      TIERS.map(seatHolder).filter(Boolean).forEach(m=>b.appendChild(card(m)));h.appendChild(b);return}
     const g=document.createElement("div");g.className="panel";
-    g.innerHTML=`<h2>Generate NPCs</h2><div class="controls" style="margin:0;background:none;border:0;padding:0">
+    g.innerHTML=`<h2>Generate NPCs</h2><div class="controls gen-row" style="margin:0;background:none;border:0;padding:0">
       <label>Occupation <select data-g="occ">${opt(Object.keys(T.occupations),gen.occ)}</select></label>
       <label>Connection <select data-g="con">${opt(Object.keys(T.connections),gen.con)}</select></label>
       <label>Genre <select data-g="genre">${opt(genreList(),gen.genre)}</select></label>
       <label>Archetype <select data-g="arch">${opt(Object.keys(T.archetypes),gen.arch)}</select></label>
       <label>Level <input data-g="level" type="number" min="1" max="20" placeholder="any" value="${esc(gen.level)}" style="width:70px"></label>
-      <button class="btn primary" id="npcRoll">Roll 3</button><button class="btn" id="npcNew">＋ New NPC</button></div>
-      <p class="hint" style="margin:6px 0 0">Blank fields roll weighted: common genres and low levels are most likely; over level 10 is rare and over 15 never happens.</p>
+      <button class="btn primary" id="npcRoll" title="Blank fields roll weighted: common genres and low levels are most likely; over level 10 is rare and over 15 never happens.">Roll 3</button><button class="btn" id="npcNew">＋ New NPC</button></div>
+      
       <div class="board" id="npcCands" style="margin-top:8px"></div>`;
     h.appendChild(g);cands.forEach(m=>g.querySelector("#npcCands").appendChild(card(m,true)));
     g.onchange=g.oninput=e=>{const k=e.target.dataset.g;if(k)gen[k]=e.target.value};
     g.querySelector("#npcRoll").onclick=()=>{cands=[0,1,2].map(()=>generate(genOpts()));render()};
     g.querySelector("#npcNew").onclick=()=>Roster.edit({id:uid(),kind:"NPC",status:"",name:"",occupation:"",connection:"",genre:"Tree-born",archetype:"Noncombatant",level:null,attitude:"Neutral",skills:[],role:"",player:"",assign:"",notes:""});
-    h.appendChild(councilEl());
+    if(filt==="council")filt="all";
     const f=document.createElement("div");f.className="controls";
-    f.innerHTML=`<div class="seg">${[["all","All"],["patron","Patrons"],["council","Council"],["rival","Rivals"],["pinned","Pinned"]].map(([k,l])=>`<button class="btn${filt===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div><input id="npcQ" placeholder="Search names, jobs, notes" value="${esc(q)}" style="width:240px">`;
+    f.innerHTML=`<div class="seg">${[["all","All"],["patron","Patrons"],["rival","Rivals"],["pinned","Pinned"]].map(([k,l])=>`<button class="btn${filt===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div><input id="npcQ" placeholder="Search names, jobs, notes" value="${esc(q)}" style="width:240px">`;
     f.onclick=e=>{if(e.target.dataset.f){filt=e.target.dataset.f;render()}};
     f.querySelector("#npcQ").oninput=e=>{q=e.target.value;drawList()};
     h.appendChild(f);const b=document.createElement("div");b.className="board";b.id="npcList";h.appendChild(b);bindAtt(b);drawList()}
@@ -202,5 +205,5 @@ Return ONLY JSON:
     return `<div class="council-notice notice"><div class="nhead">BY THE AUTHORITY OF THE TREE</div><div class="ntitle">The Council of Five</div><hr class="nrule">${L.map(([t,m])=>`<div class="cn-seat"><div class="nreward">${esc((T.council.seats[t]||{}).title||t)}</div><b>${esc(m.name)}</b>${m.guild?`, ${esc(m.guild)}`:""}<br><span>${esc(cap(m.look||""))}${m.look?". ":""}${esc(m.public||"")}</span></div>`).join("")}<hr class="nrule"><div class="sig">Petitions are heard at the Iron Seat each morning, snacks permitting.</div></div>`}
   const PRINT_CSS=`.npc-sheet h1{font:700 22px Cinzel,serif;text-align:center;margin:0 0 10px}.npc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.npc-c{border:1px solid #7a5a2e;border-radius:4px;padding:8px 10px;font-size:13.5px;line-height:1.3;break-inside:avoid;page-break-inside:avoid}.npc-c h3{margin:0;font:700 15px Cinzel,serif}.npc-c .lvl{font-size:12px;color:#5a3e1e;margin-bottom:3px}
   .council-notice{max-width:620px;margin:24px auto 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.council-notice .cn-seat{margin:9px 0;font-size:16px;line-height:1.35}.council-notice .nreward{font-size:16px}`;
-  return {reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
+  return {reset:()=>{filt="all";q=""},reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
 })();
