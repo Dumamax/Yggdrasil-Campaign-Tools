@@ -136,7 +136,7 @@ Don't change the perk's mechanics.`;
 
   /* print */
   const PRINT_CSS=`.pr{font-family:"Crimson Pro",Georgia,serif;color:#2a1c0c}
-.pr-sheet{background:linear-gradient(135deg,#f1e4c3,#e6d3a5);padding:28px 30px;border-radius:4px;margin:0 auto 18px;max-width:820px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr-sheet{background:linear-gradient(135deg,#f1e4c3,#e6d3a5);padding:24px 26px;border-radius:4px;margin:0 auto;max-width:820px;box-decoration-break:clone;-webkit-box-decoration-break:clone;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pr h1{font:700 30px "IM Fell English SC",serif;text-align:center;margin:0;color:#2a1c0c;letter-spacing:.05em}
 .pr .prsub{text-align:center;font-family:"IM Fell English",serif;font-style:italic;margin:2px 0 14px;color:#5a3e1e}
 .pr h2{font:700 17px "Cinzel",serif;color:#5a1e10;border-bottom:1.5px solid #8a6a3a;margin:16px 0 6px;padding-bottom:2px}
@@ -148,8 +148,8 @@ Don't change the perk's mechanics.`;
 .pr .ad{font-size:12px;color:#5a3e1e;font-style:italic}
 .pr .peddlers{border:2px double #5a1e10;padding:8px 12px;margin-top:10px}
 .pr .foot{margin-top:14px;text-align:center;font-style:italic;font-size:13px;color:#5a3e1e}
-.pr-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;margin:0 auto}
-.pr-card{border:2px solid #5a3e1e;border-radius:6px;padding:14px 16px;min-height:240px;background:linear-gradient(135deg,#f1e4c3,#e6d3a5);break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr-cards{display:grid;grid-template-columns:1fr 1fr;gap:.2in;max-width:820px;margin:0 auto}
+.pr-card{border:2px solid #5a3e1e;border-radius:6px;padding:14px 16px;height:3.1in;overflow:hidden;background:linear-gradient(135deg,#f1e4c3,#e6d3a5);break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pr-card h3{font:700 18px "IM Fell English SC",serif;margin:0;color:#2a1c0c}
 .pr-card .k{font:600 11px "Cinzel",serif;color:#7a5a2a;letter-spacing:.08em}
 .pr-card p{font-size:14.5px;margin:6px 0}
@@ -161,7 +161,7 @@ Don't change the perk's mechanics.`;
       const idxs=full?[0,1,2]:[own];
       const lr=idxs.map(i=>{const L=u.levels[i];return `<tr><td class="nm">${i===idxs[0]?esc(u.name)+"<br>":""}<span class="lvl">${ROMAN[i]} · ${esc(L.name)}</span></td><td>${esc(L.perk)}${L.days?` <i>(${L.days} d)</i>`:""}</td><td class="c">${i<own?"✓ owned":fmt(priceOf(L))+" gp"}</td></tr>`}).join("");
       const ad=(u.addons||[]).filter(a=>!(g.addons[u.id]||[]).includes(a.name));
-      return lr+(ad.length?`<tr><td></td><td colspan="2" class="ad">${cat==="Staff"?"Also":"Add-ons"}: ${ad.map(a=>`${esc(a.name)} (${fmt(a.gp)} gp)`).join(" · ")}</td></tr>`:"")}).join("")}</table>`;
+      return `<tbody>${lr}${ad.length?`<tr><td></td><td colspan="2" class="ad">${cat==="Staff"?"Also":"Add-ons"}: ${ad.map(a=>`${esc(a.name)} (${fmt(a.gp)} gp)`).join(" · ")}</td></tr>`:""}</tbody>`}).join("")}</table>`;
     const open=g.offers.filter(o=>!o.sold);
     const ped=withOffers&&open.length?`<div class="peddlers"><h2 style="margin-top:0">Today's Peddlers</h2><table>${open.map(o=>`<tr><td class="nm">${esc(o.name)}<br><span class="lvl">${{unique:"One of a kind",deal:`Deal: ${o.discount}% off`,hire:"Rare hire"}[o.type]}</span></td><td>${esc(o.perk)}${o.days?` <i>(${o.days} d)</i>`:""}</td><td class="c">${fmt(o.cost)} gp</td></tr>`).join("")}</table></div>`:"";
     return `<div class="pr pr-sheet"><h1>The Builder's Ledger</h1><div class="prsub">Upgrades for the guild hall · ${rankName(S.tierRank)}${g.treasury!=null?` · Treasury: ${fmt(g.treasury)} gp`:""}</div>${ped}${sec("Facilities")}${sec("Services")}${sec("Staff")}<div class="foot">Prices are final. Complaints may be addressed to Mordecai, who will ignore them.</div></div>`}

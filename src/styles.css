@@ -288,3 +288,5 @@ body.mobile #tab-jobs .controls>.seg button{flex:1 1 0;padding:6px 4px}
 body.mobile #rMemCtl>.seg{grid-column:1/-1}
 body.mobile .print-opts{align-items:stretch}
 body.mobile .print-opts fieldset{width:100%}
+body.mobile #mQuick{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow:visible}
+body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-height:1.15;min-height:40px;font-size:14px;padding:6px 8px}
