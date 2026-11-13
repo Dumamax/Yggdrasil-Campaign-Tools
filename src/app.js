@@ -49,7 +49,7 @@ const App=(()=>{
     if(p.npcs)add("npcs","NPC cheat sheet (DM)",NPCs.cheatHTML(),true);
     return L}
   function measure(L){const m=document.createElement("div");m.style.cssText=`position:absolute;left:-99999px;top:0;width:${PAGE_W}px;visibility:hidden`;
-    m.innerHTML=`<style>${printCSS()}</style>`+L.map(s=>`<div class="pr-sec">${s.html}</div>`).join("");document.body.appendChild(m);
+    m.className=UI.print.ink?"ink":"";m.innerHTML=`<style>${printCSS()}</style>`+L.map(s=>`<div class="pr-sec">${s.html}</div>`).join("");document.body.appendChild(m);
     const secs=[...m.querySelectorAll(".pr-sec")];L.forEach((s,i)=>s.pages=paginate(secs[i]));m.remove();return L}
   /* simulate page breaks: blocks that must not split get pushed whole to the next page */
   function paginate(sec){const top0=sec.getBoundingClientRect().top,H=PAGE_H-(sec.querySelector(".pr-sheet")?52:0);
@@ -63,8 +63,8 @@ const App=(()=>{
     let out="",total=0;L.forEach(s=>{
       out+=`<div class="pr-sec${s.dm?" pr-dm":""}" data-label="${esc(s.label)} · about ${s.pages} page${s.pages>1?"s":""}">${s.html}</div>`;total+=s.pages;
       if(UI.print.duplex&&s.pages%2&&s!==L[L.length-1]){out+=blank;total++}});
-    if(preview)$("#pPages").textContent=`About ${total} page${total>1?"s":""}${UI.print.duplex?` (${Math.ceil(total/2)} sheets)`:""}. Letter size; turn on "Background graphics" in the print dialog for the parchment.`;
-    return out}
+    if(preview)$("#pPages").textContent=`About ${total} page${total>1?"s":""}${UI.print.duplex?` (${Math.ceil(total/2)} sheets)`:""}. Letter size; ${UI.print.ink?"black & white, no backgrounds.":"turn on \"Background graphics\" in the print dialog for the parchment."}`;
+    return UI.print.ink?`<div class="ink">${out}</div>`:out}
   const printCSS=()=>PRINT_BASE+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   const PRINT_BASE=`@page{size:letter;margin:.5in}
 .pr-sec{break-before:page;page-break-before:always}.pr-sec:first-child{break-before:auto;page-break-before:auto}
@@ -73,7 +73,23 @@ const App=(()=>{
 .pr h1,.pr h2,.prsub{break-after:avoid;page-break-after:avoid}
 @media screen{.preview .pr-sec{position:relative;padding-top:26px}.preview .pr-sec+.pr-sec{margin-top:22px;border-top:2px dashed #b89a6a}
 .preview .pr-sec::before{content:attr(data-label);position:absolute;top:5px;left:0;font:600 12px "Cinzel",serif;letter-spacing:.06em;color:#8a6a3a}
-.preview .pr-dm::before{color:#8a2a1a}.preview .pr-blank{height:120px;background:repeating-linear-gradient(135deg,#efe5cf 0 10px,#e8dcc0 10px 20px)}.preview .pr-blank::before{content:"Blank back page"}}`;
+.preview .pr-dm::before{color:#8a2a1a}.preview .pr-blank{height:120px;background:repeating-linear-gradient(135deg,#efe5cf 0 10px,#e8dcc0 10px 20px)}.preview .pr-blank::before{content:"Blank back page"}}
+.preview .ink{background:#fff;padding:6px}
+/* ink-friendly: no fills or shadows, black line-work, same fonts and ornaments */
+.ink .pr-sec *{background:none!important;box-shadow:none!important;text-shadow:none!important;color:#111!important;border-color:#111!important}
+.ink .pr-sheet{border:3px double #111;padding:20px 24px;border-radius:0}
+.ink .pr td,.ink .shopsheet td{border-bottom:1px dotted #777!important}
+.ink .pr h2{border-bottom:1.5px solid #111}
+.ink .pr .prsub,.ink .pr .lvl,.ink .pr .ad,.ink .pr .foot,.ink .pr-card .fl,.ink .pr-card .k,.ink .shopsheet .sh-type,.ink .shopsheet .sh-by,.ink .shopsheet .d,.ink .shopsheet .sh-foot{color:#444!important}
+.ink .pr-card{border:2px solid #111;outline:1px solid #111;outline-offset:-6px;border-radius:2px}
+.ink .notice{transform:none!important;border:3px double #111;border-radius:0;padding:24px 24px 20px}
+.ink .notice::before{display:none}
+.ink .notice .nrule{border-top:1px solid #111}
+.ink .notice .stamp{border:3px double #111;color:#111!important;top:14px;bottom:auto;right:14px;width:62px;height:62px;font-size:10px}
+.ink .shopsheet{border:3px double #111;border-radius:0}
+.ink .npc-c{border:1px solid #111;border-left:4px double #111}
+.ink .pr h1::after,.ink .notice .ntitle::after,.ink .shopsheet .sh-name::after{content:"~ \\2766 ~";display:block;font:14px Georgia,serif;letter-spacing:.35em;margin-top:3px;color:#111}
+.ink .pr-blank span{color:#888!important}`;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
     $$("#tab-print input[data-p]").forEach(i=>{i.checked=!!p[i.dataset.p];if(i.dataset.p==="full"||i.dataset.p==="offers"){i.disabled=!p.ledger;i.parentElement.classList.toggle("off",!p.ledger)}});
