@@ -115,7 +115,7 @@ Use official names for standard gear and magic items, add a few invented local g
     <div class="row"><b>Senses:</b> ${esc(L.sensory)}</div><div class="row"><b>Detail:</b> ${esc(L.detail)}</div>
     ${s.readAloud?`<div class="worldblock"><b>Read aloud:</b> <i>${esc(s.readAloud)}</i></div>`:""}
     <h4 class="sh4">Staff${rr("staff","Reroll staff")}</h4>
-    ${s.staff.map(p=>`<div class="row"><b style="color:var(--ink)">${esc(p.name)}</b>, ${esc(p.role)} <span class="muted">(${esc(p.ancestry)})</span><br>${esc(cap(p.look||""))}${p.look?". ":""}${esc(cap(p.personality||""))}${p.voice?`; ${esc(p.voice)}`:""}.${p.want?`<br><span class="muted">DM: ${esc(p.want)}</span>`:""}</div>`).join("")}
+    ${s.staff.map(p=>`<div class="row"><b style="color:var(--ink)">${esc(p.name)}</b>, ${esc(p.role)} <span class="muted">(${esc(p.ancestry)})</span><br>${esc(cap(p.look||""))}${p.look?". ":""}${esc(cap(p.personality||""))}${p.voice?`; ${esc(p.voice)}`:""}.${p.want?`<br><span class="muted">DM: ${esc(p.want)}</span>`:""} <span class="reroll" data-act="snpc" data-i="${s.staff.indexOf(p)}" title="Save to Roster → NPCs">save NPC</span></div>`).join("")}
     <h4 class="sh4">Stock${rr("stock","Reroll all stock")} <span class="reroll" data-act="add" title="Add an item">＋ item</span></h4>
     <table class="ref stock">${s.stock.map((i,k)=>`<tr><td><b>${esc(i.name)}</b>${i.rarity?` <span class="badge leaf">${esc(i.rarity)}</span>`:""}<br><span class="muted">${esc(i.desc)}</span></td><td>${coins(i.price)} <span class="reroll" data-act="rm" data-i="${k}" title="Remove">✕</span></td></tr>`).join("")}</table>
     <div class="dm"><b>Quirk:</b> ${esc(s.quirk)}${rr("quirk","Reroll")}<br><b>Rumor:</b> ${esc(s.rumor)}${rr("rumor","Reroll")}<br><b>Haggling:</b> ${esc(s.haggle)}${rr("haggle","Reroll")}</div>
@@ -125,6 +125,7 @@ Use official names for standard gear and magic items, add a few invented local g
     if(s.prompt)d.querySelector(".actions").appendChild(aiButtons(s,r=>{fromAI(s,r);commit();render()}));
     d.addEventListener("click",e=>{const a=e.target.dataset.act;if(!a)return;
       if(a==="ai"){writeUp(s,e.target);return}
+      if(a==="snpc"){NPCs.fromStaff(s,s.staff[+e.target.dataset.i]);return}
       if(a==="copy"){copyText(shopText(s));return}
       if(a==="re"){const f=e.target.dataset.f;
         if(f==="name")s.name=rollName(s.type,s.staff[0]?.name||"Someone");

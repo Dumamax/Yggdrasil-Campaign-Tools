@@ -144,6 +144,13 @@ table.te-matrix th{font-size:12.5px;color:var(--mute);font-weight:600;padding:2p
 table.te-matrix td{padding:2px 3px}
 table.te-matrix .te-num{width:64px}
 table.te-matrix .te-txt{min-width:160px}
+/* NPCs & Council */
+[hidden]{display:none!important}
+.npc-host{display:grid;gap:12px}
+.badge.t-hostile{color:#d9785f;border-color:#d9785f}.badge.t-wary{color:#d6ae62;border-color:#d6ae62}
+select.att{padding:2px 6px;font-size:14px}
+table.council td{vertical-align:top}table.council a{color:var(--gold)}
+table.council select{max-width:230px}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -212,15 +219,18 @@ table.te-matrix .te-txt{min-width:160px}
 
   <section id="tab-roster" hidden>
     <div class="controls">
+      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button></div>
+      <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
       <button class="btn" id="importPC">Import character</button>
-      <button class="btn" id="copyRoster">Copy roster</button>
+      <button class="btn" id="copyRoster">Copy roster</button></span>
     </div>
     <div id="importHost"></div>
     <div id="editorHost"></div>
     <div id="roster" class="board"></div>
-    <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
+    <div id="npcHost" class="npc-host"></div>
+    <p class="hint" id="rHint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
   </section>
 
   <section id="tab-market" hidden></section>
@@ -238,6 +248,8 @@ table.te-matrix .te-txt{min-width:160px}
       <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
       <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
       <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+      <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned, DM only)</label>
+      <label class="inline"><input type="checkbox" data-p="council"> Council Notice (players)</label>
       <button class="btn primary" id="printGo">Print</button>
     </div>
     <div class="preview" id="preview"></div>
@@ -281,7 +293,7 @@ table.te-matrix .te-txt{min-width:160px}
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option><option value="npcs">NPCs &amp; Council</option></select><span class="muted" id="tblState"></span></div>
         <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
@@ -294,7 +306,7 @@ table.te-matrix .te-txt{min-width:160px}
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=3;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=4;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -329,19 +341,19 @@ const DEFAULT_SETTINGS={tierRank:0,partyLevel:3,partySize:4,
   mapping:{Iron:[3,5],Bronze:[6,8],Silver:[9,12],Gold:[13,16],Platinum:[17,20]},
   jobComp:30,hMin:6,hMax:8,feePct:25,offerCount:3,buildComp:10,revive:50};
 function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:clone(DEFAULT_SETTINGS),
-  tables:{jobs:null,upgrades:null,prices:null,shops:null},jobs:[],shops:[],
+  tables:{jobs:null,upgrades:null,prices:null,shops:null,npcs:null},jobs:[],shops:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
 /* v3: "The Trunk" was renamed "The Roots" */
 function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
-  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
-let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true}},lsGet("ygh.ui",{}));
+let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
 function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
@@ -5038,7 +5050,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
     ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}
-    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}</div>
+    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}${compact?"":patronLinks(h)}</div>
     <div class="row"><b>Job:</b> ${esc(cap(h.objective))}${compact?"":'<span class="reroll" data-f="objective" title="Reroll job">↻</span>'}</div>
     <div class="row"><b>Reward:</b> ${fmt(h.gold)} gp + ${esc(h.incentive.item)} <span class="muted">(${h.incentive.rarity})</span>${compact?"":'<span class="reroll" data-f="incentive" title="Reroll incentive">↻</span>'}<br><span class="muted">Guild fee: ${fmt(guildFee(h))} gp to the treasury</span></div>
     ${h.complication?`<div class="dm"><b>DM:</b> ${esc(h.complication)}${compact?"":'<span class="reroll" data-f="complication">↻</span>'}</div>`:""}
@@ -5056,8 +5068,13 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       if(f)rerollField(h,f);
       else if(a==="wb")h.worldBlock=h.worldBlock?null:rollWorldBlock();
       else if(a==="expand"){expand(h,ev.target);return}
-      else if(a==="keep")h.kept=!h.kept;
-      else if(a==="final"){h.final=!h.final;if(h.final)h.kept=true}
+      else if(a==="keep"){h.kept=!h.kept;if(h.kept)NPCs.fromPatron(h,true)}
+      else if(a==="final"){h.final=!h.final;if(h.final){h.kept=true;NPCs.fromPatron(h,true)}}
+      else if(a==="savenpc")NPCs.fromPatron(h);
+      else if(a==="pguild"){const m=NPCs.fromPatron(h,true);if(NPCs.isMember(m)){toast(`${m.name} is already in the guild`);return}NPCs.addToGuild(m);return}
+      else if(a==="usenpc"){const row=ev.target.parentElement;if(row.querySelector("select"))return;const L=NPCs.all();if(!L.length){toast("No saved NPCs yet");return}
+        const sel=document.createElement("select");sel.innerHTML='<option value="">Choose an NPC…</option>'+L.map(m=>`<option value="${m.id}">${esc(m.name)}${m.title?` (${esc(m.title)})`:""}</option>`).join("");
+        sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
       else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
@@ -5065,6 +5082,8 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       commit();App.render()});
     return d;
   }
+  function patronLinks(h){const m=h.patron.npcId&&C.roster.find(x=>x.id===h.patron.npcId);
+    return ` ${m?'<span class="badge leaf">saved NPC</span>':'<span class="reroll" data-act="savenpc" title="Save the patron to Roster → NPCs">save NPC</span>'} <span class="reroll" data-act="usenpc" title="Use a saved NPC as the patron">⇄ use NPC</span> ${m&&NPCs.isMember(m)?"":'<span class="reroll" data-act="pguild" title="Add the patron to the guild">＋ guild</span>'}`}
   function expandedHTML(h,x,b){
     return `<div class="expanded">${x.note?`<p class="muted">${esc(x.note)}</p>`:""}
      ${x.summary?`<p>${esc(x.summary)}</p>`:""}
@@ -5112,7 +5131,7 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").onclick=()=>{UI.jobView="dm";saveUI();initControls();render()};
     $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
   }
-  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,tables:()=>T};
+  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
 })();
 
 /* ================= GUILD UPGRADES ================= */
@@ -5184,7 +5203,7 @@ Return ONLY JSON:
  "hooks": [1 or 2 one-sentence story hooks tied to this upgrade],
  "complication": ${comp?"one or two sentences on how the complication plays out":"null"}}
 Don't change the perk's mechanics.`;
-    aiRun({prompt,btn,apply,fallback:{ai:false,title:info.name,description:info.perk,npc:{name:genName(),role:"builder",quirk:"works fast, talks faster"},mordecai:"\"That much? For THAT? Fine. Fine.\"",hooks:[],complication:comp}});
+    aiRun({prompt,btn,apply,fallback:{ai:false,title:info.name,description:info.perk,npc:{name:genName(),role:"builder",quirk:"works fast, talks faster"},mordecai:pickFresh(NPCs.tables().mordecai?.grumbles||["\"That much? For THAT? Fine. Fine.\""],"grumble"),hooks:[],complication:comp}});
   }
   function expandedHTML(x,dm){if(!x)return"";
     return `<div class="expanded">${dm&&x.note?`<p class="muted">${esc(x.note)}</p>`:""}${x.title?`<div><b>${esc(x.title)}</b></div>`:""}<div>${esc(x.description)}</div>
@@ -5216,7 +5235,7 @@ Don't change the perk's mechanics.`;
     const ad=u.addons||[],ownedAd=g.addons[u.id]||[];
     const addons=ad.length?`<details class="addons"><summary>${u.cat==="Staff"?"Other options":"Add-ons"} (${ad.length})${ownedAd.length?` · ${ownedAd.length} owned`:""}</summary><ul>${ad.map((a,i)=>{const o=ownedAd.includes(a.name);return `<li class="${o?"addon-owned":""}${!o&&!canAfford(a.gp)?" muted":""}"><b>${esc(a.name)}</b> · ${o?"✓ owned":fmt(a.gp)+" gp"}: ${esc(a.perk)} ${dm&&!o?`<button class="btn small" data-ad="${i}">Buy</button>`:""}${dm&&o?`<button class="btn small" data-adrm="${i}">✕</button>`:""}</li>`}).join("")}</ul></details>`:"";
     let op="";
-    if(u.op&&dm){const ops=C.roster.filter(m=>Roster.bestSkill(m,u.op.skills)),cur=C.roster.find(m=>m.assign===u.id),best=cur?Roster.bestSkill(cur,u.op.skills):null,out=best?T.grades[best.g]:null;
+    if(u.op&&dm){const ops=Roster.sorted().filter(m=>Roster.bestSkill(m,u.op.skills)),cur=C.roster.find(m=>m.assign===u.id),best=cur?Roster.bestSkill(cur,u.op.skills):null,out=best?T.grades[best.g]:null;
       op=`<div class="op"><b>Operator:</b> <select data-op><option value="">${ops.length?"— none —":"no one on the roster has "+esc(u.op.skills.join(" / "))}</option>${ops.map(m=>`<option value="${m.id}"${cur&&cur.id===m.id?" selected":""}>${esc(m.name)} (${Roster.bestSkill(m,u.op.skills).g})</option>`).join("")}</select>
       ${own&&out?`<br>${esc(best.g)}: <b style="color:var(--ink)">${out.output}×</b> ${esc(u.op.makes[Math.max(0,own-1)]||"")} per downtime, up to ${out.cap}.`:own?`<br><span class="muted">Needs ${esc(u.op.skills.join(" or "))}.</span>`:`<br><span class="muted">Buy Level I first.</span>`}</div>`}
     const x=C.expanded[u.id];
@@ -5239,14 +5258,15 @@ Don't change the perk's mechanics.`;
     d.innerHTML=`<h3>${esc(o.name)}</h3><div class="badges"><span class="badge gold">${{unique:"Unique",deal:"Deal",hire:"Rare hire"}[o.type]}</span><span class="badge">${esc(o.cat)}</span><span class="badge">${esc(o.genre)}</span>${o.sold?'<span class="badge leaf">Sold</span>':""}</div>
      <div class="flav">Offered by ${esc(o.vendor)}${o.reason?`: ${esc(o.reason)}`:""}.</div>
      <div class="lv${!o.sold&&!canAfford(o.cost)?" dim":""}"><span class="n">⟡</span><span class="nm">${o.type==="deal"?`<s class="muted">${fmt(o.orig)}</s> −${o.discount}%`:o.type==="hire"?"Hire":"One of a kind"}</span><span class="cost">${fmt(o.cost)} gp</span><span class="perk">${esc(o.perk)}</span><span class="meta">${o.days?`${o.days} day${o.days>1?"s":""} to build`:"Ready immediately"}</span></div>
-     ${expandedHTML(o.x,dm)}${dm?`<div class="actions">${o.sold?"":`<button class="btn small primary" data-a="buy">Buy</button>`}<button class="btn small" data-a="exp">${o.x?"Re-expand":"Expand"}</button><button class="btn small" data-a="re">Reroll</button><button class="btn small" data-a="del">✕</button></div>`:""}`;
+     ${expandedHTML(o.x,dm)}${dm?`<div class="actions">${o.sold?"":`<button class="btn small primary" data-a="buy">Buy</button>`}<button class="btn small" data-a="exp">${o.x?"Re-expand":"Expand"}</button><button class="btn small" data-a="npc">${o.npcId?"✓ NPC saved":"Save NPC"}</button><button class="btn small" data-a="re">Reroll</button><button class="btn small" data-a="del">✕</button></div>`:""}`;
     const setX=r=>{o.x=r;commit();render()};
     if(dm&&o.x&&o.x.prompt)d.querySelector(".actions").appendChild(aiButtons(o.x,setX));
     d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
       if(a==="buy")buyOffer(o);
       else if(a==="re"){Object.assign(o,newOffer(),{x:null,sold:false});commit();render()}
       else if(a==="del"){G().offers=G().offers.filter(x=>x!==o);commit();render()}
-      else if(a==="exp")expand(o,ev.target,setX)});
+      else if(a==="exp")expand(o,ev.target,setX)
+      else if(a==="npc"){NPCs.fromOffer(o);render()}});
     return d;
   }
 
@@ -5305,10 +5325,14 @@ const Roster=(()=>{
   function gradeOf(m,sk){if(sk.g==="Prof")return "Skilled";if(sk.g==="Exp")return (m.level||0)>=11?"Master":"Expert";return sk.g||"Skilled"}
   function bestSkill(m,skills){let best=null;(m.skills||[]).forEach(sk=>{if(skills.some(s=>s.toLowerCase()===String(sk.s||"").toLowerCase())){const g=gradeOf(m,sk);if(!best||GORDER.indexOf(g)>GORDER.indexOf(best.g))best={s:sk.s,g}}});return best}
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
-  const sorted=()=>C.roster.slice().sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
+  const sorted=()=>C.roster.filter(m=>KINDS.includes(m.kind)).sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
   function render(){
-    const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();renderEditor();
+    const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
+    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub!=="npcs";$("#rHint").hidden=sub!=="members";
+    renderEditor();if(sub==="npcs"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render();return}
+    $("#npcHost").innerHTML="";
+    const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();
     $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
     let list=sorted();
     if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
@@ -5319,10 +5343,11 @@ const Roster=(()=>{
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
-      ${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
-      <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
+      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
         if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+        else if(a==="leave"){NPCs.leaveGuild(m);return}
         else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
         else if(a==="del"){if(ev.target.dataset.sure){C.roster=C.roster.filter(x=>x.id!==m.id);commit();render()}else{ev.target.dataset.sure=1;ev.target.textContent="Confirm delete?"}}});
       el.appendChild(d)});
@@ -5333,7 +5358,7 @@ const Roster=(()=>{
     const owners=Upgrades.opCatalog().filter(u=>(C.guild.owned[u.id]||0)>0);
     h.innerHTML=`<div class="editor"><div class="grid">
       <label>Name <input data-k="name" value="${esc(m.name)}"></label>
-      <label>Type <select data-k="kind">${KINDS.map(k=>`<option${k===m.kind?" selected":""}>${k}</option>`).join("")}</select></label>
+      <label>Type <select data-k="kind">${[...KINDS,"NPC"].map(k=>`<option${k===m.kind?" selected":""}>${k}</option>`).join("")}</select></label>
       <label>Status <select data-k="status">${STATUSES.map(k=>`<option${k===m.status?" selected":""}>${k}</option>`).join("")}</select></label>
       <label>Level <input data-k="level" type="number" min="1" max="20" value="${esc(m.level??"")}"></label>
       <label>Ancestry / class <input data-k="ancestry" value="${esc(m.ancestry||"")}"></label>
@@ -5342,12 +5367,13 @@ const Roster=(()=>{
       <label>Operating <select data-k="assign"><option value="">— nothing —</option>${owners.map(u=>`<option value="${u.id}"${u.id===m.assign?" selected":""}>${esc(u.name)}</option>`).join("")}</select></label></div>
       <div><div class="muted" style="font-size:13px">Working skills &amp; tools</div><div id="skillRows"></div><button class="btn small" id="addSkill">＋ skill</button></div>
       <label>Notes <textarea data-k="notes" rows="2">${esc(m.notes||"")}</textarea></label>
+      ${profileEditor(m)}
       <datalist id="skillList">${SKILL_HINTS.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
       <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
     rows();
     h.oninput=h.onchange=e=>{const t=e.target;
-      if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.value;
+      if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
     h.onclick=e=>{const t=e.target;
@@ -5357,6 +5383,7 @@ const Roster=(()=>{
       else if(t.id==="saveMem"){if(!String(m.name||"").trim()){toast("Give them a name");return}
         m.skills=(m.skills||[]).filter(s=>String(s.s).trim());
         if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
+        if(m.seat)C.roster.forEach(x=>{if(x.seat===m.seat&&x.id!==m.id)x.seat=""});
         save(m);editing=null;render();toast("Saved")}};
   }
   /* ---------- import a character (Guild Hall JSON from Claude, or a sheet via Claude) ---------- */
@@ -5409,13 +5436,28 @@ ${t}`:""}`;
   const text=()=>sorted().map(m=>`${m.name} [${m.kind}${m.status?", "+m.status:""}]${m.level?" lvl "+m.level:""} ${m.ancestry||""}${m.role?" · "+m.role:""}${m.player?" · player: "+m.player:""}
   Skills: ${(m.skills||[]).map(s=>`${s.s} (${gradeOf(m,s)})`).join(", ")||"none"}${m.assign?"\n  Operating: "+assignName(m):""}${m.notes?"\n  Notes: "+m.notes:""}`).join("\n");
   const printHTML=()=>`<div class="pr pr-sheet pr-roster"><h1>Guild Roster</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${sorted().map(m=>`<tr><td class="nm">${esc(m.name)}<br><span class="lvl">${esc(m.kind)} · ${esc(m.status||"")}</span></td><td>${m.level?`Lvl ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.role?` · ${esc(m.role)}`:""}<br>${(m.skills||[]).map(s=>`${esc(s.s)} (${gradeOf(m,s)})`).join(", ")}${m.assign?`<br><i>Operating: ${esc(assignName(m))}</i>`:""}</td></tr>`).join("")}</table></div>`;
+  /* profile fields (NPC card) shown in the editor for everyone except active PCs */
+  function profileEditor(m){const NT=NPCs.tables(),sel=(k,list,blank)=>`<select data-k="${k}">${blank?'<option value="">—</option>':""}${list.map(x=>`<option${x===(m[k]||(k==="attitude"?"Neutral":""))?" selected":""}>${esc(x)}</option>`).join("")}</select>`;
+    const inp=(k,l,ph)=>`<label>${l} <input data-k="${k}" value="${esc(m[k]||"")}"${ph?` placeholder="${esc(ph)}"`:""}></label>`;
+    return `<details class="addons"${m.kind!=="Active PC"?" open":""}><summary>NPC profile</summary><div class="grid" style="margin-top:6px">
+      <label>Occupation ${sel("occupation",Object.keys(NT.occupations),1)}</label>${inp("title","Job / title","e.g. glassblower")}
+      <label>Connection ${sel("connection",Object.keys(NT.connections),1)}</label><label>Attitude ${sel("attitude",NPCs.ATT)}</label>
+      ${inp("genre","Home world / genre","Tree-born")}<label>Archetype ${sel("archetype",Object.keys(NT.archetypes),1)}</label>
+      ${inp("label","Fighting flavor","e.g. ex-sky-pirate with a hook blade")}${inp("guild","Guild")}
+      ${inp("look","Look")}${inp("voice","Voice")}${inp("manner","Manner")}${inp("want","Wants")}
+      ${inp("secret","Secret (DM)")}${inp("public","Public face (players)")}
+      <label>Council seat ${sel("seat",TIERS,1)}</label>
+      <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
+      ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
+  function edit(m){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
   function bind(){
+    $("#rSub").onclick=e=>{const s=e.target.dataset.sub;if(!s)return;UI.rosterSub=s;saveUI();editing=null;render()};
     $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
     $("#addMember").onclick=()=>{editing={id:uid(),name:"",kind:"Active PC",status:"Adventuring",level:S.partyLevel,ancestry:"",player:"",role:"",skills:[],assign:"",notes:""};renderEditor()};
     $("#copyRoster").onclick=()=>copyText(text());
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+  return {render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();
 
 /* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
@@ -5625,7 +5667,7 @@ Use official names for standard gear and magic items, add a few invented local g
     <div class="row"><b>Senses:</b> ${esc(L.sensory)}</div><div class="row"><b>Detail:</b> ${esc(L.detail)}</div>
     ${s.readAloud?`<div class="worldblock"><b>Read aloud:</b> <i>${esc(s.readAloud)}</i></div>`:""}
     <h4 class="sh4">Staff${rr("staff","Reroll staff")}</h4>
-    ${s.staff.map(p=>`<div class="row"><b style="color:var(--ink)">${esc(p.name)}</b>, ${esc(p.role)} <span class="muted">(${esc(p.ancestry)})</span><br>${esc(cap(p.look||""))}${p.look?". ":""}${esc(cap(p.personality||""))}${p.voice?`; ${esc(p.voice)}`:""}.${p.want?`<br><span class="muted">DM: ${esc(p.want)}</span>`:""}</div>`).join("")}
+    ${s.staff.map(p=>`<div class="row"><b style="color:var(--ink)">${esc(p.name)}</b>, ${esc(p.role)} <span class="muted">(${esc(p.ancestry)})</span><br>${esc(cap(p.look||""))}${p.look?". ":""}${esc(cap(p.personality||""))}${p.voice?`; ${esc(p.voice)}`:""}.${p.want?`<br><span class="muted">DM: ${esc(p.want)}</span>`:""} <span class="reroll" data-act="snpc" data-i="${s.staff.indexOf(p)}" title="Save to Roster → NPCs">save NPC</span></div>`).join("")}
     <h4 class="sh4">Stock${rr("stock","Reroll all stock")} <span class="reroll" data-act="add" title="Add an item">＋ item</span></h4>
     <table class="ref stock">${s.stock.map((i,k)=>`<tr><td><b>${esc(i.name)}</b>${i.rarity?` <span class="badge leaf">${esc(i.rarity)}</span>`:""}<br><span class="muted">${esc(i.desc)}</span></td><td>${coins(i.price)} <span class="reroll" data-act="rm" data-i="${k}" title="Remove">✕</span></td></tr>`).join("")}</table>
     <div class="dm"><b>Quirk:</b> ${esc(s.quirk)}${rr("quirk","Reroll")}<br><b>Rumor:</b> ${esc(s.rumor)}${rr("rumor","Reroll")}<br><b>Haggling:</b> ${esc(s.haggle)}${rr("haggle","Reroll")}</div>
@@ -5635,6 +5677,7 @@ Use official names for standard gear and magic items, add a few invented local g
     if(s.prompt)d.querySelector(".actions").appendChild(aiButtons(s,r=>{fromAI(s,r);commit();render()}));
     d.addEventListener("click",e=>{const a=e.target.dataset.act;if(!a)return;
       if(a==="ai"){writeUp(s,e.target);return}
+      if(a==="snpc"){NPCs.fromStaff(s,s.staff[+e.target.dataset.i]);return}
       if(a==="copy"){copyText(shopText(s));return}
       if(a==="re"){const f=e.target.dataset.f;
         if(f==="name")s.name=rollName(s.type,s.staff[0]?.name||"Someone");
@@ -5677,17 +5720,337 @@ Quirk: ${s.quirk}\nRumor: ${s.rumor}\nHaggling: ${s.haggle}`}
   return {reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,tables:()=>T};
 })();
 
+/* NPC & Council default tables. Looks, voices and mannerisms come from the Shop Generator's "Shopkeeper parts". */
+const DEFAULT_NPC_TABLES={
+ version:1,
+ levelCurve:{"1-2":40,"3-4":30,"5-6":15,"7-8":9,"9-10":5,"11-15":1},
+ adventurerShift:0.75,
+ cityShare:0.55,
+ crPerLevel:0.6,
+ occupations:{
+  Merchant:{w:14,titles:["spice trader","curio dealer","caravan master","pawnbroker","cloth seller","CCV money-changer","tea-cart owner","map seller","street vendor of questionable skewers","importer of other worlds' snacks"],
+   arch:{Noncombatant:60,Support:10,Skirmisher:10,Sneak:10,Guardian:10},skills:["Persuasion","Insight","Deception","Calligrapher's Supplies","Cook's Utensils"]},
+  Crafter:{w:12,titles:["blacksmith","glassblower","cobbler","root-carver","tailor","clockmaker","brewer","jeweler","bookbinder","potter","alchemist","tinker"],
+   arch:{Noncombatant:50,Brute:20,Guardian:10,Support:10,"Arcane Caster":10},skills:["Smith's Tools","Alchemist's Supplies","Carpenter's Tools","Leatherworker's Tools","Tinker's Tools","Jeweler's Tools","Brewer's Supplies","Woodcarver's Tools","Glassblower's Tools","Cook's Utensils"]},
+  Laborer:{w:14,titles:["porter","dock hand","sap-tapper","street sweeper","bark-mason","cook","stable hand","lamplighter","farmhand from a branch-world","rope-runner"],
+   arch:{Noncombatant:50,Brute:30,Guardian:10,Skirmisher:10},skills:["Athletics","Cook's Utensils","Carpenter's Tools","Herbalism Kit","Nature","Animal Handling"]},
+  Official:{w:8,titles:["Council clerk","district warden","tax assessor","charter registrar","watch sergeant","branch-gate inspector","notary","customs officer"],
+   arch:{Noncombatant:40,Guardian:25,Support:15,Controller:10,Sneak:10},skills:["Insight","Persuasion","History","Calligrapher's Supplies","Investigation"]},
+  Scholar:{w:7,titles:["archivist","planar cartographer","tutor","naturalist","Tree-theologian","linguist","astronomer of many skies","rot researcher"],
+   arch:{Noncombatant:40,"Arcane Caster":35,Support:10,Controller:10,"Nature Caster":5},skills:["Arcana","History","Nature","Investigation","Calligrapher's Supplies","Cartographer's Tools"]},
+  Clergy:{w:6,titles:["Root Chapel acolyte","wandering priest","oracle","temple healer","funeral singer","shrine-keeper of a forgotten god","Root-warden"],
+   arch:{"Divine Caster":55,Noncombatant:20,"Nature Caster":15,Guardian:10},skills:["Religion","Medicine","Insight","Herbalism Kit"]},
+  Noble:{w:4,titles:["minor lord","exiled heir","dowager","guild patron","merchant-prince","bored aristocrat from a dying world"],
+   arch:{Noncombatant:50,Skirmisher:15,Controller:15,Support:10,"Pact Caster":10},skills:["Persuasion","History","Insight","Deception"]},
+  Entertainer:{w:7,titles:["bard","puppeteer","street magician","fortune teller","troupe actor","busker","storyteller","dancer"],
+   arch:{Support:40,Noncombatant:25,Controller:15,Skirmisher:10,"Arcane Caster":10},skills:["Performance","Deception","Persuasion","Sleight of Hand"]},
+  Criminal:{w:8,titles:["fence","pickpocket","smuggler","forger","debt collector","information broker","cat burglar","con artist"],
+   arch:{Sneak:45,Skirmisher:20,Brute:15,Sharpshooter:10,Controller:10},skills:["Stealth","Sleight of Hand","Deception","Thieves' Tools","Forgery Kit","Poisoner's Kit"]},
+  Adventurer:{w:10,titles:["guild adventurer","freelancer between guilds","monster hunter","retired adventurer","sellsword","guide for hire","delver"],
+   arch:{Brute:15,Guardian:12,Skirmisher:15,Sharpshooter:12,Sneak:10,"Arcane Caster":10,"Divine Caster":8,"Nature Caster":6,Controller:4,"Pact Caster":4,Support:4},skills:["Athletics","Survival","Perception","Medicine","Arcana","Herbalism Kit","Smith's Tools"]},
+  "Planar Traveler":{w:6,titles:["world-hopper","Roots ferryman","refugee from a dying world","pilgrim","lost tourist","envoy from another world"],
+   arch:{Noncombatant:35,Skirmisher:15,"Arcane Caster":15,"Pact Caster":15,Sharpshooter:10,"Nature Caster":10},skills:["Survival","Navigator's Tools","Insight","Arcana","History"]},
+  Oddity:{w:4,titles:["sentient mushroom notary","ghost with a day job","talking hat","retired mimic","clockwork poet","very polite swarm of bees","a door that wants to be a person"],
+   arch:{Noncombatant:40,Controller:20,"Pact Caster":15,"Arcane Caster":15,Brute:10},skills:["Arcana","Insight","Performance","Nature"]}
+ },
+ connections:{
+  Patron:{w:15,attitude:{Wary:15,Neutral:45,Friendly:40},
+   wants:["needs a job done quietly and quickly","wants the guild on retainer if this goes well","needs something back that was stolen from them","wants a rival embarrassed, not hurt","needs a message carried through the Roots","wants proof that a rumor about their home world is false"]},
+  Contact:{w:30,attitude:{Wary:20,Neutral:45,Friendly:35},
+   wants:["trades rumors for favors","wants a cut of anything they point the guild toward","wants to be owed one","needs a reliable crew they can vouch for","wants news from a specific world","wants to quietly test the guild before trusting it"]},
+  Hireable:{w:20,attitude:{Wary:10,Neutral:55,Friendly:35},
+   wants:["wants steady work and a roof inside the Tree","wants to learn from real adventurers","wants a fresh start after a bad job","wants enough coin to bring family to the city","wants a place that doesn't ask about their past","wants to prove a former guild wrong about them"]},
+  Bystander:{w:35,attitude:{Hostile:5,Wary:25,Neutral:55,Friendly:15},
+   wants:["wants their street to stay boring","wants the guild to stop tracking mud through the market","wants to see something truly strange before they die","wants the best spot at the next festival","wants a lost pet back","wants to know what the guild actually does all day"]}
+ },
+ secrets:["owes a dangerous amount to a Platinum-tier guild","is secretly from a world whose Tree has already died","has a twin who is wanted in three worlds","once saw one of the First and told no one","is spying on the guild for a Council clerk","is a changeling wearing the face of someone who vanished","sells the guild's gossip to a rival","forged their own charter papers","is slowly turning into a plant and doesn't mind","keeps a key to a door in the Roots that shouldn't exist","is the anonymous author of a scandalous bazaar broadsheet","used to be a much higher level and lost it somehow","is hiding a fugitive in their back room","knows a shortcut through the Roots that saves a day of travel","has been paid to delay the guild, but likes them too much to do it well","is the last speaker of a dead world's language","dreams of the rot every night","is quietly paying off a friend's revival fees","collects one item from every world and is almost done","is in love with a member of the Council"],
+ guildJobs:{"Smith's Tools":"Smith","Alchemist's Supplies":"Alchemist","Cook's Utensils":"Cook","Herbalism Kit":"Herbalist","Nature":"Gardener","Arcana":"Librarian","History":"Archivist","Medicine":"Healer","Religion":"Chaplain","Carpenter's Tools":"Carpenter","Tinker's Tools":"Tinker","Brewer's Supplies":"Brewer","Calligrapher's Supplies":"Scribe","Persuasion":"Steward","Insight":"Steward","Athletics":"Porter","Survival":"Guide","Navigator's Tools":"Guide","Cartographer's Tools":"Cartographer","Thieves' Tools":"Locksmith","Performance":"Entertainer"},
+ patronOccupations:{"Local commoner":"Laborer","Merchant":"Merchant","Noble":"Noble","Guild":"Adventurer","Council":"Official","Otherworldly being":"Oddity"},
+ ancestries:{
+  "Tree-born":["human","dwarf","gnome","halfling","elf","half-orc","tiefling","goblin","kobold","tortle","kenku","tabaxi","rat folk","owlin","firbolg","changeling","warforged","harengon","bugbear","aasimar","dragonborn","mushroom-folk","dryad-touched","a sap-born (grew in the Tree)"],
+  Fantasy:["human","human","dwarf","elf","halfling","gnome","half-elf","half-orc","dragonborn","tiefling","goliath","orc"],
+  "Fey / whimsical":["satyr","pixie-blooded halfling","harengon","fairy","firbolg","talking fox","hobgoblin of the court","elf"],
+  "Steampunk / gaslamp":["human","human","gnome","dwarf","warforged","autognome","half-elf","tiefling"],
+  "Frontier / weird west":["human","human","dwarf","half-orc","tabaxi","lizardfolk","revenant","goblin"],
+  "Post-apocalyptic":["human","human","mutant human","warforged","kobold","tortle","ghoul-touched survivor","plasmoid"],
+  "Planar / elemental":["genasi","genasi","githzerai","githyanki","aasimar","tiefling","modron (off-duty)","azer"],
+  Modern:["human","human","human","half-elf","tiefling","hidden-fey human","changeling"],
+  "Cyberpunk / sci-fi":["human","augmented human","android","plasmoid","thri-kreen","astral elf","hadozee","autognome"]
+ },
+ names:{
+  "Steampunk / gaslamp":["Ada Copperfield","Barnaby Fogg","Cornelius Whitlow","Effie Brassbuckle","Mortimer Greaves","Philippa Smokewell","Octavia Penhallow","Silas Gearhart"],
+  "Frontier / weird west":["Dusty Calhoun","Ezekiel Crane","Mercy Holloway","Jedediah Pike","Clementine Rook","Wyatt Hollis","Sadie Mae Cutter","Hank Two-Feathers"],
+  "Post-apocalyptic":["Rust","Scrap-Mother Juno","Tallow","Dex Nine","Old Ivy","Cinder","Patch","Mags Wheeler"],
+  "Planar / elemental":["Ashkar of the Ember Court","Liriel Saltwind","Brask Stoneheart","Ozzith","Mireth-of-Mists","Kaal the Unquenched","Tesh Brightvane","Ullu Deepcurrent"],
+  Modern:["Dana Okafor","Marcus Bell","Priya Raman","Tommy Reyes","Gwen Albright","Jules Moreau","Kenji Sato","Rosa Delgado"],
+  "Cyberpunk / sci-fi":["Vex Kaneda","Nyx-7","Juno Halcyon","Rico Static","Sable Okonkwo","Unit Orrin","Kestrel Vance","Zee Marlowe"]
+ },
+ archetypes:{
+  Brute:{blurb:"Heavy melee, soaks hits",ladder:[{name:"Thug",cr:0.5},{name:"Berserker",cr:2},{name:"Gladiator",cr:5},{name:"Champion",cr:9},{name:"Warlord",cr:12}]},
+  Guardian:{blurb:"Armor, protects allies",ladder:[{name:"Guard",cr:0.125},{name:"Knight",cr:3},{name:"Blackguard",cr:8},{name:"Champion",cr:9}]},
+  Skirmisher:{blurb:"Mobile, hit-and-run",ladder:[{name:"Bandit",cr:0.125},{name:"Bandit Captain",cr:2},{name:"Swashbuckler",cr:3},{name:"Gladiator",cr:5}]},
+  Sharpshooter:{blurb:"Ranged damage",ladder:[{name:"Scout",cr:0.5},{name:"Archer",cr:3},{name:"Assassin (ranged)",cr:8}]},
+  Sneak:{blurb:"Stealth, burst damage",ladder:[{name:"Spy",cr:1},{name:"Master Thief",cr:5},{name:"Assassin",cr:8}]},
+  "Arcane Caster":{blurb:"Blasts and utility",ladder:[{name:"Apprentice Wizard",cr:0.25},{name:"Illusionist",cr:3},{name:"Mage",cr:6},{name:"Evoker",cr:9},{name:"Archmage",cr:12}]},
+  "Divine Caster":{blurb:"Heals and smites",ladder:[{name:"Acolyte",cr:0.25},{name:"Priest",cr:2},{name:"War Priest",cr:9}]},
+  "Nature Caster":{blurb:"Terrain, beasts, healing",ladder:[{name:"Druid",cr:2},{name:"Archdruid",cr:12}]},
+  Controller:{blurb:"Charms, debuffs, summons",ladder:[{name:"Cult Fanatic",cr:2},{name:"Enchanter",cr:5},{name:"Necromancer",cr:9}]},
+  "Pact Caster":{blurb:"Patron-fueled magic",ladder:[{name:"Warlock of the Archfey",cr:4},{name:"Warlock of the Great Old One",cr:6},{name:"Warlock of the Fiend",cr:7}]},
+  Support:{blurb:"Buffs, inspires, defends",ladder:[{name:"Bard",cr:2},{name:"Abjurer",cr:9}]},
+  Noncombatant:{blurb:"Runs or surrenders",ladder:[{name:"Commoner",cr:0},{name:"Noble",cr:0.125}]}
+ },
+ mordecai:{grumbles:["\"That much? For THAT? Fine. Fine.\"","\"I didn't found a guild so I could count spoons.\"","\"Wonderful. Another thing that can catch fire.\"","\"You know what's free? Not dying. Try it sometime.\"","\"I'm not angry. I'm just going to be quietly disappointed in a corner.\"","\"Sure, spend the treasury. It's not like rent exists. Oh wait, it doesn't. Lucky you.\"","\"Every time you buy something, a little part of me retires.\"","\"Back in my day we slept on the floor and we were GRATEFUL.\"","\"Don't touch that. Don't— and now it's touched.\"","\"Great job. Truly. Now go away before I say something nice.\"","\"If anyone asks, I approved this under protest.\"","\"I've seen worlds end with less paperwork.\"","\"Yes, yes, heroes, very shiny. Sign here.\"","\"Of course it's on fire. Why wouldn't it be on fire.\""]},
+ council:{
+  seats:{
+   Iron:{title:"The Iron Seat",duties:"Speaks for the newest and smallest guilds. Hands out Iron-mandated jobs, hears bazaar petitions, and sponsors new charters.",stance:"Protective and overworked: wants Iron guilds to survive their first year.",level:"5-7"},
+   Bronze:{title:"The Bronze Seat",duties:"Represents the working guilds that keep the city fed and the branches open. Oversees Roots traffic, branch permits, and caravan escorts.",stance:"Practical: sees Iron guilds as future partners, or recruits to poach.",level:"8-10"},
+   Silver:{title:"The Silver Seat",duties:"Keeper of charters, records, and arbitration. Settles guild disputes and certifies tier advancements.",stance:"Procedural: fair to Iron guilds as long as the paperwork is right.",level:"11-13"},
+   Gold:{title:"The Gold Seat",duties:"Watches over the Tree's health: world crises, dying worlds, rot, and relations with other worlds' Trees.",stance:"Distant but hopeful: every guild is another pair of hands against the rot.",level:"14-16"},
+   Platinum:{title:"The Platinum Seat",duties:"The oldest seat. Liaison to the First, final word in emergencies, and keeper of the Council's oldest promises.",stance:"Aloof: Iron guilds are barely visible from up here, until one does something extraordinary.",level:"17-20"}
+  },
+  starting:[
+   {seat:"Iron",name:"Marigold \"Goldie\" Thrushwhistle",ancestry:"halfling",genre:"Tree-born",occupation:"Adventurer",title:"guild master of the Cellar Lanterns (Iron 1)",connection:"Contact",archetype:"Support",level:6,label:"lantern-bearer who never lets anyone fall behind",guild:"The Cellar Lanterns",
+    look:"a brass lantern hat and a satchel of overdue paperwork",voice:"talks in numbered checklists",manner:"brisk, warm, always mid-errand",
+    public:"The tireless champion of small guilds; hands out mandated jobs in person, with snacks.",want:"better pay and safer jobs for Iron guilds",
+    secret:"She has been quietly paying other Iron guilds' revival fees from her own pocket and is nearly broke. She and Mordecai have history, and she won't say what.",attitude:"Friendly"},
+   {seat:"Bronze",name:"Captain Odessa Varn",ancestry:"human",genre:"Swashbuckling / nautical",occupation:"Adventurer",title:"captain of the Tin Gale Company (Bronze 1)",connection:"Contact",archetype:"Skirmisher",level:9,label:"ex-sky-pirate with a hook blade and a grin",guild:"The Tin Gale Company",
+    look:"a weathered sky-captain's coat with one sleeve pinned back",voice:"loud, laughs at her own threats",manner:"generous with drinks, stingy with trust",
+    public:"Brash champion of expansion into new worlds; pushes for more branch permits and fewer rules.",want:"open every branch the Council keeps sealed",
+    secret:"Her company smuggles cargo through sealed paths in the Roots, and one of those cargoes may be carrying rot.",attitude:"Neutral"},
+   {seat:"Silver",name:"Professor Quillon Ashgrave-Mott",ancestry:"owlin",genre:"Tree-born",occupation:"Scholar",title:"head archivist of the Lamplit Archive (Silver 2)",connection:"Bystander",archetype:"Arcane Caster",level:12,label:"spell-archivist who fights with footnotes",guild:"The Lamplit Archive",
+    look:"spectacles stacked three deep and ink on every feather",voice:"pauses mid-sentence to correct himself",manner:"fussy, exact, quietly kind",
+    public:"The Council's stickler for procedure; nothing advances a tier without his stamp.",want:"a complete record of every world the Tree has touched",
+    secret:"His archive's records show the rot follows a pattern, and he has found a name tied to it in an old guild ledger: one of Mordecai's former aliases.",attitude:"Neutral"},
+   {seat:"Gold",name:"Sister Verdance",ancestry:"dryad-touched firbolg",genre:"Tree-born",occupation:"Clergy",title:"Root-warden of the Green Vein Wardens (Gold 1)",connection:"Bystander",archetype:"Nature Caster",level:15,label:"Root-warden who speaks with the Tree's sap",guild:"The Green Vein Wardens",
+    look:"bark-textured skin and moss that blooms when she's pleased",voice:"slow and gentle, as if listening to something else",manner:"serene, then suddenly fierce about the Tree",
+    public:"The Tree's caretaker on the Council, said to be closest to the First.",want:"stop the rot before another world's Tree dies",
+    secret:"She hasn't heard from the First in over a year and is terrified of what that silence means.",attitude:"Neutral"},
+   {seat:"Platinum",name:"Aurelian Vey",ancestry:"elf",genre:"High fantasy",occupation:"Adventurer",title:"guild master of the Gilded Spiral (Platinum 1)",connection:"Bystander",archetype:"Guardian",level:18,label:"living legend in battered gold armor",guild:"The Gilded Spiral",
+    look:"ageless, with one hand always gloved",voice:"rarely speaks; when he does, the room goes quiet",manner:"courteous, distant, faintly amused",
+    public:"Legend of the Tree; he hasn't lost a Council vote in forty years.",want:"a worthy successor, though he'd never admit it",
+    secret:"A planar wound under his glove is slowly killing him. He watches new guilds closely, looking for whoever might one day hold the line after him.",attitude:"Neutral"}
+  ]
+ }
+};
+
+/* ================= NPCs & COUNCIL (Roster → NPCs subtab) ================= */
+const NPCs=(()=>{
+  let T=DEFAULT_NPC_TABLES;
+  function reloadTables(){T=C.tables.npcs||DEFAULT_NPC_TABLES}
+  const GUILD_KINDS=["Founder","Active PC","Retired PC","Hired NPC"],ATT=["Hostile","Wary","Neutral","Friendly","Devoted"];
+  const isMember=m=>GUILD_KINDS.includes(m.kind);
+  const all=()=>C.roster.filter(m=>!isMember(m)).sort((a,b)=>String(a.name).localeCompare(b.name));
+  const byId=id=>C.roster.find(m=>m.id===id);
+  const seatHolder=t=>C.roster.find(m=>m.seat===t);
+  const SN=()=>(Shops.tables()&&Shops.tables().npc)||{};
+  let gen={occ:"",con:"",genre:"",arch:"",level:""},cands=[],filt="all",q="";
+
+  /* ---------- generation ---------- */
+  const wkeys=o=>Object.entries(o).map(([k,v])=>[k,typeof v==="number"?v:(v.w??1)]);
+  function rollLevel(adv){const k=wpick(Object.entries(T.levelCurve||{"1-2":1}));const [a,b]=String(k).split("-").map(Number);let l=a+rnd((b||a)-a+1);
+    const t=tierOf(S.tierRank);if(adv&&t>0){const lo=S.mapping[TIERS[t]][0];l=Math.min(15,l+Math.round((lo-3)*(T.adventurerShift??0.75)))}return Math.max(1,l)}
+  const genreList=()=>{const G=Jobs.tables().genres;return ["Tree-born",...Object.keys(G.fantasy),...Object.keys(G.other)]};
+  const isFantasy=g=>!!Jobs.tables().genres.fantasy[g];
+  function rollGenre(){return Math.random()<(T.cityShare??0.55)?"Tree-born":Jobs.rollGenre(S.tierRank)}
+  const ancList=g=>T.ancestries[g]||(isFantasy(g)?T.ancestries.Fantasy:null)||T.ancestries["Tree-born"];
+  function rollName(g){const L=(T.names||{})[g];if(L&&L.length&&Math.random()<0.6){const used=new Set(C.roster.map(m=>m.name));const n=pickFresh(L,"nname:"+g,used);if(!used.has(n))return n}return Jobs.genName()}
+  const gradeFor=l=>l<=1?"Novice":l<=4?"Skilled":l<=10?"Expert":"Master";
+  function generate(o={}){
+    const occ=o.occ||wpick(wkeys(T.occupations)),O=T.occupations[occ]||{};
+    const con=o.con||wpick(wkeys(T.connections)),K=T.connections[con]||{};
+    const genre=o.genre||rollGenre(),arch=o.arch||wpick(Object.entries(O.arch||{Noncombatant:1}));
+    const adv=occ==="Adventurer"||(con==="Hireable"&&arch!=="Noncombatant");
+    const N=SN(),m={id:uid(),kind:"NPC",status:"",name:rollName(genre),ancestry:pickFresh(ancList(genre),"nanc:"+genre)||"",genre,occupation:occ,
+      title:pickFresh(O.titles||[occ.toLowerCase()],"ntitle:"+occ)||"",connection:con,archetype:arch,level:+o.level||rollLevel(adv),label:"",
+      look:pickFresh(N.looks||[],"nlook")||"",voice:pickFresh(N.voices||[],"nvoice")||"",manner:pickFresh(N.personalities||[],"nmanner")||"",
+      want:pickFresh(K.wants||N.wants||[],"nwant:"+con)||"",secret:pickFresh(T.secrets||[],"nsecret")||"",attitude:wpick(Object.entries(K.attitude||{Neutral:1})),
+      notes:"",skills:[],role:"",player:"",assign:"",guild:"",public:"",seat:"",rival:false,pinned:false};
+    if(con==="Hireable"){const sk=(O.skills||[]).slice(),n=Math.min(sk.length,Math.random()<0.4?2:1),g=gradeFor(m.level);
+      const w=String(m.title).toLowerCase().slice(0,5),fit=sk.findIndex(s=>s.toLowerCase().includes(w));
+      for(let i=0;i<n;i++)m.skills.push({s:sk.splice(i===0&&fit>=0?fit:rnd(sk.length),1)[0],g});
+      m.role=(m.skills[0]&&T.guildJobs[m.skills[0].s])||cap(m.title)}
+    return m}
+  function add(m,quiet){C.roster.push(m);commit();if(!quiet)toast(`${m.name} saved to NPCs`);return m}
+
+  /* ---------- bridges from other tabs ---------- */
+  function fromPatron(h,quiet){
+    const p=h.patron;let m=p.npcId&&byId(p.npcId);if(m)return m;
+    m=C.roster.find(x=>x.name===p.name);if(m){p.npcId=m.id;commit();return m}
+    m=generate({con:"Patron",genre:h.world.genre||"Tree-born",occ:(T.patronOccupations||{})[p.cat]});
+    Object.assign(m,{name:p.name,title:p.arch,manner:p.quirk,want:`wants the party to ${h.objective}`,notes:`Patron: ${h.expanded?.title||h.type}.`});
+    p.npcId=m.id;return add(m,quiet)}
+  function usePatron(h,id){const m=byId(id);if(!m)return;Object.assign(h.patron,{name:m.name,npcId:m.id,quirk:m.manner||m.voice||h.patron.quirk});commit()}
+  function fromOffer(o){let m=o.npcId&&byId(o.npcId);if(m){toast(`${m.name} is already saved`);return m}
+    if(o.type==="hire"){m=generate({con:"Hireable",occ:"Crafter",genre:o.genre&&o.genre!=="Any"?o.genre:undefined});
+      Object.assign(m,{name:o.name.split(",")[0],title:o.name.split(", ").slice(1).join(", ")||o.role,role:o.role,skills:(o.skills||[]).map(s=>({s,g:o.grade})),manner:o.quirk||m.manner})}
+    else{m=generate({con:"Contact",occ:"Merchant"});Object.assign(m,{title:`peddler: ${o.vendor}`,notes:`Sold "${o.name}" as a Peddler.`})}
+    o.npcId=m.id;return add(m)}
+  function fromStaff(s,p){let m=C.roster.find(x=>x.name===p.name);if(m){toast(`${m.name} is already saved`);return m}
+    m=generate({con:"Contact",occ:"Merchant",genre:"Tree-born"});
+    Object.assign(m,{name:p.name,ancestry:p.ancestry||m.ancestry,title:`${(p.role||"staff").toLowerCase()} at ${s.name}`,look:p.look||m.look,voice:p.voice||m.voice,manner:p.personality||m.manner,want:p.want||m.want});
+    return add(m)}
+  function addToGuild(m){m.kind="Hired NPC";m.status="In the hall";commit();toast(`${m.name} joins the guild`);App.render()}
+  function leaveGuild(m){m.kind="NPC";m.status="";m.assign="";commit();toast(`${m.name} moves to NPCs`);App.render()}
+
+  /* ---------- Claude: write-up, stat block, Council re-roll ---------- */
+  const WORLD=()=>`Setting: a D&D 5e campaign around a planar World Tree whose city is a cosmopolitan bazaar; branches lead to worlds of every genre. Tone: whimsical-weird with a hopeful heart. The players' guild is young (currently ${rankName(S.tierRank)}), founded by Mordecai, a gruff changeling who looks like a rat-folk.`;
+  const summary=m=>`${m.name}: ${m.ancestry||"?"} ${m.title||m.occupation||""}${m.genre?` (from ${m.genre==="Tree-born"?"the Tree city":"a "+m.genre+" world"})`:""}; ${m.archetype||"Noncombatant"} level ${m.level||"?"}${m.label?` (${m.label})`:""}. Look: ${m.look||"?"}. Voice: ${m.voice||"?"}; ${m.manner||""}. Wants: ${m.want||"?"}. Secret: ${m.secret||"?"}. Attitude toward the guild: ${m.attitude||"Neutral"}.${m.seat?` Holds the ${m.seat} seat on the Council${m.guild?` for ${m.guild}`:""}.`:""}`;
+  function merge(m,r){["name","ancestry","title","look","voice","manner","want","secret","label","guild","public"].forEach(k=>{if(r[k]&&typeof r[k]==="string")m[k]=r[k]});
+    if(r.level&&!isNaN(+r.level))m.level=+r.level;if(r.archetype&&T.archetypes[r.archetype])m.archetype=r.archetype;
+    m.x={ai:!!r.ai,bio:r.bio||m.x?.bio||"",hooks:Array.isArray(r.hooks)?r.hooks:(m.x?.hooks||[]),prompt:r.prompt,note:r.note}}
+  function writeUp(m,btn){
+    const prompt=`${WORLD()}
+Flesh out this NPC for the DM, keeping their name, ancestry, occupation, archetype and level:
+${summary(m)}
+Return ONLY JSON:
+{"look": one vivid line, "voice": how they talk, "manner": one short phrase, "want": what they want right now, "secret": a DM-only secret, "label": short flavor tag for how they fight (e.g. "ex-sky-pirate with a hook blade"), "bio": 2-3 DM-facing sentences, "hooks": [2 one-sentence hooks tying them to the players' guild]}`;
+    aiRun({prompt,btn,fallback:{bio:"",hooks:[]},apply:r=>{merge(m,r);commit();App.render()}})}
+  const crTxt=c=>c===0.125?"⅛":c===0.25?"¼":c===0.5?"½":String(c);
+  function ladderPick(m){const A=T.archetypes[m.archetype]||T.archetypes.Noncombatant,target=(m.level||1)*(T.crPerLevel??0.6);
+    let best=A.ladder[0];A.ladder.forEach(r=>{if(Math.abs(r.cr-target)<Math.abs(best.cr-target))best=r});return {r:best,target}}
+  function sbBasic(m){const {r,target}=ladderPick(m),d=target-r.cr;
+    const adjust=d>0.75?`Tougher than the base: +${Math.min(60,Math.round(d*12))}% hit points and +${Math.max(1,Math.round(d/2))} to attack rolls and save DCs.`:d<-0.75?`Weaker than the base: −${Math.min(50,Math.round(-d*12))}% hit points and −1 to attack rolls and save DCs.`:"Use as written.";
+    return {base:`${r.name} (CR ${crTxt(r.cr)})`,adjust,reskin:`Reskin weapons, spells and gear to fit ${m.genre==="Tree-born"||!m.genre?"the Tree city":"a "+m.genre+" world"}${m.label?`: ${m.label}`:""}.`}}
+  function statBlock(m,btn){const b=sbBasic(m);
+    const prompt=`${WORLD()}
+Build a compact reference stat block for this NPC from the official D&D 5e "${b.base.replace(/ \(CR.*$/,"")}" stat block, adjusted to their level and reskinned to their genre and fighting style:
+${summary(m)}
+Return ONLY JSON:
+{"base": official stat block used and its CR, "ac": string, "hp": string, "speed": string, "abilities": "STR x DEX x CON x INT x WIS x CHA x", "attacks": [short attack lines with to-hit and damage], "traits": [2-4 short traits or spells], "tactics": one sentence on how they fight}`;
+    aiRun({prompt,btn,fallback:b,apply:r=>{m.sb=r;commit();App.render()}})}
+  function rerollSeat(t,btn){
+    const ST=T.council.seats[t]||{},old=seatHolder(t),others=TIERS.filter(x=>x!==t).map(seatHolder).filter(Boolean).map(summary).join("\n");
+    const lv=String(ST.level||"").split("-").map(Number),level=lv[0]?lv[0]+rnd((lv[1]||lv[0])-lv[0]+1):tierMidLevel(TIERS.indexOf(t));
+    const fb=generate({occ:"Adventurer",con:"Bystander",level});Object.assign(fb,{title:`guild master of a top ${t} guild`,want:ST.stance||fb.want,public:`Newly elected to ${ST.title||"the "+t+" Seat"}.`});
+    const prompt=`${WORLD()}
+Write a new member of the Council (5 seats, one per guild tier, each elected by that tier's guilds; usually a top guild's master). They now hold ${ST.title||t}.
+Seat duties: ${ST.duties||""}
+Seat's usual stance toward Iron guilds: ${ST.stance||""}
+Typical level for this seat: ${ST.level||level}.${old?`\nThey replace: ${summary(old)}`:""}
+Other current Council members (make this one distinct from them):
+${others||"none"}
+Return ONLY JSON:
+{"name": string, "ancestry": string, "title": e.g. "guild master of the X (${t} 1)", "guild": guild name, "archetype": one of ${Object.keys(T.archetypes).join(", ")}, "level": number, "label": short flavor tag for how they fight, "look": one line, "voice": how they talk, "manner": short phrase, "public": one line players would hear about them, "want": their agenda, "secret": DM-only secret with a hook, "bio": 2-3 DM-facing sentences, "hooks": [2 one-sentence hooks tying them to the players' Iron guild]}`;
+    aiRun({prompt,btn,fallback:{},apply:r=>{const m=fb;merge(m,r);m.occupation="Adventurer";m.connection="Bystander";m.seat=t;
+      if(old){old.seat="";old.notes=`${old.notes?old.notes+" ":""}Former ${t} Council seat.`}C.roster.push(m);commit();toast(`${m.name} takes the ${t} seat`);App.render()}})}
+  function seatNPC(t,id){const cur=seatHolder(t);if(cur)cur.seat="";const m=byId(id);if(m)m.seat=t;commit();App.render()}
+
+  /* seed Council + Mordecai's profile fields (old campaigns get them on load) */
+  function ensure(){let ch=false;
+    if(!C.councilSeeded){(T.council.starting||[]).forEach(s=>{if(!C.roster.some(m=>m.name===s.name)){C.roster.push(Object.assign({id:uid(),kind:"NPC",status:"",skills:[],role:"",player:"",assign:"",notes:"",rival:false,pinned:s.seat==="Iron"},clone(s)))}});C.councilSeeded=true;ch=true}
+    const mo=C.roster.find(m=>m.kind==="Founder");
+    if(mo&&mo.forms==null){Object.assign(mo,{forms:["Rat Folk (current form)"],motive:"",occupation:"Adventurer",archetype:mo.archetype||"Support",look:mo.look||"a scruffy, grey-whiskered rat-folk with tired eyes and a stained vest",voice:mo.voice||"a gravelly mutter, mostly complaints",manner:mo.manner||"gruff, sarcastic, secretly caring"});ch=true}
+    if(ch)commit()}
+
+  /* ---------- UI ---------- */
+  const attSel=m=>`<select class="att" data-att="${m.id}">${ATT.map(a=>`<option${a===(m.attitude||"Neutral")?" selected":""}>${a}</option>`).join("")}</select>`;
+  const attCls=a=>({Hostile:"t-hostile",Wary:"t-wary",Friendly:"leaf",Devoted:"gold"}[a]||"");
+  function profileHTML(m,dm=true){
+    const sb=m.sb;return `${m.ancestry||m.genre?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
+    ${m.look||m.voice||m.manner?`<div class="row">${esc(cap(m.look||""))}${m.look?". ":""}${m.voice?`<i>${esc(cap(m.voice))}</i>`:""}${m.manner?`; ${esc(m.manner)}`:""}.</div>`:""}
+    ${m.public?`<div class="row"><b>Known for:</b> ${esc(m.public)}</div>`:""}
+    ${m.want?`<div class="row"><b>Wants:</b> ${esc(m.want)}</div>`:""}
+    ${dm&&(m.secret||m.motive)?`<div class="dm">${m.motive?`<b>Motive:</b> ${esc(m.motive)}<br>`:""}${m.secret?`<b>Secret:</b> ${esc(m.secret)}`:""}</div>`:""}
+    ${(m.forms||[]).length?`<div class="row"><b>Forms:</b> ${m.forms.map(esc).join(" → ")}</div>`:""}
+    ${m.x&&(m.x.bio||(m.x.hooks||[]).length||m.x.note)?`<div class="expanded">${m.x.note?`<p class="muted">${esc(m.x.note)}</p>`:""}${m.x.bio?`<p>${esc(m.x.bio)}</p>`:""}${(m.x.hooks||[]).length?`<h4>Hooks</h4><ul>${m.x.hooks.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>`:""}</div>`:""}
+    ${sb?`<div class="worldblock"><b>Stat block:</b> ${esc(sb.base||"")}${sb.ac?` · AC ${esc(sb.ac)} · HP ${esc(sb.hp)} · Speed ${esc(sb.speed||"")}<br>${esc(sb.abilities||"")}`:""}
+      ${(sb.attacks||[]).length?`<br><b>Attacks:</b> ${sb.attacks.map(esc).join("; ")}`:""}${(sb.traits||[]).length?`<br><b>Traits:</b> ${sb.traits.map(esc).join("; ")}`:""}
+      ${sb.tactics?`<br><i>${esc(sb.tactics)}</i>`:""}${sb.adjust?`<br>${esc(sb.adjust)}`:""}${sb.reskin?`<br><span class="muted">${esc(sb.reskin)}</span>`:""}${sb.note?`<br><span class="muted">${esc(sb.note)}</span>`:""}</div>`:""}`}
+  function badges(m){return `<div class="badges">${m.seat?`<span class="badge gold">${esc(m.seat)} Seat</span>`:""}${m.occupation?`<span class="badge">${esc(m.occupation)}${m.title?`: ${esc(m.title)}`:""}</span>`:""}${m.connection?`<span class="badge">${esc(m.connection)}</span>`:""}
+    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 Pinned</span>':""}</div>`}
+  function card(m,candidate){
+    const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;
+    d.innerHTML=`<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
+      ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${Roster.gradeOf(m,s)}</b></span>`).join("")}${m.role?` <span class="muted" style="font-size:14px">suits: ${esc(m.role)}</span>`:""}</div>`:""}
+      ${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      <div class="actions">${candidate?`<button class="btn small primary" data-a="keep">Save NPC</button><button class="btn small" data-a="reroll">Reroll</button>`:
+      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="pin">${m.pinned?"Unpin":"📌 Pin"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
+      <button class="btn small primary" data-a="write">${m.x?.ai?"Rewrite":"Write up"}</button><button class="btn small" data-a="sb">${m.sb?"Re-roll stat block":"Roll stat block"}</button><button class="btn small" data-a="join">Add to Guild</button><button class="btn small danger" data-a="del">Delete</button>`}</div>`;
+    if(!candidate){const acts=d.querySelector(".actions");if(m.x&&m.x.prompt)acts.appendChild(aiButtons(m.x,r=>{merge(m,r);commit();App.render()}));
+      if(m.sb&&m.sb.prompt){const w=aiButtons(m.sb,r=>{m.sb=r;commit();App.render()});w.querySelectorAll("button").forEach(b=>b.textContent=b.textContent.replace("Claude prompt","stat block prompt").replace("Paste result","Paste stat block"));acts.appendChild(w)}}
+    d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
+      if(candidate){if(a==="keep"){add(m);cands=cands.filter(x=>x!==m)}else if(a==="reroll")cands[cands.indexOf(m)]=generate(genOpts());render();return}
+      if(a==="edit"){Roster.edit(m);return}
+      if(a==="pin")m.pinned=!m.pinned;else if(a==="rival")m.rival=!m.rival;
+      else if(a==="write"){writeUp(m,ev.target);return}else if(a==="sb"){statBlock(m,ev.target);return}
+      else if(a==="join"){addToGuild(m);return}
+      else if(a==="del"){if(!ev.target.dataset.sure){ev.target.dataset.sure=1;ev.target.textContent="Confirm delete?";return}C.roster=C.roster.filter(x=>x!==m)}
+      commit();render()});
+    return d}
+  function bindAtt(root){root.addEventListener("change",e=>{const id=e.target.dataset.att;if(!id)return;const m=byId(id);if(m){m.attitude=e.target.value;commit();toast(`${m.name}: ${m.attitude}`)}})}
+  const genOpts=()=>({occ:gen.occ,con:gen.con,genre:gen.genre,arch:gen.arch,level:gen.level});
+  const opt=(list,v,any="Any")=>`<option value="">${any}</option>`+list.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("");
+  function councilEl(){
+    const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>The Council</h2><table class="ref council">${TIERS.map(t=>{const m=seatHolder(t),ST=T.council.seats[t]||{};
+      return `<tr><td><b>${esc(ST.title||t)}</b><br><span class="muted" style="font-size:13px">${esc(ST.duties||"")}</span></td>
+      <td style="text-align:left;white-space:normal">${m?`<b><a href="#" data-go="${m.id}">${esc(m.name)}</a></b> <span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span><br><span class="muted">${esc(m.title||"")}</span>`:'<span class="muted">Vacant</span>'}
+      <div class="actions" style="margin-top:4px"><select data-seat="${t}"><option value="">Assign NPC…</option>${all().filter(x=>x.seat!==t).map(x=>`<option value="${x.id}">${esc(x.name)}${x.seat?` (${x.seat} seat)`:""}</option>`).join("")}</select>
+      <button class="btn small" data-reseat="${t}">Re-roll seat</button><button class="btn small" data-newseat="${t}">Enter manually</button>${m?`<button class="btn small" data-vacate="${t}">Vacate</button>`:""}</div></td></tr>`}).join("")}</table>
+      <p class="hint">Re-roll writes a new member with Claude (or fills one from the tables, with a prompt to copy). The old holder stays in your NPCs.</p>`;
+    p.onclick=e=>{const t=e.target.dataset;
+      if(t.go){e.preventDefault();filt="all";q="";render();document.querySelector(`[data-npc="${t.go}"]`)?.scrollIntoView({behavior:"smooth"})}
+      else if(t.reseat)rerollSeat(t.reseat,e.target);
+      else if(t.newseat){const m=generate({occ:"Adventurer",con:"Bystander",level:tierMidLevel(TIERS.indexOf(t.newseat))});Object.assign(m,{name:"",seat:t.newseat,want:"",secret:"",look:"",voice:"",manner:""});Roster.edit(m)}
+      else if(t.vacate){const m=seatHolder(t.vacate);if(m){m.seat="";commit();render()}}};
+    p.onchange=e=>{const t=e.target.dataset.seat;if(t&&e.target.value)seatNPC(t,e.target.value)};
+    return p}
+  function render(){
+    const h=$("#npcHost");if(!h)return;h.innerHTML="";
+    const g=document.createElement("div");g.className="panel";
+    g.innerHTML=`<h2>Generate NPCs</h2><div class="controls" style="margin:0;background:none;border:0;padding:0">
+      <label>Occupation <select data-g="occ">${opt(Object.keys(T.occupations),gen.occ)}</select></label>
+      <label>Connection <select data-g="con">${opt(Object.keys(T.connections),gen.con)}</select></label>
+      <label>Genre <select data-g="genre">${opt(genreList(),gen.genre)}</select></label>
+      <label>Archetype <select data-g="arch">${opt(Object.keys(T.archetypes),gen.arch)}</select></label>
+      <label>Level <input data-g="level" type="number" min="1" max="20" placeholder="any" value="${esc(gen.level)}" style="width:70px"></label>
+      <button class="btn primary" id="npcRoll">Roll 3</button><button class="btn" id="npcNew">＋ New NPC</button></div>
+      <p class="hint" style="margin:6px 0 0">Blank fields roll weighted: common genres and low levels are most likely; over level 10 is rare and over 15 never happens.</p>
+      <div class="board" id="npcCands" style="margin-top:8px"></div>`;
+    h.appendChild(g);cands.forEach(m=>g.querySelector("#npcCands").appendChild(card(m,true)));
+    g.onchange=g.oninput=e=>{const k=e.target.dataset.g;if(k)gen[k]=e.target.value};
+    g.querySelector("#npcRoll").onclick=()=>{cands=[0,1,2].map(()=>generate(genOpts()));render()};
+    g.querySelector("#npcNew").onclick=()=>Roster.edit({id:uid(),kind:"NPC",status:"",name:"",occupation:"",connection:"",genre:"Tree-born",archetype:"Noncombatant",level:null,attitude:"Neutral",skills:[],role:"",player:"",assign:"",notes:""});
+    h.appendChild(councilEl());
+    const f=document.createElement("div");f.className="controls";
+    f.innerHTML=`<div class="seg">${[["all","All"],["patron","Patrons"],["council","Council"],["rival","Rivals"],["pinned","Pinned"]].map(([k,l])=>`<button class="btn${filt===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div><input id="npcQ" placeholder="Search names, jobs, notes" value="${esc(q)}" style="width:240px">`;
+    f.onclick=e=>{if(e.target.dataset.f){filt=e.target.dataset.f;render()}};
+    f.querySelector("#npcQ").oninput=e=>{q=e.target.value;drawList()};
+    h.appendChild(f);const b=document.createElement("div");b.className="board";b.id="npcList";h.appendChild(b);bindAtt(b);drawList()}
+  function drawList(){const b=$("#npcList");if(!b)return;b.innerHTML="";
+    let L=all();if(filt==="patron")L=L.filter(m=>m.connection==="Patron");if(filt==="council")L=L.filter(m=>m.seat);if(filt==="rival")L=L.filter(m=>m.rival);if(filt==="pinned")L=L.filter(m=>m.pinned);
+    if(q.trim()){const s=q.toLowerCase();L=L.filter(m=>JSON.stringify([m.name,m.title,m.occupation,m.notes,m.guild,m.ancestry]).toLowerCase().includes(s))}
+    if(!L.length){b.innerHTML='<p class="muted">No NPCs here yet. Roll some above, or save patrons from the Job Board.</p>';return}
+    L.forEach(m=>b.appendChild(card(m)))}
+
+  /* ---------- Table Mode + print ---------- */
+  function tableEl(){const w=document.createElement("div");
+    const ids=new Set(),L=[];const push=(m,why)=>{if(m&&!ids.has(m.id)){ids.add(m.id);L.push([m,why])}};
+    C.jobs.filter(h=>h.kept||h.final).forEach(h=>push(h.patron.npcId&&byId(h.patron.npcId),"Patron"));
+    push(seatHolder("Iron"),"Iron Seat");C.roster.filter(m=>m.pinned).forEach(m=>push(m,"Pinned"));
+    w.innerHTML=L.length?`<table class="ref">${L.map(([m,why])=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${why}</span><br><i class="muted">${esc(m.voice||"")}${m.manner?`; ${esc(m.manner)}`:""}</i></td><td>${attSel(m)}</td></tr>`).join("")}</table>`:'<p class="muted">Pin NPCs, or keep jobs with saved patrons, to see them here.</p>';
+    bindAtt(w);return w}
+  const pinnedOrSeated=()=>C.roster.filter(m=>m.pinned);
+  function cheatHTML(){const L=pinnedOrSeated();if(!L.length)return"";
+    return `<div class="pr npc-sheet"><h1>NPC Cheat Sheet</h1><div class="npc-grid">${L.map(m=>`<div class="npc-c"><h3>${esc(m.name)}</h3><div class="lvl">${esc([m.ancestry,m.title||m.occupation].filter(Boolean).join(", "))}${m.seat?` · ${esc(m.seat)} Seat`:""} · ${esc(m.archetype||"")} ${m.level?"lvl "+esc(m.level):""} · <b>${esc(m.attitude||"Neutral")}</b></div>
+      ${m.look?`<div>${esc(cap(m.look))}.</div>`:""}${m.voice||m.manner?`<div><i>${esc(cap(m.voice||""))}${m.manner?`; ${esc(m.manner)}`:""}</i></div>`:""}${m.want?`<div><b>Wants:</b> ${esc(m.want)}</div>`:""}${m.secret?`<div><b>Secret:</b> ${esc(m.secret)}</div>`:""}${m.sb?`<div><b>Stats:</b> ${esc(m.sb.base||"")}${m.sb.ac?`, AC ${esc(m.sb.ac)}, HP ${esc(m.sb.hp)}`:""}</div>`:""}</div>`).join("")}</div></div>`}
+  function councilHTML(){const L=TIERS.map(t=>[t,seatHolder(t)]).filter(x=>x[1]);if(!L.length)return"";
+    return `<div class="council-notice notice"><div class="nhead">BY THE AUTHORITY OF THE TREE</div><div class="ntitle">The Council of Five</div><hr class="nrule">${L.map(([t,m])=>`<div class="cn-seat"><div class="nreward">${esc((T.council.seats[t]||{}).title||t)}</div><b>${esc(m.name)}</b>${m.guild?`, ${esc(m.guild)}`:""}<br><span>${esc(cap(m.look||""))}${m.look?". ":""}${esc(m.public||"")}</span></div>`).join("")}<hr class="nrule"><div class="sig">Petitions are heard at the Iron Seat each morning, snacks permitting.</div></div>`}
+  const PRINT_CSS=`.npc-sheet h1{font:700 22px Cinzel,serif;text-align:center;margin:0 0 10px}.npc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.npc-c{border:1px solid #7a5a2e;border-radius:4px;padding:8px 10px;font-size:13.5px;line-height:1.3;break-inside:avoid;page-break-inside:avoid}.npc-c h3{margin:0;font:700 15px Cinzel,serif}.npc-c .lvl{font-size:12px;color:#5a3e1e;margin-bottom:3px}
+  .council-notice{max-width:620px;margin:24px auto 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.council-notice .cn-seat{margin:9px 0;font-size:16px;line-height:1.35}.council-notice .nreward{font-size:16px}`;
+  return {reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
+})();
+
 /* ================= FRIENDLY TABLE EDITOR (form view over any table JSON) ================= */
 const TableEditor=(()=>{
   const HIDE=new Set(["version","tiers"]);
-  const RECORD=new Set(["fantasyShare","worldBlock","sizes","locations","offers","names","typeWeightsByTier","op","genres"]);
+  const RECORD=new Set(["levelCurve","council","seats","mordecai","fantasyShare","worldBlock","sizes","locations","offers","names","typeWeightsByTier","op","genres"]);
   const LABELS={w:"Weight",wealth:"Wealth (gold ×)",jobTypes:"Job types",fantasyShare:"Fantasy share",worldBlock:"World details",patronNames:"Patron names",patronQuirks:"Patron quirks",
     goldBaseByLevel:"Job gold by party level",rarityByTier:"Incentive rarity by tier",xpBudget:"XP budget per character",fightPlan:"Fight plan",goldMult:"Gold multiplier",
     perkLabels:"Perk type labels",typeWeightsByTier:"Peddler type weights by tier",dealReasons:"Deal reasons",jobs:"Price (in jobs)",gp:"Price override (gp)",days:"Build days",
     tier:"Recommended tier",types:"Perk types (P/A/B/C)",op:"Operator",makes:"Makes (per level)",cat:"Category",s:"Skill",g:"Grade",cap:"Rarity cap",output:"Items per downtime",
     first:"First names",last:"Last names",rows:"Rows",rule:"Rule of thumb",arch:"Archetype",
     shopTypes:"Shop types",quickTypes:"Quick buttons",namePatterns:"Shop name patterns",adjectives:"Name adjectives",placeNouns:"Name places",magicRarityByTier:"Magic item rarity by tier",magicItems:"Magic items",
-    stock:"Stock",price:"Base price (gp)",desc:"Description",mult:"Price ×",itemCount:"Items (min, max)",staffCount:"Staff (min, max)",magic:"Magic item chance (0–1)",kinds:"Shop words",nouns:"Name nouns",keywords:"Custom-idea keywords",roles:"Staff roles (first = owner)",interiors:"Interiors",places:"Locations",haggle:"Haggling rules",npc:"Shopkeeper parts"};
+    stock:"Stock",price:"Base price (gp)",desc:"Description",mult:"Price ×",itemCount:"Items (min, max)",staffCount:"Staff (min, max)",magic:"Magic item chance (0–1)",kinds:"Shop words",nouns:"Name nouns",keywords:"Custom-idea keywords",roles:"Staff roles (first = owner)",interiors:"Interiors",places:"Locations",haggle:"Haggling rules",npc:"Shopkeeper parts",levelCurve:"Level odds",adventurerShift:"Adventurer level shift",cityShare:"City-born share (0–1)",crPerLevel:"CR per NPC level",occupations:"Occupations",connections:"Connections",titles:"Job titles",secrets:"Secrets",guildJobs:"Guild job by skill",patronOccupations:"Occupation by patron category",ancestries:"Ancestries by genre",archetypes:"Archetypes",ladder:"Stat block ladder",cr:"CR",blurb:"Fights by",grumbles:"Mordecai's grumbles",council:"Council",seats:"Seat templates",starting:"Starting Council members",duties:"Duties",stance:"Stance toward Iron guilds",attitude:"Default attitude odds",wants:"Wants"};
   const HINTS={jobTypes:"How often each job type appears at each tier. Bigger number = more common; 0 = never.",
     sizes:"How often each job size appears per tier, plus its gold multiplier and contribution value.",locations:"Where jobs happen, weighted per tier.",
     fantasyShare:"Share of fantasy-flavored worlds at Iron vs. Platinum (0 to 1).",genres:"World genres: weight, places, quirks, and fill-in words used in job text.",
@@ -5699,7 +6062,7 @@ const TableEditor=(()=>{
     offers:"Peddlers: type weights per tier, discounts, vendors, one-of-a-kind upgrades, rare hires.",names:"Name parts for generated NPCs.",perkLabels:"What the perk-type letters mean.",
     rows:"Item and price, one row each.",
     shopTypes:"Each shop type: name words, staff roles, interiors, magic chance, and stock with base prices (0.1 gp = 1 sp).",quickTypes:"Shop types shown as one-click buttons.",namePatterns:"Words in {braces}: {owner} {adj} {noun} {noun2} {kind} {place}.",
-    magicRarityByTier:"Chance of each magic rarity (common, uncommon, rare, very rare, legendary) per tier.",magicItems:"Magic items shops can stock, by rarity.",wealth:"Shop wealth levels: price multiplier and how many items and staff.",places:"Where a shop is: exterior and sensory details.",npc:"Parts for shopkeepers and staff.",rule:"Shown above the price table."};
+    magicRarityByTier:"Chance of each magic rarity (common, uncommon, rare, very rare, legendary) per tier.",magicItems:"Magic items shops can stock, by rarity.",wealth:"Shop wealth levels: price multiplier and how many items and staff.",places:"Where a shop is: exterior and sensory details.",npc:"Parts for shopkeepers and staff.",rule:"Shown above the price table.",levelCurve:"Odds of each level range for generated NPCs (Council and manual entries ignore this).",adventurerShift:"How far adventurer-type NPCs shift up toward the guild's tier (0 = not at all).",cityShare:"Share of generated NPCs who are Tree-born city folk when genre is left blank.",occupations:"Occupation: weight, job titles, archetype odds, and skills hireables can have.",connections:"How the NPC relates to the guild: weight, default attitude odds, and wants.",archetypes:"How each archetype fights and the official stat blocks it maps to by CR.",council:"Seat templates and the starting Council (used once, when a campaign is first opened).",guildJobs:"Suggested guild job for a hireable's first skill."};
   const human=k=>LABELS[k]||String(k).replace(/([a-z])([A-Z])/g,"$1 $2").replace(/^./,c=>c.toUpperCase());
   const isNum=v=>typeof v==="number",isStr=v=>typeof v==="string",isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
   const sig=v=>Array.isArray(v)?"a"+(v.length?sig(v[0]):""):isObj(v)?"o":typeof v;
@@ -5794,7 +6157,7 @@ const App=(()=>{
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
   function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
-  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();Jobs.initControls();render()}
+  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- table mode ---------- */
   function renderTable(){
@@ -5812,6 +6175,7 @@ const App=(()=>{
     const rv=col("Revival fee",`<label class="inline">Character level <input id="rvLvl" type="number" min="1" max="20" value="${S.partyLevel}"></label><div class="row" id="rvOut"></div><p class="hint">${S.revive} gp × level${chapel?`, −${disc*100}% from the Root Chapel ${Upgrades.ROMAN[chapel-1]}`:""}. Death in the worlds is normal D&D.</p>`);
     const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
     rv.querySelector("#rvLvl").oninput=upd;upd();
+    col("NPCs in play",NPCs.tableEl());
     col("Who's in the hall",`<table class="ref">${Roster.sorted().map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
     col("Shops in play",Shops.tableHTML());
     col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
@@ -5824,8 +6188,10 @@ const App=(()=>{
     if(p.cards){const c=Upgrades.cardsHTML();if(c)out+=(out?'<div class="pr-break"></div>':"")+c}
     if(p.shops){const s=Shops.printHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
     if(p.roster)out+=(out?'<div class="pr-break"></div>':"")+Roster.printHTML();
+    if(p.npcs){const s=NPCs.cheatHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
+    if(p.council){const s=NPCs.councilHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
     return out}
-  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS;
+  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
     $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
@@ -5848,7 +6214,7 @@ const App=(()=>{
     loadTblEditor();
   }
   let tblKey="jobs",draft=null;
-  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES}[tblKey]);
+  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES,npcs:DEFAULT_NPC_TABLES}[tblKey]);
   function loadTblEditor(){
     $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
     const cur=C.tables[tblKey],def=tblDefaults(),stale=cur&&def.version&&(cur.version||0)<def.version;
@@ -5888,7 +6254,7 @@ const App=(()=>{
       replaceCampaign(newCampaign());commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
   }
   async function boot(){
-    Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();Jobs.initControls();
+    Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}

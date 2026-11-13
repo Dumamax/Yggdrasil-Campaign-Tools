@@ -58,15 +58,18 @@
 
   <section id="tab-roster" hidden>
     <div class="controls">
+      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button></div>
+      <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
       <button class="btn" id="importPC">Import character</button>
-      <button class="btn" id="copyRoster">Copy roster</button>
+      <button class="btn" id="copyRoster">Copy roster</button></span>
     </div>
     <div id="importHost"></div>
     <div id="editorHost"></div>
     <div id="roster" class="board"></div>
-    <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
+    <div id="npcHost" class="npc-host"></div>
+    <p class="hint" id="rHint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
   </section>
 
   <section id="tab-market" hidden></section>
@@ -84,6 +87,8 @@
       <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
       <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
       <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+      <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned, DM only)</label>
+      <label class="inline"><input type="checkbox" data-p="council"> Council Notice (players)</label>
       <button class="btn primary" id="printGo">Print</button>
     </div>
     <div class="preview" id="preview"></div>
@@ -127,7 +132,7 @@
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option><option value="npcs">NPCs &amp; Council</option></select><span class="muted" id="tblState"></span></div>
         <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>

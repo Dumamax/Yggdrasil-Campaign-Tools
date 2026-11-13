@@ -67,7 +67,7 @@ Return ONLY JSON:
  "hooks": [1 or 2 one-sentence story hooks tied to this upgrade],
  "complication": ${comp?"one or two sentences on how the complication plays out":"null"}}
 Don't change the perk's mechanics.`;
-    aiRun({prompt,btn,apply,fallback:{ai:false,title:info.name,description:info.perk,npc:{name:genName(),role:"builder",quirk:"works fast, talks faster"},mordecai:"\"That much? For THAT? Fine. Fine.\"",hooks:[],complication:comp}});
+    aiRun({prompt,btn,apply,fallback:{ai:false,title:info.name,description:info.perk,npc:{name:genName(),role:"builder",quirk:"works fast, talks faster"},mordecai:pickFresh(NPCs.tables().mordecai?.grumbles||["\"That much? For THAT? Fine. Fine.\""],"grumble"),hooks:[],complication:comp}});
   }
   function expandedHTML(x,dm){if(!x)return"";
     return `<div class="expanded">${dm&&x.note?`<p class="muted">${esc(x.note)}</p>`:""}${x.title?`<div><b>${esc(x.title)}</b></div>`:""}<div>${esc(x.description)}</div>
@@ -99,7 +99,7 @@ Don't change the perk's mechanics.`;
     const ad=u.addons||[],ownedAd=g.addons[u.id]||[];
     const addons=ad.length?`<details class="addons"><summary>${u.cat==="Staff"?"Other options":"Add-ons"} (${ad.length})${ownedAd.length?` · ${ownedAd.length} owned`:""}</summary><ul>${ad.map((a,i)=>{const o=ownedAd.includes(a.name);return `<li class="${o?"addon-owned":""}${!o&&!canAfford(a.gp)?" muted":""}"><b>${esc(a.name)}</b> · ${o?"✓ owned":fmt(a.gp)+" gp"}: ${esc(a.perk)} ${dm&&!o?`<button class="btn small" data-ad="${i}">Buy</button>`:""}${dm&&o?`<button class="btn small" data-adrm="${i}">✕</button>`:""}</li>`}).join("")}</ul></details>`:"";
     let op="";
-    if(u.op&&dm){const ops=C.roster.filter(m=>Roster.bestSkill(m,u.op.skills)),cur=C.roster.find(m=>m.assign===u.id),best=cur?Roster.bestSkill(cur,u.op.skills):null,out=best?T.grades[best.g]:null;
+    if(u.op&&dm){const ops=Roster.sorted().filter(m=>Roster.bestSkill(m,u.op.skills)),cur=C.roster.find(m=>m.assign===u.id),best=cur?Roster.bestSkill(cur,u.op.skills):null,out=best?T.grades[best.g]:null;
       op=`<div class="op"><b>Operator:</b> <select data-op><option value="">${ops.length?"— none —":"no one on the roster has "+esc(u.op.skills.join(" / "))}</option>${ops.map(m=>`<option value="${m.id}"${cur&&cur.id===m.id?" selected":""}>${esc(m.name)} (${Roster.bestSkill(m,u.op.skills).g})</option>`).join("")}</select>
       ${own&&out?`<br>${esc(best.g)}: <b style="color:var(--ink)">${out.output}×</b> ${esc(u.op.makes[Math.max(0,own-1)]||"")} per downtime, up to ${out.cap}.`:own?`<br><span class="muted">Needs ${esc(u.op.skills.join(" or "))}.</span>`:`<br><span class="muted">Buy Level I first.</span>`}</div>`}
     const x=C.expanded[u.id];
@@ -122,14 +122,15 @@ Don't change the perk's mechanics.`;
     d.innerHTML=`<h3>${esc(o.name)}</h3><div class="badges"><span class="badge gold">${{unique:"Unique",deal:"Deal",hire:"Rare hire"}[o.type]}</span><span class="badge">${esc(o.cat)}</span><span class="badge">${esc(o.genre)}</span>${o.sold?'<span class="badge leaf">Sold</span>':""}</div>
      <div class="flav">Offered by ${esc(o.vendor)}${o.reason?`: ${esc(o.reason)}`:""}.</div>
      <div class="lv${!o.sold&&!canAfford(o.cost)?" dim":""}"><span class="n">⟡</span><span class="nm">${o.type==="deal"?`<s class="muted">${fmt(o.orig)}</s> −${o.discount}%`:o.type==="hire"?"Hire":"One of a kind"}</span><span class="cost">${fmt(o.cost)} gp</span><span class="perk">${esc(o.perk)}</span><span class="meta">${o.days?`${o.days} day${o.days>1?"s":""} to build`:"Ready immediately"}</span></div>
-     ${expandedHTML(o.x,dm)}${dm?`<div class="actions">${o.sold?"":`<button class="btn small primary" data-a="buy">Buy</button>`}<button class="btn small" data-a="exp">${o.x?"Re-expand":"Expand"}</button><button class="btn small" data-a="re">Reroll</button><button class="btn small" data-a="del">✕</button></div>`:""}`;
+     ${expandedHTML(o.x,dm)}${dm?`<div class="actions">${o.sold?"":`<button class="btn small primary" data-a="buy">Buy</button>`}<button class="btn small" data-a="exp">${o.x?"Re-expand":"Expand"}</button><button class="btn small" data-a="npc">${o.npcId?"✓ NPC saved":"Save NPC"}</button><button class="btn small" data-a="re">Reroll</button><button class="btn small" data-a="del">✕</button></div>`:""}`;
     const setX=r=>{o.x=r;commit();render()};
     if(dm&&o.x&&o.x.prompt)d.querySelector(".actions").appendChild(aiButtons(o.x,setX));
     d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
       if(a==="buy")buyOffer(o);
       else if(a==="re"){Object.assign(o,newOffer(),{x:null,sold:false});commit();render()}
       else if(a==="del"){G().offers=G().offers.filter(x=>x!==o);commit();render()}
-      else if(a==="exp")expand(o,ev.target,setX)});
+      else if(a==="exp")expand(o,ev.target,setX)
+      else if(a==="npc"){NPCs.fromOffer(o);render()}});
     return d;
   }
 

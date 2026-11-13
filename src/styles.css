@@ -135,3 +135,10 @@ table.te-matrix th{font-size:12.5px;color:var(--mute);font-weight:600;padding:2p
 table.te-matrix td{padding:2px 3px}
 table.te-matrix .te-num{width:64px}
 table.te-matrix .te-txt{min-width:160px}
+/* NPCs & Council */
+[hidden]{display:none!important}
+.npc-host{display:grid;gap:12px}
+.badge.t-hostile{color:#d9785f;border-color:#d9785f}.badge.t-wary{color:#d6ae62;border-color:#d6ae62}
+select.att{padding:2px 6px;font-size:14px}
+table.council td{vertical-align:top}table.council a{color:var(--gold)}
+table.council select{max-width:230px}

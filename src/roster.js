@@ -6,10 +6,14 @@ const Roster=(()=>{
   function gradeOf(m,sk){if(sk.g==="Prof")return "Skilled";if(sk.g==="Exp")return (m.level||0)>=11?"Master":"Expert";return sk.g||"Skilled"}
   function bestSkill(m,skills){let best=null;(m.skills||[]).forEach(sk=>{if(skills.some(s=>s.toLowerCase()===String(sk.s||"").toLowerCase())){const g=gradeOf(m,sk);if(!best||GORDER.indexOf(g)>GORDER.indexOf(best.g))best={s:sk.s,g}}});return best}
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
-  const sorted=()=>C.roster.slice().sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
+  const sorted=()=>C.roster.filter(m=>KINDS.includes(m.kind)).sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
   function render(){
-    const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();renderEditor();
+    const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
+    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub!=="npcs";$("#rHint").hidden=sub!=="members";
+    renderEditor();if(sub==="npcs"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render();return}
+    $("#npcHost").innerHTML="";
+    const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();
     $$("#rFilter button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
     let list=sorted();
     if(filter==="pc")list=list.filter(m=>m.kind==="Active PC");
@@ -20,10 +24,11 @@ const Roster=(()=>{
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
-      ${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
-      <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
+      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
         if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+        else if(a==="leave"){NPCs.leaveGuild(m);return}
         else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
         else if(a==="del"){if(ev.target.dataset.sure){C.roster=C.roster.filter(x=>x.id!==m.id);commit();render()}else{ev.target.dataset.sure=1;ev.target.textContent="Confirm delete?"}}});
       el.appendChild(d)});
@@ -34,7 +39,7 @@ const Roster=(()=>{
     const owners=Upgrades.opCatalog().filter(u=>(C.guild.owned[u.id]||0)>0);
     h.innerHTML=`<div class="editor"><div class="grid">
       <label>Name <input data-k="name" value="${esc(m.name)}"></label>
-      <label>Type <select data-k="kind">${KINDS.map(k=>`<option${k===m.kind?" selected":""}>${k}</option>`).join("")}</select></label>
+      <label>Type <select data-k="kind">${[...KINDS,"NPC"].map(k=>`<option${k===m.kind?" selected":""}>${k}</option>`).join("")}</select></label>
       <label>Status <select data-k="status">${STATUSES.map(k=>`<option${k===m.status?" selected":""}>${k}</option>`).join("")}</select></label>
       <label>Level <input data-k="level" type="number" min="1" max="20" value="${esc(m.level??"")}"></label>
       <label>Ancestry / class <input data-k="ancestry" value="${esc(m.ancestry||"")}"></label>
@@ -43,12 +48,13 @@ const Roster=(()=>{
       <label>Operating <select data-k="assign"><option value="">— nothing —</option>${owners.map(u=>`<option value="${u.id}"${u.id===m.assign?" selected":""}>${esc(u.name)}</option>`).join("")}</select></label></div>
       <div><div class="muted" style="font-size:13px">Working skills &amp; tools</div><div id="skillRows"></div><button class="btn small" id="addSkill">＋ skill</button></div>
       <label>Notes <textarea data-k="notes" rows="2">${esc(m.notes||"")}</textarea></label>
+      ${profileEditor(m)}
       <datalist id="skillList">${SKILL_HINTS.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
       <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
     rows();
     h.oninput=h.onchange=e=>{const t=e.target;
-      if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.value;
+      if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
     h.onclick=e=>{const t=e.target;
@@ -58,6 +64,7 @@ const Roster=(()=>{
       else if(t.id==="saveMem"){if(!String(m.name||"").trim()){toast("Give them a name");return}
         m.skills=(m.skills||[]).filter(s=>String(s.s).trim());
         if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
+        if(m.seat)C.roster.forEach(x=>{if(x.seat===m.seat&&x.id!==m.id)x.seat=""});
         save(m);editing=null;render();toast("Saved")}};
   }
   /* ---------- import a character (Guild Hall JSON from Claude, or a sheet via Claude) ---------- */
@@ -110,11 +117,26 @@ ${t}`:""}`;
   const text=()=>sorted().map(m=>`${m.name} [${m.kind}${m.status?", "+m.status:""}]${m.level?" lvl "+m.level:""} ${m.ancestry||""}${m.role?" · "+m.role:""}${m.player?" · player: "+m.player:""}
   Skills: ${(m.skills||[]).map(s=>`${s.s} (${gradeOf(m,s)})`).join(", ")||"none"}${m.assign?"\n  Operating: "+assignName(m):""}${m.notes?"\n  Notes: "+m.notes:""}`).join("\n");
   const printHTML=()=>`<div class="pr pr-sheet pr-roster"><h1>Guild Roster</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${sorted().map(m=>`<tr><td class="nm">${esc(m.name)}<br><span class="lvl">${esc(m.kind)} · ${esc(m.status||"")}</span></td><td>${m.level?`Lvl ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.role?` · ${esc(m.role)}`:""}<br>${(m.skills||[]).map(s=>`${esc(s.s)} (${gradeOf(m,s)})`).join(", ")}${m.assign?`<br><i>Operating: ${esc(assignName(m))}</i>`:""}</td></tr>`).join("")}</table></div>`;
+  /* profile fields (NPC card) shown in the editor for everyone except active PCs */
+  function profileEditor(m){const NT=NPCs.tables(),sel=(k,list,blank)=>`<select data-k="${k}">${blank?'<option value="">—</option>':""}${list.map(x=>`<option${x===(m[k]||(k==="attitude"?"Neutral":""))?" selected":""}>${esc(x)}</option>`).join("")}</select>`;
+    const inp=(k,l,ph)=>`<label>${l} <input data-k="${k}" value="${esc(m[k]||"")}"${ph?` placeholder="${esc(ph)}"`:""}></label>`;
+    return `<details class="addons"${m.kind!=="Active PC"?" open":""}><summary>NPC profile</summary><div class="grid" style="margin-top:6px">
+      <label>Occupation ${sel("occupation",Object.keys(NT.occupations),1)}</label>${inp("title","Job / title","e.g. glassblower")}
+      <label>Connection ${sel("connection",Object.keys(NT.connections),1)}</label><label>Attitude ${sel("attitude",NPCs.ATT)}</label>
+      ${inp("genre","Home world / genre","Tree-born")}<label>Archetype ${sel("archetype",Object.keys(NT.archetypes),1)}</label>
+      ${inp("label","Fighting flavor","e.g. ex-sky-pirate with a hook blade")}${inp("guild","Guild")}
+      ${inp("look","Look")}${inp("voice","Voice")}${inp("manner","Manner")}${inp("want","Wants")}
+      ${inp("secret","Secret (DM)")}${inp("public","Public face (players)")}
+      <label>Council seat ${sel("seat",TIERS,1)}</label>
+      <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
+      ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
+  function edit(m){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
   function bind(){
+    $("#rSub").onclick=e=>{const s=e.target.dataset.sub;if(!s)return;UI.rosterSub=s;saveUI();editing=null;render()};
     $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
     $("#addMember").onclick=()=>{editing={id:uid(),name:"",kind:"Active PC",status:"Adventuring",level:S.partyLevel,ancestry:"",player:"",role:"",skills:[],assign:"",notes:""};renderEditor()};
     $("#copyRoster").onclick=()=>copyText(text());
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+  return {render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();

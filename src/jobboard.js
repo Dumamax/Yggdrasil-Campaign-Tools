@@ -101,7 +101,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
     ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}
-    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}</div>
+    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}${compact?"":patronLinks(h)}</div>
     <div class="row"><b>Job:</b> ${esc(cap(h.objective))}${compact?"":'<span class="reroll" data-f="objective" title="Reroll job">↻</span>'}</div>
     <div class="row"><b>Reward:</b> ${fmt(h.gold)} gp + ${esc(h.incentive.item)} <span class="muted">(${h.incentive.rarity})</span>${compact?"":'<span class="reroll" data-f="incentive" title="Reroll incentive">↻</span>'}<br><span class="muted">Guild fee: ${fmt(guildFee(h))} gp to the treasury</span></div>
     ${h.complication?`<div class="dm"><b>DM:</b> ${esc(h.complication)}${compact?"":'<span class="reroll" data-f="complication">↻</span>'}</div>`:""}
@@ -119,8 +119,13 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       if(f)rerollField(h,f);
       else if(a==="wb")h.worldBlock=h.worldBlock?null:rollWorldBlock();
       else if(a==="expand"){expand(h,ev.target);return}
-      else if(a==="keep")h.kept=!h.kept;
-      else if(a==="final"){h.final=!h.final;if(h.final)h.kept=true}
+      else if(a==="keep"){h.kept=!h.kept;if(h.kept)NPCs.fromPatron(h,true)}
+      else if(a==="final"){h.final=!h.final;if(h.final){h.kept=true;NPCs.fromPatron(h,true)}}
+      else if(a==="savenpc")NPCs.fromPatron(h);
+      else if(a==="pguild"){const m=NPCs.fromPatron(h,true);if(NPCs.isMember(m)){toast(`${m.name} is already in the guild`);return}NPCs.addToGuild(m);return}
+      else if(a==="usenpc"){const row=ev.target.parentElement;if(row.querySelector("select"))return;const L=NPCs.all();if(!L.length){toast("No saved NPCs yet");return}
+        const sel=document.createElement("select");sel.innerHTML='<option value="">Choose an NPC…</option>'+L.map(m=>`<option value="${m.id}">${esc(m.name)}${m.title?` (${esc(m.title)})`:""}</option>`).join("");
+        sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
       else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
@@ -128,6 +133,8 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       commit();App.render()});
     return d;
   }
+  function patronLinks(h){const m=h.patron.npcId&&C.roster.find(x=>x.id===h.patron.npcId);
+    return ` ${m?'<span class="badge leaf">saved NPC</span>':'<span class="reroll" data-act="savenpc" title="Save the patron to Roster → NPCs">save NPC</span>'} <span class="reroll" data-act="usenpc" title="Use a saved NPC as the patron">⇄ use NPC</span> ${m&&NPCs.isMember(m)?"":'<span class="reroll" data-act="pguild" title="Add the patron to the guild">＋ guild</span>'}`}
   function expandedHTML(h,x,b){
     return `<div class="expanded">${x.note?`<p class="muted">${esc(x.note)}</p>`:""}
      ${x.summary?`<p>${esc(x.summary)}</p>`:""}
@@ -175,5 +182,5 @@ Reward: ${fmt(h.gold)} gp + ${h.incentive.item} (${h.incentive.rarity}); guild f
     $("#vDM").onclick=()=>{UI.jobView="dm";saveUI();initControls();render()};
     $("#vNotice").onclick=()=>{UI.jobView="notice";saveUI();initControls();render()};
   }
-  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,tables:()=>T};
+  return {reloadTables,render,initControls,bind,dmCard,budget,noticesPrintHTML,PRINT_CSS,genName,rollGenre,tables:()=>T};
 })();

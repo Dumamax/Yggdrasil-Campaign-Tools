@@ -1,5 +1,5 @@
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=3;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=4;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -34,19 +34,19 @@ const DEFAULT_SETTINGS={tierRank:0,partyLevel:3,partySize:4,
   mapping:{Iron:[3,5],Bronze:[6,8],Silver:[9,12],Gold:[13,16],Platinum:[17,20]},
   jobComp:30,hMin:6,hMax:8,feePct:25,offerCount:3,buildComp:10,revive:50};
 function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:clone(DEFAULT_SETTINGS),
-  tables:{jobs:null,upgrades:null,prices:null,shops:null},jobs:[],shops:[],
+  tables:{jobs:null,upgrades:null,prices:null,shops:null,npcs:null},jobs:[],shops:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
 /* v3: "The Trunk" was renamed "The Roots" */
 function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
-  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
-let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true}},lsGet("ygh.ui",{}));
+let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
 function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
