@@ -1,6 +1,6 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","print","settings"],TABLE_TABS=["table","print","settings"];
+  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -10,8 +10,8 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
-  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Jobs.initControls();render()}
+  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
+  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();Jobs.initControls();render()}
 
   /* ---------- table mode ---------- */
   function renderTable(){
@@ -30,6 +30,7 @@ const App=(()=>{
     const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
     rv.querySelector("#rvLvl").oninput=upd;upd();
     col("Who's in the hall",`<table class="ref">${Roster.sorted().map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
+    col("Shops in play",Shops.tableHTML());
     col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
   }
 
@@ -38,9 +39,10 @@ const App=(()=>{
     if(p.notices)out+=Jobs.noticesPrintHTML();
     if(p.ledger)out+=(out?'<div class="pr-break"></div>':"")+Upgrades.ledgerHTML(p.full,p.offers);
     if(p.cards){const c=Upgrades.cardsHTML();if(c)out+=(out?'<div class="pr-break"></div>':"")+c}
+    if(p.shops){const s=Shops.printHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
     if(p.roster)out+=(out?'<div class="pr-break"></div>':"")+Roster.printHTML();
     return out}
-  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS;
+  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
     $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
@@ -63,7 +65,7 @@ const App=(()=>{
     loadTblEditor();
   }
   let tblKey="jobs",draft=null;
-  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES}[tblKey]);
+  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES}[tblKey]);
   function loadTblEditor(){
     $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
     const cur=C.tables[tblKey],def=tblDefaults(),stale=cur&&def.version&&(cur.version||0)<def.version;
@@ -103,7 +105,7 @@ const App=(()=>{
       replaceCampaign(newCampaign());commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
   }
   async function boot(){
-    Jobs.reloadTables();Upgrades.reloadTables();Jobs.initControls();
+    Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();Jobs.initControls();
     Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}

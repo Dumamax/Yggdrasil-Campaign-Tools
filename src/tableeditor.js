@@ -6,7 +6,9 @@ const TableEditor=(()=>{
     goldBaseByLevel:"Job gold by party level",rarityByTier:"Incentive rarity by tier",xpBudget:"XP budget per character",fightPlan:"Fight plan",goldMult:"Gold multiplier",
     perkLabels:"Perk type labels",typeWeightsByTier:"Peddler type weights by tier",dealReasons:"Deal reasons",jobs:"Price (in jobs)",gp:"Price override (gp)",days:"Build days",
     tier:"Recommended tier",types:"Perk types (P/A/B/C)",op:"Operator",makes:"Makes (per level)",cat:"Category",s:"Skill",g:"Grade",cap:"Rarity cap",output:"Items per downtime",
-    first:"First names",last:"Last names",rows:"Rows",rule:"Rule of thumb",arch:"Archetype"};
+    first:"First names",last:"Last names",rows:"Rows",rule:"Rule of thumb",arch:"Archetype",
+    shopTypes:"Shop types",quickTypes:"Quick buttons",namePatterns:"Shop name patterns",adjectives:"Name adjectives",placeNouns:"Name places",magicRarityByTier:"Magic item rarity by tier",magicItems:"Magic items",
+    stock:"Stock",price:"Base price (gp)",desc:"Description",mult:"Price ×",itemCount:"Items (min, max)",staffCount:"Staff (min, max)",magic:"Magic item chance (0–1)",kinds:"Shop words",nouns:"Name nouns",keywords:"Custom-idea keywords",roles:"Staff roles (first = owner)",interiors:"Interiors",places:"Locations",haggle:"Haggling rules",npc:"Shopkeeper parts"};
   const HINTS={jobTypes:"How often each job type appears at each tier. Bigger number = more common; 0 = never.",
     sizes:"How often each job size appears per tier, plus its gold multiplier and contribution value.",locations:"Where jobs happen, weighted per tier.",
     fantasyShare:"Share of fantasy-flavored worlds at Iron vs. Platinum (0 to 1).",genres:"World genres: weight, places, quirks, and fill-in words used in job text.",
@@ -16,7 +18,9 @@ const TableEditor=(()=>{
     rarityByTier:"Which incentive rarities each tier can roll.",items:"Incentive items by kind and rarity.",xpBudget:"XP per character for Low / Moderate / High encounters, by level.",
     grades:"Operator grades: items per downtime, rarity cap, and hire price (tier + jobs).",catalog:"Every Facility, Service, and Staff upgrade with its three levels and add-ons.",
     offers:"Peddlers: type weights per tier, discounts, vendors, one-of-a-kind upgrades, rare hires.",names:"Name parts for generated NPCs.",perkLabels:"What the perk-type letters mean.",
-    rows:"Item and price, one row each.",rule:"Shown above the price table."};
+    rows:"Item and price, one row each.",
+    shopTypes:"Each shop type: name words, staff roles, interiors, magic chance, and stock with base prices (0.1 gp = 1 sp).",quickTypes:"Shop types shown as one-click buttons.",namePatterns:"Words in {braces}: {owner} {adj} {noun} {noun2} {kind} {place}.",
+    magicRarityByTier:"Chance of each magic rarity (common, uncommon, rare, very rare, legendary) per tier.",magicItems:"Magic items shops can stock, by rarity.",wealth:"Shop wealth levels: price multiplier and how many items and staff.",places:"Where a shop is: exterior and sensory details.",npc:"Parts for shopkeepers and staff.",rule:"Shown above the price table."};
   const human=k=>LABELS[k]||String(k).replace(/([a-z])([A-Z])/g,"$1 $2").replace(/^./,c=>c.toUpperCase());
   const isNum=v=>typeof v==="number",isStr=v=>typeof v==="string",isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
   const sig=v=>Array.isArray(v)?"a"+(v.length?sig(v[0]):""):isObj(v)?"o":typeof v;

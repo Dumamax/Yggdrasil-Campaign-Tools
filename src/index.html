@@ -27,6 +27,7 @@
   <button data-tab="jobs">Job Board</button>
   <button data-tab="shop">Guild Upgrades</button>
   <button data-tab="roster">Roster</button>
+  <button data-tab="market">Shop Generator</button>
   <button data-tab="table">At the Table</button>
   <button data-tab="print">Print</button>
   <button data-tab="settings">Settings &amp; Tables</button>
@@ -68,6 +69,8 @@
     <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
   </section>
 
+  <section id="tab-market" hidden></section>
+
   <section id="tab-table" hidden>
     <div id="tableView" class="tm-grid"></div>
   </section>
@@ -79,6 +82,7 @@
       <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
       <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
       <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+      <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
       <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
       <button class="btn primary" id="printGo">Print</button>
     </div>
@@ -123,7 +127,7 @@
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option></select><span class="muted" id="tblState"></span></div>
         <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>

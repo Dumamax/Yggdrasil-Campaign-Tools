@@ -1,5 +1,5 @@
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=1;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=2;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -34,17 +34,17 @@ const DEFAULT_SETTINGS={tierRank:0,partyLevel:3,partySize:4,
   mapping:{Iron:[3,5],Bronze:[6,8],Silver:[9,12],Gold:[13,16],Platinum:[17,20]},
   jobComp:30,hMin:6,hMax:8,feePct:25,offerCount:3,buildComp:10,revive:50};
 function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:clone(DEFAULT_SETTINGS),
-  tables:{jobs:null,upgrades:null,prices:null},jobs:[],
+  tables:{jobs:null,upgrades:null,prices:null,shops:null},jobs:[],shops:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
 function normalize(c){const n=newCampaign();const o=Object.assign(n,c||{});
-  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null},o.tables||{});
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
-let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false}},lsGet("ygh.ui",{}));
+let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
 function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
@@ -109,7 +109,7 @@ const AI={
     if(this.sample&&!pdfBase64)return await this.sample.json(prompt,{modelTier:"default"});
     const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}
     const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:pdfBase64?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfBase64}},{type:"text",text:prompt}]:prompt}]})});
+      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:4000,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:pdfBase64?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfBase64}},{type:"text",text:prompt}]:prompt}]})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok)throw new Error(data?.error?.message||`API error ${res.status}`);
     return this.parse((data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""));

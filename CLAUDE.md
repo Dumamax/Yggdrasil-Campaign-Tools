@@ -12,6 +12,7 @@ A single-file, offline HTML app ("Guild Hall") the DM uses for prep and at the t
 - `core.js`: helpers, campaign state `C` (+ `S = C.settings`), `commit()` (autosave to localStorage + dirty flag), campaign file save/load/import, `AI` (artifact `sample` → API key via direct browser fetch → copy/paste fallback via `aiRun`/`aiButtons`), `printHTML` (window.print standalone; downloads a printable page when framed).
 - `jobtables.js` / `upgtables.js`: default tables (`DEFAULT_JOB_TABLES`, `DEFAULT_UPG_TABLES`, `DEFAULT_PRICES`). Custom tables are stored in `C.tables.*` (null = use defaults) and travel in the campaign file.
 - `jobboard.js` (`Jobs`), `upgrades.js` (`Upgrades`), `roster.js` (`Roster`): IIFE modules, each with `render`/`bind`.
+- `shoptables.js` (`DEFAULT_SHOP_TABLES`) / `shops.js` (`Shops`): Shop Generator tab (`tab-market`; the `shop` tab id is Guild Upgrades). Shops live in `C.shops` (kept ones feed Print and Table Mode; unkept capped at 8); custom ideas and write-ups go through `aiRun`/`aiButtons`. Prices stored in gp decimals (0.1 = 1 sp), shown via `Shops.coins`.
 - `tableeditor.js` (`TableEditor`): form view over any table JSON (lazy collapsible sections; maps vs records via heuristics + `RECORD` set; labels/hints maps).
 - `app.js` (`App`): nav, Table Mode, print center, settings, boot.
 - `notice.css` is shared by the page and print output (injected as `NOTICE_CSS`).

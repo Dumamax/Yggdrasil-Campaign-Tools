@@ -181,6 +181,7 @@ table.te-matrix .te-txt{min-width:160px}
   <button data-tab="jobs">Job Board</button>
   <button data-tab="shop">Guild Upgrades</button>
   <button data-tab="roster">Roster</button>
+  <button data-tab="market">Shop Generator</button>
   <button data-tab="table">At the Table</button>
   <button data-tab="print">Print</button>
   <button data-tab="settings">Settings &amp; Tables</button>
@@ -222,6 +223,8 @@ table.te-matrix .te-txt{min-width:160px}
     <p class="hint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
   </section>
 
+  <section id="tab-market" hidden></section>
+
   <section id="tab-table" hidden>
     <div id="tableView" class="tm-grid"></div>
   </section>
@@ -233,6 +236,7 @@ table.te-matrix .te-txt{min-width:160px}
       <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
       <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
       <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+      <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
       <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
       <button class="btn primary" id="printGo">Print</button>
     </div>
@@ -277,7 +281,7 @@ table.te-matrix .te-txt{min-width:160px}
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option></select><span class="muted" id="tblState"></span></div>
         <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
@@ -290,7 +294,7 @@ table.te-matrix .te-txt{min-width:160px}
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=1;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=2;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -325,17 +329,17 @@ const DEFAULT_SETTINGS={tierRank:0,partyLevel:3,partySize:4,
   mapping:{Iron:[3,5],Bronze:[6,8],Silver:[9,12],Gold:[13,16],Platinum:[17,20]},
   jobComp:30,hMin:6,hMax:8,feePct:25,offerCount:3,buildComp:10,revive:50};
 function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:clone(DEFAULT_SETTINGS),
-  tables:{jobs:null,upgrades:null,prices:null},jobs:[],
+  tables:{jobs:null,upgrades:null,prices:null,shops:null},jobs:[],shops:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[]},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
   expanded:{},recent:{}}}
 function normalize(c){const n=newCampaign();const o=Object.assign(n,c||{});
-  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null},o.tables||{});
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
-let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false}},lsGet("ygh.ui",{}));
+let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
 function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
@@ -400,7 +404,7 @@ const AI={
     if(this.sample&&!pdfBase64)return await this.sample.json(prompt,{modelTier:"default"});
     const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}
     const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:2500,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:pdfBase64?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfBase64}},{type:"text",text:prompt}]:prompt}]})});
+      body:JSON.stringify({model:UI.model||"claude-sonnet-5-5",max_tokens:4000,system:"You write prep material for a D&D 5e campaign. Reply with only valid JSON, no prose or code fences.",messages:[{role:"user",content:pdfBase64?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfBase64}},{type:"text",text:prompt}]:prompt}]})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok)throw new Error(data?.error?.message||`API error ${res.status}`);
     return this.parse((data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""));
@@ -5412,6 +5416,265 @@ ${t}`:""}`;
   return {render,bind,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();
 
+/* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
+const DEFAULT_SHOP_TABLES={
+ version:1,
+ quickTypes:["General Store","Blacksmith & Armorer","Weaponsmith & Fletcher","Alchemist & Apothecary","Magic Curios","Tavern & Inn","Black Market","Cartographer & Planar Guide"],
+ namePatterns:["The {adj} {noun}","{owner}'s {kind}","The {noun} & {noun2}","{adj} {noun} {kind}","{owner} & Kin, {kind}","The {noun} Under the {place}","{kind} of the {adj} {noun}"],
+ adjectives:["Crooked","Gilded","Humming","Sleepy","Rootbound","Lopsided","Second-Hand","Patient","Copper","Mossy","Honest","Wandering","Thrice-Blessed","Upside-Down","Lantern-Lit","Quiet","Bramble","Velvet","Stubborn","Twelfth"],
+ placeNouns:["Third Root","Lantern Bridge","Leaning Branch","Old Knot","Sap Steps","Hollow Stair","Whispering Bough","Bazaar Arch"],
+ wealth:{
+  "Hole-in-the-wall":{mult:0.9,itemCount:[5,7],staffCount:[1,1],blurb:"cramped, cheap, and a little dodgy"},
+  "Modest":{mult:1,itemCount:[7,10],staffCount:[1,2],blurb:"honest prices, honest dust"},
+  "Prosperous":{mult:1.15,itemCount:[9,12],staffCount:[2,3],blurb:"well-stocked and proud of it"},
+  "Grand":{mult:1.4,itemCount:[11,15],staffCount:[2,4],blurb:"lavish, famous, and priced to match"}
+ },
+ magicRarityByTier:[[70,30,0,0,0],[40,55,5,0,0],[15,50,35,0,0],[0,30,50,20,0],[0,0,40,45,15]],
+ places:{
+  "The City (base bazaar)":{exterior:["a striped awning wedged between two bigger stalls","a narrow storefront built into a root that broke through the street","a cart that stopped moving years ago and grew a porch","a tall, skinny shop with a crooked chimney and a hand-painted sign","a stall on stilts above the bazaar crowd, reached by rope ladder"],sensory:["street-food smoke and haggling drift in from outside","bells from the Tree's entrance ring every hour","a busker plays the same three songs just outside the door","sap-sweet air from the Tree mixes with lamp oil"]},
+  "Inside the Tree":{exterior:["a doorway carved straight into living heartwood","a hollow knot fitted with a round glass door","a shop grown, not built, from a bulging burl","a stairwell landing curtained off with hanging moss","a lantern-lit alcove where the bark folds back like a cloak"],sensory:["the wood creaks softly, like the Tree is listening","glowing sap trickles in channels along the walls","the floor is warm, and faintly pulses","distant roots groan as they shift between planes"]},
+  "The Trunk":{exterior:["a stall bolted to the Trunk's bark on a swaying platform","a converted ferry cabin moored to a branch-junction","a waystation shop where three worlds' roads meet","a shack whose door opens onto a different weather each day","a booth hung from chains over the gap between worlds"],sensory:["wind from three different worlds blows through at once","the light keeps changing color as branches turn overhead","travelers' languages babble in every direction","the whole shop sways gently, and nobody else seems to notice"]},
+  "A world (any genre)":{exterior:["a shopfront that matches the local style, with a tiny Tree-leaf sigil by the door","a market stall run by an obvious off-worlder","a respectable shop with a back room that smells of sap","a trading post at the edge of the local Branch-gate","a shop that is very clearly bigger on the inside"],sensory:["local music and Tree-traders' chatter overlap","the air has the world's usual smell, plus something green","locals eye the off-world goods with suspicion and envy","a door in the back leads somewhere that is definitely not here"]}
+ },
+ details:["a cat-sized beetle sleeps on the counter and must not be woken","every item has a tiny handwritten tag with a pun","a bell over the door announces each customer by name, often wrongly","a jar by the register holds coins from a dozen worlds","the shelves rearrange themselves slightly when no one is looking","a portrait of the founder whose eyes follow gold, not people","a 'You break it, you've adopted it' sign","a lost-and-found bin that seems to contain things not yet lost","a guest book signed by adventurers, some famous, some deceased","the scales on the counter weigh honesty as well as goods"],
+ quirks:["prices drop if you tell the owner a joke they haven't heard","the shop only takes coin minted on worlds the owner has visited","everything is sold with a story, whether you want it or not","the owner refuses to sell to anyone wearing yellow","the stock changes completely every new moon","a ghostly previous owner still offers unsolicited advice","haggling is mandatory; paying full price is an insult","the shop is closed whenever it rains in any world, which is always somewhere","all receipts are written as tiny poems","one shelf is 'not for sale,' and the owner gets nervous if asked why"],
+ rumors:["The owner owes money to a Gold-tier guild and is getting desperate.","A rival shop across the bazaar has been sabotaging deliveries.","Something in the back room was bought from a world that no longer exists.","The shop was once a Council member's hideout.","A regular customer hasn't come back from a Branch-trip, and the owner is worried.","The owner is secretly the heir to a minor branch-world throne.","Goods keep vanishing from the stockroom overnight, and the tracks are small.","The owner would pay well for a rare ingredient from a dangerous world."],
+ haggle:["Easy mark: DC 10 Persuasion for 10% off.","Fair trader: DC 13 Persuasion for 10% off; DC 18 for 20%.","Tough nut: DC 15 Persuasion; failure raises prices 10% for the day.","Won't haggle, but gives a discount for interesting trade goods.","Responds better to Intimidation than charm (DC 14), but remembers it.","Haggles only in riddles: DC 13 Intelligence to win 15% off."],
+ npc:{
+  ancestries:["human","dwarf","gnome","halfling","elf","half-orc","tiefling","goblin","kobold","tortle","kenku","tabaxi","rat folk","owlin","firbolg","changeling","warforged","mushroom-folk (myconid-like)","plant-folk (dryad-touched)","harengon","bugbear","aasimar","a sentient construct of brass and roots","a very old, very small giant"],
+  looks:["spectacles on a chain, pushed up into wild hair","an apron covered in pockets, each one full","ink-stained fingers and a perpetual squint","a missing tooth replaced with a tiny gemstone","braided beard threaded with copper wire","a scarf knitted by someone who clearly loved them","far too many rings","burn scars on both forearms, worn proudly","a moth perched permanently on one shoulder","immaculately dressed in a style from another world","wears a helmet indoors 'just in case'","freckles that glow faintly in the dark","leaf-shaped earrings that rustle when they nod","a coat patched with fabric from a dozen worlds"],
+  personalities:["cheerful and relentlessly upselling","gruff but scrupulously fair","nervous and over-apologetic","dreamy and easily distracted","suspicious of every customer","a gossip who trades news as eagerly as goods","a perfectionist who hates selling 'imperfect' stock","warm and motherly to young adventurers","bored and sarcastic","theatrical, treats every sale as a performance","a retired adventurer with a story for everything","ambitious and always pitching a business deal"],
+  voices:["talks in a rapid whisper","ends every sentence with a question","hums between words","speaks in a booming auctioneer's voice","refers to themself in the third person","uses old-fashioned courtesies","has a thick off-world accent","clicks their tongue while thinking","calls everyone 'friend' in a slightly threatening way","speaks only in prices and nods"],
+  wants:["wants a rare ingredient from a dangerous world","is saving up to move the shop closer to the Tree","is quietly hiding a fugitive in the back","needs someone to collect an overdue debt","wants to join a guild but is too shy to ask","is feuding with a neighbor over a property line","is looking for a missing sibling who went up a branch","wants revenge on a supplier who cheated them","hopes to be featured on a Platinum guild's endorsement list","is secretly broke and keeping up appearances"]
+ },
+ magicItems:{
+  common:[{name:"Potion of Healing",price:50,desc:"Red, fizzy, tastes of cherries and regret."},{name:"Potion of Climbing",price:75,desc:"Brown and gritty; your fingers grip like a gecko's."},{name:"Spell Scroll (cantrip)",price:30,desc:"A single cantrip, written in a hurried hand."},{name:"Spell Scroll (1st level)",price:60,desc:"Seal intact; the ink still shimmers."},{name:"Cloak of Many Fashions",price:50,desc:"Changes style on command; it has opinions."},{name:"Candle of the Deep",price:50,desc:"Burns underwater, smells faintly of kelp."},{name:"Mystery Key",price:50,desc:"Opens exactly one lock, somewhere, once."},{name:"Orb of Direction",price:50,desc:"Always points north, wherever north is today."},{name:"Rope of Mending",price:50,desc:"Knits itself back together when cut."},{name:"Tankard of Sobriety",price:60,desc:"Keeps you clear-headed no matter what's poured in."},{name:"Moon-Touched Sword",price:100,desc:"Sheds pale moonlight in the dark."},{name:"Walloping Ammunition",price:50,desc:"Knocks the target prone. Sometimes the archer too."},{name:"Wand of Pyrotechnics",price:75,desc:"Harmless fireworks, very popular at festivals."},{name:"Pot of Awakening",price:100,desc:"Plant a shrub, grow a friend."}],
+  uncommon:[{name:"Potion of Greater Healing",price:150,desc:"Deep crimson, slightly warm to the touch."},{name:"Spell Scroll (2nd level)",price:200,desc:"Rolled tight and tied with sap-thread."},{name:"Spell Scroll (3rd level)",price:300,desc:"The parchment hums faintly."},{name:"Bag of Holding",price:400,desc:"Bigger inside. Don't put it in another one."},{name:"Driftglobe",price:350,desc:"A floating glass light that follows its owner."},{name:"Goggles of Night",price:300,desc:"Darkvision in a set of brass-rimmed goggles."},{name:"Immovable Rod",price:500,desc:"Press the button; it stays put, no matter what."},{name:"Sending Stones",price:300,desc:"A matched pair for short messages across distance."},{name:"Alchemy Jug",price:300,desc:"Pours mayonnaise, ale, or acid on command."},{name:"Decanter of Endless Water",price:400,desc:"A stoppered flask that never runs dry."},{name:"Lantern of Revealing",price:350,desc:"Shows what's invisible within its light."},{name:"Cloak of Protection",price:450,desc:"+1 to AC and saving throws."},{name:"Wand of Magic Missiles",price:500,desc:"Seven charges of never-miss force bolts."},{name:"+1 Weapon",price:500,desc:"A finely balanced blade or bow with a faint glow."},{name:"Hat of Disguise",price:400,desc:"Become someone else, at least on the outside."}],
+  rare:[{name:"Potion of Superior Healing",price:500,desc:"Thick and glowing; heals like a miracle."},{name:"Spell Scroll (4th–5th level)",price:2000,desc:"Sealed in wax stamped with a guild sigil."},{name:"Portable Hole",price:4000,desc:"A folded black cloth that's a hole when spread."},{name:"Necklace of Fireballs",price:3500,desc:"Each bead is a fireball waiting to happen."},{name:"Ring of Free Action",price:4500,desc:"Nothing slows or holds you."},{name:"Cape of the Mountebank",price:4000,desc:"Vanish in a puff of smoke, reappear nearby."},{name:"Flame Tongue",price:5000,desc:"A sword that bursts into flame on command."},{name:"+2 Weapon",price:4000,desc:"Masterwork, enchanted, and a little smug."},{name:"Wand of Fireballs",price:5000,desc:"Exactly what it sounds like."},{name:"Cloak of Displacement",price:5000,desc:"You appear to stand a step from where you are."}],
+  "very rare":[{name:"Potion of Supreme Healing",price:5000,desc:"Liquid sunlight in a crystal vial."},{name:"Spell Scroll (6th level)",price:20000,desc:"Kept in a locked case, handled with tongs."},{name:"Carpet of Flying",price:40000,desc:"Rolls out, lifts off, slightly dusty."},{name:"Staff of Thunder and Lightning",price:35000,desc:"Crackles whenever anyone raises their voice."},{name:"+3 Weapon",price:40000,desc:"A weapon of legend-in-the-making."},{name:"Horseshoes of a Zephyr",price:30000,desc:"Your mount runs on air."}],
+  legendary:[{name:"Well of Many Worlds",price:200000,desc:"A cloth portal to another world. The Tree disapproves."},{name:"Cloak of Invisibility",price:200000,desc:"Hood up, gone."},{name:"Vorpal Sword",price:220000,desc:"Snicker-snack."},{name:"Spell Scroll (9th level)",price:100000,desc:"The seal is a bound star."}]
+ },
+ shopTypes:{
+  "General Store":{keywords:["general","supplies","sundries","grocer","goods","store"],kinds:["Sundries","Supply","Provisions","Goods"],nouns:["Barrel","Lantern","Acorn","Satchel","Kettle","Bramble"],roles:["Owner","Stock-runner","Bookkeeper","Nephew who 'helps'"],magic:0.05,
+   interiors:["floor-to-ceiling shelves of crates, barrels, and dangling gear","a cluttered counter buried under ledgers and twine","aisles so narrow customers turn sideways to pass"],
+   stock:[{name:"Backpack",price:2,desc:"Waxed canvas, many straps."},{name:"Bedroll",price:1,desc:"Rolled tight, smells of pine."},{name:"Rope, hempen (50 ft)",price:1,desc:"Sturdy, slightly scratchy."},{name:"Torch (10)",price:0.1,desc:"Pitch-soaked, one hour each."},{name:"Rations (1 day)",price:0.5,desc:"Hardtack, jerky, and dried fruit."},{name:"Waterskin",price:0.2,desc:"Leather, doesn't leak (much)."},{name:"Tinderbox",price:0.5,desc:"Flint, steel, and dry moss."},{name:"Lantern, hooded",price:5,desc:"Brass, with a shutter for sneaking."},{name:"Oil (flask)",price:0.1,desc:"Six hours of lantern light."},{name:"Crowbar",price:2,desc:"For doors that disagree."},{name:"Chalk (10 pieces)",price:0.1,desc:"Mark your path through the roots."},{name:"Pot, iron",price:2,desc:"Dented, but beloved."},{name:"Blanket",price:0.5,desc:"Wool, a bit itchy."},{name:"Mirror, steel",price:5,desc:"Handy for peeking around corners."},{name:"Ball bearings (1,000)",price:1,desc:"In a pouch that is always leaking."},{name:"Soap",price:0.02,desc:"Smells like lavender and lye."}]},
+  "Blacksmith & Armorer":{keywords:["blacksmith","smith","armor","armour","forge","anvil","metal"],kinds:["Forge","Smithy","Anvil","Ironworks"],nouns:["Hammer","Anvil","Bellows","Ember","Tongs","Rivet"],roles:["Master smith","Apprentice","Bellows-keeper","Armor fitter"],magic:0.08,
+   interiors:["a roaring forge throws orange light over racks of armor","anvils ring while sparks dance across a soot-black floor","armor stands line the walls like a silent, headless army"],
+   stock:[{name:"Leather armor",price:10,desc:"Boiled and oiled, AC 11."},{name:"Studded leather",price:45,desc:"Rivets polished to a shine, AC 12."},{name:"Hide armor",price:10,desc:"Thick and smelly, AC 12."},{name:"Chain shirt",price:50,desc:"Fine links, quiet-ish, AC 13."},{name:"Scale mail",price:50,desc:"Overlapping plates like a fish, AC 14."},{name:"Breastplate",price:400,desc:"Polished steel, AC 14."},{name:"Chain mail",price:75,desc:"Heavy and loud, AC 16."},{name:"Splint armor",price:200,desc:"Strips of metal on leather, AC 17."},{name:"Plate armor",price:1500,desc:"Custom-fit, takes a week, AC 18."},{name:"Shield",price:10,desc:"Oak and iron, +2 AC."},{name:"Smith's tools",price:20,desc:"Hammers, tongs, and a spare apron."},{name:"Armor repair",price:5,desc:"Dents hammered out by morning."},{name:"Iron spikes (10)",price:1,desc:"Hand-forged, still warm."},{name:"Manacles",price:2,desc:"Key included. Probably."}]},
+  "Weaponsmith & Fletcher":{keywords:["weapon","sword","bow","arrow","fletch","blade","arms","axe"],kinds:["Arms","Blades","Bows","Armory"],nouns:["Blade","Arrow","Quiver","Hilt","Edge","Fletching"],roles:["Weaponsmith","Fletcher","Sword-tester","Sharpener"],magic:0.1,
+   interiors:["blades hang point-down from the rafters like metal icicles","a test range out back thunks with arrows all day","a whetstone wheel screeches in the corner"],
+   stock:[{name:"Dagger",price:2,desc:"Balanced for throwing."},{name:"Shortsword",price:10,desc:"Light and quick."},{name:"Longsword",price:15,desc:"Classic, dependable, versatile."},{name:"Rapier",price:25,desc:"Elegant guard, needle point."},{name:"Greatsword",price:50,desc:"Big. Very big."},{name:"Battleaxe",price:10,desc:"Bearded blade, ash handle."},{name:"Warhammer",price:15,desc:"For armored problems."},{name:"Spear",price:1,desc:"Simple, honest, pointy."},{name:"Quarterstaff",price:0.2,desc:"Polished heartwood."},{name:"Shortbow",price:25,desc:"Yew, light draw."},{name:"Longbow",price:50,desc:"Taller than its owner."},{name:"Light crossbow",price:25,desc:"Point, click, done."},{name:"Arrows (20)",price:1,desc:"Goose-feather fletching."},{name:"Bolts (20)",price:1,desc:"Iron-tipped, in a leather case."},{name:"Silvered arrow",price:5,desc:"For things that laugh at steel."},{name:"Sharpening service",price:0.5,desc:"Edges like new in ten minutes."}]},
+  "Alchemist & Apothecary":{keywords:["alchem","potion","apothecar","herb","tonic","elixir","poison","remed"],kinds:["Apothecary","Tonics","Remedies","Elixirs"],nouns:["Mortar","Vial","Mandrake","Cauldron","Toad","Willow"],roles:["Alchemist","Herbalist","Taste-tester","Assistant (slightly singed)"],magic:0.25,
+   interiors:["bubbling flasks on every surface, connected by glass tubing","bundles of drying herbs hang so low you have to duck","jars of floating things watch from the shelves"],
+   stock:[{name:"Potion of Healing",price:50,desc:"Red, fizzy, cherry-flavored."},{name:"Antitoxin",price:50,desc:"Advantage against poison for an hour."},{name:"Alchemist's fire",price:50,desc:"Sticky, burns on contact with air."},{name:"Acid (vial)",price:25,desc:"Eats through locks and patience."},{name:"Healer's kit",price:5,desc:"Bandages, salves, splints (10 uses)."},{name:"Herbalism kit",price:5,desc:"Clippers, pouches, mortar and pestle."},{name:"Basic poison (vial)",price:100,desc:"Sold 'for pest control.'"},{name:"Perfume (vial)",price:5,desc:"Smells like a summer orchard."},{name:"Sleep tonic",price:2,desc:"Guaranteed eight hours. Mostly."},{name:"Hangover cure",price:1,desc:"Tastes worse than the hangover."},{name:"Smelling salts",price:0.5,desc:"Wakes the unconscious and annoys the dead."},{name:"Holy water (flask)",price:25,desc:"Blessed by someone, somewhere."},{name:"Alchemist's supplies",price:50,desc:"Glassware, burners, and reagents."},{name:"Glowsap lamp oil",price:0.5,desc:"Tree-sap that glows green for a night."}]},
+  "Magic Curios":{keywords:["magic","arcane","wand","curio","enchant","wizard","scroll","artifact"],kinds:["Curios","Wonders","Arcana","Oddments"],nouns:["Wand","Star","Owl","Crystal","Comet","Rune"],roles:["Proprietor","Appraiser","Warded doorman","Familiar (unpaid)"],magic:0.8,
+   interiors:["display cases glow softly, each warded with a different color","items float lazily in the air above velvet cushions","the room is quiet in a way that makes your ears ring"],
+   stock:[{name:"Arcane focus (crystal)",price:10,desc:"Hums when held correctly."},{name:"Arcane focus (wand)",price:10,desc:"Ebony, slightly warped."},{name:"Component pouch",price:25,desc:"Pre-stocked with bat guano and more."},{name:"Spellbook (blank)",price:50,desc:"Vellum pages, silver clasp."},{name:"Ink and quill",price:10,desc:"Ink that dries in any world's air."},{name:"Identify service",price:30,desc:"The appraiser tells you what it is."},{name:"Pearl (100 gp)",price:100,desc:"For identify spells, lustrous and round."},{name:"Diamond dust (300 gp)",price:300,desc:"For revivify. Sold in sealed vials."}]},
+  "Tavern & Inn":{keywords:["tavern","inn","bar","pub","ale","drink","lodging","alehouse","tea","coffee","cafe","café"],kinds:["Tavern","Taproom","Inn","Alehouse"],nouns:["Flagon","Boar","Root","Stag","Kettle","Mug","Owl"],roles:["Innkeeper","Barkeep","Cook","Server","Bouncer"],magic:0.03,
+   interiors:["a long, scarred bar and a fire big enough to roast a boar","mismatched tables from a dozen worlds, all wobbling","a stage in the corner where anyone may perform (and be judged)"],
+   stock:[{name:"Mug of ale",price:0.04,desc:"Dark, frothy, local."},{name:"Bottle of wine (common)",price:0.2,desc:"Red, rough, honest."},{name:"Bottle of wine (fine)",price:10,desc:"From a branch-world vineyard."},{name:"Bowl of stew",price:0.1,desc:"Contents vary. Don't ask."},{name:"Meal (modest)",price:0.3,desc:"Bread, cheese, meat, and a pickle."},{name:"Meal (comfortable)",price:0.5,desc:"Roast fowl with all the trimmings."},{name:"Room (modest, 1 night)",price:0.5,desc:"Clean sheets, a lock that works."},{name:"Room (comfortable, 1 night)",price:0.8,desc:"Feather bed, a window, a hearth."},{name:"Private dining room",price:2,desc:"For secret meetings and loud parties."},{name:"Bath, hot",price:0.1,desc:"Water heated by a bored fire spirit."},{name:"House special drink",price:0.5,desc:"Changes color as you drink it."},{name:"Stabling (per night)",price:0.5,desc:"Feed and a brush included."}]},
+  "Tailor & Outfitter":{keywords:["tailor","cloth","clothes","outfit","seamstress","fashion","dress","boots","cobbler"],kinds:["Outfitters","Threads","Tailoring","Haberdashery"],nouns:["Needle","Thimble","Spool","Button","Silk","Bobbin"],roles:["Master tailor","Cobbler","Seamstress","Model (reluctant)"],magic:0.05,
+   interiors:["bolts of cloth from a hundred worlds stacked to the ceiling","dress forms wearing half-finished outfits strike dramatic poses","a three-way mirror that compliments you, a bit too much"],
+   stock:[{name:"Common clothes",price:0.5,desc:"Sturdy, plain, practical."},{name:"Traveler's clothes",price:2,desc:"Deep pockets, weatherproof hood."},{name:"Fine clothes",price:15,desc:"Silk trim, for meeting the Council."},{name:"Costume",price:5,desc:"Mask included."},{name:"Cold-weather gear",price:10,desc:"Fur-lined for snowy branch-worlds."},{name:"Boots, sturdy",price:3,desc:"Resoled for root-climbing."},{name:"Cloak, oiled",price:1,desc:"Sheds rain from any world."},{name:"Robes",price:1,desc:"Scholar's or priest's cut."},{name:"Signet ring setting",price:5,desc:"Your crest, engraved while you wait."},{name:"Tailoring service",price:2,desc:"Alterations by tomorrow."},{name:"Disguise kit",price:25,desc:"Wigs, paints, and false noses."},{name:"Weaver's tools",price:1,desc:"Shuttle, thread, and patience."}]},
+  "Stable & Beast Trader":{keywords:["stable","horse","mount","beast","pet","animal","menagerie","kennel"],kinds:["Stables","Menagerie","Beasts","Mounts"],nouns:["Hoof","Saddle","Gryphon","Bridle","Mule","Feather"],roles:["Beastmaster","Stablehand","Farrier","Animal whisperer"],magic:0.03,
+   interiors:["stalls of strange creatures that all stop to stare","hay everywhere, including the ceiling somehow","a pen of baby somethings that the owner won't let you touch"],
+   stock:[{name:"Riding horse",price:75,desc:"Calm, reliable, likes apples."},{name:"Pony",price:30,desc:"Small, stubborn, beloved."},{name:"Mule",price:8,desc:"Will carry anything, opinions included."},{name:"Draft horse",price:50,desc:"Huge and gentle."},{name:"Warhorse",price:400,desc:"Trained for battle, hates loud magic."},{name:"Mastiff",price:25,desc:"Loyal guard dog, drools a lot."},{name:"Riding saddle",price:10,desc:"Well-worn leather."},{name:"Saddlebags",price:4,desc:"Two big pockets."},{name:"Cart",price:15,desc:"Squeaky wheel, free of charge."},{name:"Feed (per day)",price:0.05,desc:"Oats, hay, and the occasional treat."},{name:"Messenger bird",price:20,desc:"Trained to find one address."},{name:"Giant beetle mount (rental, per day)",price:2,desc:"Climbs bark like a dream."}]},
+  "Bookseller & Scribe":{keywords:["book","library","scribe","scroll","map","writing","tome","paper"],kinds:["Books","Scriptorium","Pages","Bindery"],nouns:["Quill","Inkwell","Folio","Bookworm","Margin","Lantern"],roles:["Bookseller","Scribe","Archivist","Shushing assistant"],magic:0.12,
+   interiors:["towers of books form a maze only the owner can navigate","reading nooks tucked between shelves, each with a sleeping patron","pages whisper softly when no one is reading them"],
+   stock:[{name:"Book (common subject)",price:25,desc:"Histories, recipes, bad poetry."},{name:"Book (rare lore)",price:75,desc:"On a branch-world nobody visits."},{name:"Paper (sheet)",price:0.2,desc:"Crisp and white."},{name:"Parchment (sheet)",price:0.1,desc:"Scraped clean, mostly."},{name:"Ink (1 oz)",price:10,desc:"Black, blue, or Tree-sap green."},{name:"Ink pen",price:0.02,desc:"Sharpened quill."},{name:"Calligrapher's supplies",price:10,desc:"For letters that impress."},{name:"Copying service (per page)",price:0.5,desc:"Neat hand, no questions."},{name:"Letter of introduction",price:5,desc:"Forged-adjacent."},{name:"Sealing wax",price:0.5,desc:"With a stamp of your choice."},{name:"Research service (per day)",price:2,desc:"The archivist digs for answers."},{name:"Forgery kit",price:15,desc:"Kept under the counter."}]},
+  "Temple & Healer":{keywords:["temple","shrine","healer","healing","priest","church","cleric","chapel"],kinds:["Shrine","Sanctum","Chapel","House of Mending"],nouns:["Candle","Bell","Lotus","Lamb","Halo","Leaf"],roles:["High priest","Acolyte","Healer","Bell-ringer"],magic:0.1,
+   interiors:["candles in every alcove, and a fountain that never stops","pews carved from roots that still have leaves","a quiet ward of cots for wounded adventurers"],
+   stock:[{name:"Cure Wounds (spell service)",price:50,desc:"A blessing and a bandage."},{name:"Lesser Restoration (service)",price:200,desc:"Cures disease, poison, blindness."},{name:"Remove Curse (service)",price:300,desc:"Done carefully, with paperwork."},{name:"Revivify (service, diamond extra)",price:300,desc:"Within a minute of death. Hurry."},{name:"Holy water (flask)",price:25,desc:"Blessed by the high priest personally."},{name:"Holy symbol",price:5,desc:"Choose a god; most are in stock."},{name:"Prayer candle",price:0.1,desc:"Burns for one wish's worth."},{name:"Healer's kit",price:5,desc:"Donated by grateful patrons."},{name:"Potion of Healing",price:50,desc:"Brewed by the acolytes."},{name:"Blessing for a journey",price:1,desc:"Doesn't do anything mechanical. Probably."},{name:"Funeral rites",price:10,desc:"Dignified and short."}]},
+  "Tinker & Toolmaker":{keywords:["tinker","tool","gadget","clockwork","artificer","inventor","mechan","gear"],kinds:["Gadgets","Tinkery","Workshop","Contraptions"],nouns:["Cog","Spring","Gear","Sprocket","Clock","Widget"],roles:["Inventor","Tinker","Test subject","Clockwork helper"],magic:0.1,
+   interiors:["gears tick in the walls and something whistles every minute","half-built contraptions twitch on the workbench","a mechanical bird takes your coat whether you want it to or not"],
+   stock:[{name:"Thieves' tools",price:25,desc:"'For locksmiths,' wink."},{name:"Tinker's tools",price:50,desc:"Tiny screwdrivers, tiny hammers."},{name:"Carpenter's tools",price:8,desc:"Saw, plane, chisels."},{name:"Mason's tools",price:10,desc:"Trowel, hammer, chisel."},{name:"Navigator's tools",price:25,desc:"Compass and sextant."},{name:"Lock",price:10,desc:"Opens with one key or one clever rogue."},{name:"Hourglass",price:25,desc:"Runs for exactly one hour."},{name:"Spyglass",price:1000,desc:"Brass, extends three sections."},{name:"Magnifying glass",price:100,desc:"Lights fires and reveals fine print."},{name:"Clockwork toy",price:5,desc:"Wind it up, watch it march."},{name:"Grappling hook",price:2,desc:"Folding prongs."},{name:"Repair service",price:1,desc:"Fixes most mundane things."},{name:"Self-stirring spoon",price:3,desc:"Overenthusiastic."}]},
+  "Jeweler & Gem Cutter":{keywords:["jewel","gem","jeweler","ring","necklace","gold","silver","diamond"],kinds:["Jewelers","Gems","Facets","Treasury"],nouns:["Sapphire","Pearl","Garnet","Locket","Diamond","Opal"],roles:["Master jeweler","Gem cutter","Guard","Appraiser"],magic:0.12,
+   interiors:["glass cases sparkle under bright mage-lights","a guard stands by the door, pretending not to watch you","velvet-lined trays laid out like a feast"],
+   stock:[{name:"Silver ring",price:5,desc:"Simple band, polished bright."},{name:"Gold locket",price:25,desc:"Room for a tiny portrait."},{name:"Agate (10 gp gem)",price:10,desc:"Striped like tree rings."},{name:"Moonstone (50 gp gem)",price:50,desc:"Glows faintly at night."},{name:"Pearl (100 gp)",price:100,desc:"Perfect for identify spells."},{name:"Jade carving",price:250,desc:"A tiny Tree, very detailed."},{name:"Diamond (300 gp)",price:300,desc:"Revivify-grade, certified."},{name:"Ruby (1,000 gp)",price:1000,desc:"Deep red, a bit warm."},{name:"Jeweler's tools",price:25,desc:"Loupes, files, and pliers."},{name:"Appraisal service",price:1,desc:"Honest valuation of any treasure."},{name:"Engraving service",price:2,desc:"Up to twenty letters."}]},
+  "Food Stall & Bakery":{keywords:["food","bakery","bread","cake","sweets","candy","cook","stall","snack"],kinds:["Bakery","Kitchen","Sweets","Eats"],nouns:["Bun","Crust","Honeycomb","Pie","Oven","Dumpling"],roles:["Head baker","Cook","Taster","Delivery runner"],magic:0.03,
+   interiors:["fresh loaves cool on racks while customers drool","a giant oven glows like a dragon's mouth","jars of sweets in colors that don't exist on most worlds"],
+   stock:[{name:"Loaf of bread",price:0.02,desc:"Crusty and warm."},{name:"Honey cake",price:0.1,desc:"Sticky, golden, beloved."},{name:"Meat pie",price:0.05,desc:"Mystery meat, excellent gravy."},{name:"Sap-candy (bag)",price:0.1,desc:"Tree-sap sweets that crackle on the tongue."},{name:"Wheel of cheese",price:1,desc:"Sharp, aged, enormous."},{name:"Trail rations (5 days)",price:2.5,desc:"Dense, filling, keeps forever."},{name:"Spiced sausages (string)",price:0.3,desc:"Smoky and hot."},{name:"Celebration cake",price:5,desc:"Custom message included."},{name:"Branch-world fruit",price:0.2,desc:"Tastes like music. Odd."},{name:"Picnic basket",price:2,desc:"Everything for a party of four."},{name:"Cook's utensils",price:1,desc:"Pans, ladles, and a cleaver."}]},
+  "Cartographer & Planar Guide":{keywords:["map","cartograph","guide","planar","travel","branch","navigation","portal"],kinds:["Maps","Charts","Wayfinding","Branch-Guides"],nouns:["Compass","Branch","Atlas","Star","Route","Waypoint"],roles:["Cartographer","Planar guide","Map-runner","Tea-maker"],magic:0.15,
+   interiors:["maps cover every surface, some of them updating themselves","a huge model of the Tree turns slowly in the center of the room","pins and string mark routes between worlds across the walls"],
+   stock:[{name:"City map",price:1,desc:"Shows the bazaar and the Tree's entrance."},{name:"Map of the inner roots",price:15,desc:"Accurate as of last week."},{name:"Trunk ferry schedule",price:0.1,desc:"Mostly accurate."},{name:"Branch-world chart (nearby)",price:25,desc:"Paths to one nearby world."},{name:"Branch-world chart (distant)",price:100,desc:"Routes to a far world, hand-drawn."},{name:"Guide hire (per day)",price:5,desc:"Knows shortcuts nobody else does."},{name:"Cartographer's tools",price:15,desc:"Compass, rulers, and ink."},{name:"Compass",price:5,desc:"Points toward the Tree from any world."},{name:"World-weather almanac",price:3,desc:"What to pack for twenty worlds."},{name:"Map-copying service",price:2,desc:"Copies any map you bring in."},{name:"Phrasebook (a branch-world tongue)",price:5,desc:"Hello, thank you, run."}]},
+  "Black Market":{keywords:["black market","smuggl","fence","illegal","thieves","contraband","shady","stolen"],kinds:["Back Room","Exchange","Fencing","Rarities"],nouns:["Shadow","Rat","Mask","Knife","Crow","Key"],roles:["Fence","Lookout","Muscle","'Accountant'"],magic:0.3,
+   interiors:["a dim cellar behind a fake wall, lit by one shaded lamp","crates with other people's names still on them","everyone keeps their hood up, including the furniture"],
+   stock:[{name:"Basic poison (vial)",price:80,desc:"No questions asked."},{name:"Thieves' tools",price:20,desc:"Slightly used."},{name:"Forged guild seal",price:50,desc:"Passes casual inspection."},{name:"Stolen jewelry",price:40,desc:"'Inherited.'"},{name:"Smoke bomb",price:5,desc:"Pop, cough, gone."},{name:"Fake identity papers",price:25,desc:"With a backstory included."},{name:"Map of guard patrols",price:15,desc:"Updated weekly."},{name:"Contraband from a quarantined world",price:100,desc:"Do not open indoors."},{name:"Unlabeled potion",price:30,desc:"Probably healing. Probably."},{name:"Information (a secret)",price:10,desc:"Prices vary by who it's about."},{name:"Assassin's blood (vial)",price:150,desc:"Very much illegal."}]},
+  "Pawnshop & Oddities":{keywords:["pawn","oddit","junk","antique","second-hand","trinket","weird","strange"],kinds:["Oddities","Pawn","Curiosities","Trinkets"],nouns:["Trinket","Jar","Skull","Teacup","Clock","Button"],roles:["Owner","Buyer","Duster","Very old cat"],magic:0.2,
+   interiors:["a jumble of junk and treasure with no labels or logic","stuffed creatures from unknown worlds stare from every shelf","a hundred clocks, each showing a different time"],
+   stock:[{name:"Mysterious key",price:1,desc:"Opens something, somewhere."},{name:"Music box",price:5,desc:"Plays a song nobody recognizes."},{name:"Preserved off-world beetle",price:2,desc:"Still twitches occasionally."},{name:"Snow globe of a city",price:3,desc:"The tiny people move."},{name:"Used longsword",price:8,desc:"Nicked, but serviceable."},{name:"Chipped teacup set",price:1,desc:"One cup is cursed (cosmetically)."},{name:"Old adventurer's journal",price:5,desc:"Last entry: 'Going up the branch tomorrow.'"},{name:"Wooden mask",price:2,desc:"Someone carved a smile, then changed their mind."},{name:"Bag of mixed coins",price:3,desc:"From worlds that may not exist anymore."},{name:"Spyglass (cracked)",price:200,desc:"Still works, mostly."},{name:"Trinket (roll on the PHB table)",price:0.5,desc:"One random oddity."},{name:"Pawn loan",price:0,desc:"Half an item's value, 30 days to buy back."}]}
+ }
+};
+
+/* ================= SHOP GENERATOR ================= */
+const Shops=(()=>{
+  let T=DEFAULT_SHOP_TABLES;
+  function reloadTables(){T=C.tables.shops||DEFAULT_SHOP_TABLES}
+  const RAR=["common","uncommon","rare","very rare","legendary"];
+  const M=()=>(UI.mkt=UI.mkt||{type:"General Store",custom:"",place:"The City (base bazaar)",wealth:"Modest",tier:null,view:"dm"});
+  const between=r=>{const [a,b]=r||[1,1];return a+rnd(Math.max(0,b-a)+1)};
+  const tierNow=()=>M().tier==null?tierOf(S.tierRank):M().tier;
+  const typeName=s=>s.typeLabel||s.type;
+  function roundPrice(g){g=+g||0;if(g<=0)return 0;if(g>=100)return Math.round(g/5)*5;if(g>=10)return Math.round(g);if(g>=1)return Math.round(g*10)/10;return Math.max(0.01,Math.round(g*100)/100)}
+  function coins(g){g=+g||0;if(g<=0)return "—";if(g>=10)return fmt(Math.round(g))+" gp";
+    const cp=Math.round(g*100),G=Math.floor(cp/100),s=Math.floor(cp%100/10),c=cp%10;return [G&&G+" gp",s&&s+" sp",c&&c+" cp"].filter(Boolean).join(" ")}
+  function matchType(text){const t=(text||"").toLowerCase();let best=null,score=0;
+    Object.entries(T.shopTypes).forEach(([k,v])=>{const s=(v.keywords||[]).filter(w=>t.includes(w)).length;if(s>score){score=s;best=k}});return best}
+  const allowedRarities=t=>RAR.filter((r,i)=>((T.magicRarityByTier||[])[t]||[])[i]>0);
+
+  /* ---------- rolling ---------- */
+  function ownerKey(name){const p=String(name).split(" ").filter(w=>!/^(old|young|madame|master|mother|father|sister|brother|auntie|uncle|captain|doctor|lady|lord|sir|dame|the)$/i.test(w));
+    return p.length>1&&Math.random()<0.5?p[p.length-1]:(p[0]||name)}
+  function rollName(type,owner){const ty=T.shopTypes[type]||{},nouns=ty.nouns&&ty.nouns.length?ty.nouns:["Lantern"],n1=pick(nouns);let n2=pick(nouns);for(let i=0;i<4&&n2===n1;i++)n2=pick(nouns);
+    return pickFresh(T.namePatterns,"shopname").replace("{adj}",pickFresh(T.adjectives,"shopadj")).replace("{noun2}",n2).replace("{noun}",n1)
+      .replace("{kind}",pick(ty.kinds&&ty.kinds.length?ty.kinds:["Shop"])).replace("{owner}",ownerKey(owner)).replace("{place}",pick(T.placeNouns||["Old Knot"]))}
+  function rollNPC(role){const N=T.npc;return {name:Jobs.genName(),role,ancestry:pickFresh(N.ancestries,"sanc"),look:pickFresh(N.looks,"slook"),
+    personality:pickFresh(N.personalities,"spers"),voice:pickFresh(N.voices,"svoice"),want:pickFresh(N.wants,"swant")}}
+  function rollStaff(s){const roles=(T.shopTypes[s.type].roles||["Owner"]).slice(),n=between((T.wealth[s.wealth]||{}).staffCount);
+    const out=[rollNPC(roles.shift()||"Owner")];for(let i=1;i<n;i++)out.push(rollNPC(roles.length?roles.splice(rnd(roles.length),1)[0]:"Helper"));return out}
+  function rollMagic(t){const w=(T.magicRarityByTier||[])[t]||[1];const r=wpick(RAR.map((k,i)=>[k,w[i]||0]));const it=pickFresh(T.magicItems[r]||[],"smag:"+r);return it?Object.assign({rarity:r},it):null}
+  const priceOf=(it,s)=>it.price?roundPrice(it.price*((T.wealth[s.wealth]||{}).mult||1)*(0.9+Math.random()*0.25)):0;
+  function rollItem(s,have){const ty=T.shopTypes[s.type];
+    for(let i=0;i<15;i++){let it=Math.random()<(ty.magic||0)?rollMagic(s.tier):null;if(!it)it=pickFresh(ty.stock,"stock:"+s.type);
+      if(it&&!have.has(it.name)){have.add(it.name);return {name:it.name,price:priceOf(it,s),desc:it.desc||"",rarity:it.rarity||null}}}
+    return null}
+  const sortStock=a=>a.sort((x,y)=>(x.rarity?1:0)-(y.rarity?1:0)||x.price-y.price);
+  function rollStock(s){const have=new Set(),out=[],n=between((T.wealth[s.wealth]||{}).itemCount);for(let i=0;i<n;i++){const it=rollItem(s,have);if(it)out.push(it)}return sortStock(out)}
+  function rollLook(s){const P=T.places[s.place]||Object.values(T.places)[0],ty=T.shopTypes[s.type];
+    return {exterior:cap(pickFresh(P.exterior,"sext:"+s.place)),interior:cap(pickFresh(ty.interiors||["shelves of goods"],"sint:"+s.type)),sensory:cap(pickFresh(P.sensory,"ssen:"+s.place)),detail:cap(pickFresh(T.details,"sdet"))}}
+  function newShop(){const m=M(),custom=(m.custom||"").trim();let type=m.type;
+    if(type==="__custom"||(custom&&!T.shopTypes[type]))type=matchType(custom)||"Pawnshop & Oddities";
+    if(!T.shopTypes[type])type=Object.keys(T.shopTypes)[0];
+    const s={id:uid(),type,custom:m.type==="__custom"||custom?custom:"",place:T.places[m.place]?m.place:Object.keys(T.places)[0],wealth:T.wealth[m.wealth]?m.wealth:"Modest",tier:tierNow(),
+      kept:false,ai:false,tagline:"",readAloud:"",prompt:null,note:null};
+    s.staff=rollStaff(s);s.name=rollName(type,s.staff[0].name);s.look=rollLook(s);s.stock=rollStock(s);
+    s.quirk=pickFresh(T.quirks,"squirk");s.rumor=pickFresh(T.rumors,"srumor");s.haggle=pick(T.haggle);
+    if(s.custom){s.prompt=prompt(s);s.note=`Built from the "${type}" tables. Your custom idea needs Claude: use the write-up button, or copy the prompt.`}
+    return s}
+  function generate(withAI,btn){const s=newShop();
+    const unkept=C.shops.filter(x=>!x.kept);if(unkept.length>=8){const drop=unkept[unkept.length-1];C.shops.splice(C.shops.indexOf(drop),1)}
+    C.shops.unshift(s);commit();render();
+    if(withAI)writeUp(s,$(`#mShops [data-id="${s.id}"] [data-act="ai"]`))}
+
+  /* ---------- Claude ---------- */
+  function prompt(s){const w=T.wealth[s.wealth]||{},n=w.itemCount||[8,12];return `You are helping a DM prep a shop for a D&D 5e campaign.
+Setting: one universal World Tree (Yggdrasil) grows through the planes. A bazaar city sits at its base, more lives inside the Tree, its Trunk links the worlds, and its branches rise into worlds of every genre. Tone: whimsical and strange with a hopeful heart. Currency is cp/sp/gp/pp; 1 gp is about a day of modest living; use PHB/DMG prices. The party's guild is ${TIERS[s.tier]} tier, so any magic items should be ${allowedRarities(s.tier).join(" or ")||"uncommon"}.
+
+SHOP REQUEST
+Type: ${s.type}${s.custom?`\nThe DM's idea (follow it closely; it overrides the type): ${s.custom}`:""}
+Location: ${s.place}. Wealth: ${s.wealth} (${w.blurb||""}).
+Draft from the random tables (keep what fits, improve or replace the rest):
+Name: ${s.name}
+Staff: ${s.staff.map(p=>`${p.name} (${p.role}), ${p.ancestry}, ${p.personality}`).join("; ")}
+Stock: ${s.stock.map(i=>`${i.name} ${coins(i.price)}`).join("; ")}
+Look: ${s.look.exterior}. ${s.look.interior}. ${s.look.sensory}. ${s.look.detail}.
+Quirk: ${s.quirk}
+
+Return ONLY JSON:
+{"name": shop name, "type": short shop-type label, "tagline": the sign's slogan,
+ "look": {"exterior": 1-2 sentences, "interior": 1-2 sentences, "sensory": 1 sentence of sounds and smells, "detail": one memorable signature detail},
+ "readAloud": 2-3 sentences the DM reads aloud as the party walks in,
+ "staff": [1-4 NPCs: {"name", "role", "ancestry", "look", "personality", "voice", "want": DM-only want or secret that could become a job}],
+ "stock": [${n[0]}-${n[1]} items: {"name", "price_gp": number (0.1 = 1 sp, 0.01 = 1 cp), "desc": one short in-world line, "rarity": null or the magic item rarity}],
+ "quirk": one shop quirk, "rumor": one DM-only rumor or hook, "haggle": one line on haggling here, with a DC}
+Use official names for standard gear and magic items, add a few invented local goods, and price everything for this shop's wealth.`}
+  function fromAI(s,x){const num=v=>{const n=parseFloat(String(v).replace(/[^0-9.]/g,""));return isNaN(n)?0:n};
+    if(x.name)s.name=x.name;if(x.type)s.typeLabel=x.type;if(x.tagline!=null)s.tagline=x.tagline;if(x.readAloud)s.readAloud=x.readAloud;
+    if(x.look)s.look=Object.assign({},s.look,x.look);
+    if(Array.isArray(x.staff)&&x.staff.length)s.staff=x.staff.map(p=>({name:p.name||"?",role:p.role||"",ancestry:p.ancestry||"",look:p.look||"",personality:p.personality||"",voice:p.voice||"",want:p.want||""}));
+    if(Array.isArray(x.stock)&&x.stock.length)s.stock=x.stock.map(i=>({name:i.name||"?",price:roundPrice(num(i.price_gp??i.price)),desc:i.desc||"",rarity:i.rarity||null}));
+    ["quirk","rumor","haggle"].forEach(k=>{if(x[k])s[k]=x[k]});s.ai=true;s.prompt=null;s.note=null}
+  function writeUp(s,btn){aiRun({prompt:prompt(s),fallback:{},btn,apply:x=>{if(x.ai)fromAI(s,x);else{s.prompt=x.prompt;s.note=x.note}commit();render()}})}
+
+  /* ---------- render ---------- */
+  const opts=(list,cur)=>list.map(v=>`<option ${v===cur?"selected":""}>${esc(v)}</option>`).join("");
+  function render(){const host=$("#tab-market");if(!host)return;const m=M(),gt=tierOf(S.tierRank);
+    host.innerHTML=`<div class="controls">
+      <label>Shop type <select id="mType">${opts(Object.keys(T.shopTypes),m.type)}<option value="__custom" ${m.type==="__custom"?"selected":""}>Custom (describe it)</option></select></label>
+      <label>Location <select id="mPlace">${opts(Object.keys(T.places),m.place)}</select></label>
+      <label>Wealth <select id="mWealth">${opts(Object.keys(T.wealth),m.wealth)}</select></label>
+      <label>Magic stock tier <select id="mTier"><option value="">Guild tier (${TIERS[gt]})</option>${TIERS.map((t,i)=>`<option value="${i}" ${m.tier===i?"selected":""}>${t}</option>`).join("")}</select></label>
+      <label style="flex:1;min-width:260px">Custom shop idea (optional) <input id="mCustom" placeholder="e.g. a mushroom-folk tea house that also sells memories" value="${esc(m.custom)}"></label>
+      <button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI">Generate + Claude write-up</button>
+    </div>
+    <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+    <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
+      <button class="btn small" id="mClear">Clear unkept</button><span class="hint" style="margin:0">${AI.mode()==="none"?"No Claude connection: shops come from the tables; custom ideas give you a prompt to copy into Claude.":"Claude write-ups use "+(AI.mode()==="claude"?"Claude directly.":"your API key.")} Quick buttons generate instantly. Kept shops go to Print and At the Table.</span></div>
+    <div id="mShops" class="board shops"></div>`;
+    const box=$("#mShops");
+    if(!C.shops.length)box.innerHTML='<p class="muted">Pick a shop type (or describe your own) and generate.</p>';
+    C.shops.forEach(s=>box.appendChild(m.view==="player"?playerCard(s):dmCard(s)));
+    const set=(k,v)=>{m[k]=v;saveUI()};
+    $("#mType").onchange=e=>set("type",e.target.value);$("#mPlace").onchange=e=>set("place",e.target.value);$("#mWealth").onchange=e=>set("wealth",e.target.value);
+    $("#mTier").onchange=e=>set("tier",e.target.value===""?null:+e.target.value);$("#mCustom").oninput=e=>set("custom",e.target.value);
+    $("#mGen").onclick=()=>generate(false);$("#mGenAI").onclick=()=>generate(true);
+    $("#mQuick").onclick=e=>{const q=e.target.dataset.q;if(!q)return;m.type=q;m.custom="";saveUI();generate(false)};
+    host.querySelector(".seg [data-v]").parentNode.onclick=e=>{const v=e.target.dataset.v;if(v){set("view",v);render()}};
+    $("#mClear").onclick=()=>{C.shops=C.shops.filter(s=>s.kept);commit();render()};
+  }
+  const rr=(f,t)=>`<span class="reroll" data-act="re" data-f="${f}" title="${t}">↻</span>`;
+  function dmCard(s){const d=document.createElement("div");d.className="card"+(s.kept?" kept":"");d.dataset.id=s.id;const L=s.look||{};
+    d.innerHTML=`<h3>${esc(s.name)}${rr("name","Reroll name")}</h3>
+    <div class="badges"><span class="badge gold">${esc(typeName(s))}</span><span class="badge">${esc(s.wealth)}</span><span class="badge">${esc(s.place)}</span><span class="badge t${s.tier}">${TIERS[s.tier]} stock</span>${s.ai?'<span class="badge leaf">Claude write-up</span>':""}${s.kept?'<span class="badge gold">Kept</span>':""}</div>
+    ${s.custom?`<div class="row"><b>Idea:</b> <i>${esc(s.custom)}</i></div>`:""}
+    ${s.tagline?`<div class="flav">“${esc(s.tagline)}”</div>`:""}
+    <h4 class="sh4">The look${rr("look","Reroll look")}</h4>
+    <div class="row"><b>Outside:</b> ${esc(L.exterior)}</div><div class="row"><b>Inside:</b> ${esc(L.interior)}</div>
+    <div class="row"><b>Senses:</b> ${esc(L.sensory)}</div><div class="row"><b>Detail:</b> ${esc(L.detail)}</div>
+    ${s.readAloud?`<div class="worldblock"><b>Read aloud:</b> <i>${esc(s.readAloud)}</i></div>`:""}
+    <h4 class="sh4">Staff${rr("staff","Reroll staff")}</h4>
+    ${s.staff.map(p=>`<div class="row"><b style="color:var(--ink)">${esc(p.name)}</b>, ${esc(p.role)} <span class="muted">(${esc(p.ancestry)})</span><br>${esc(cap(p.look||""))}${p.look?". ":""}${esc(cap(p.personality||""))}${p.voice?`; ${esc(p.voice)}`:""}.${p.want?`<br><span class="muted">DM: ${esc(p.want)}</span>`:""}</div>`).join("")}
+    <h4 class="sh4">Stock${rr("stock","Reroll all stock")} <span class="reroll" data-act="add" title="Add an item">＋ item</span></h4>
+    <table class="ref stock">${s.stock.map((i,k)=>`<tr><td><b>${esc(i.name)}</b>${i.rarity?` <span class="badge leaf">${esc(i.rarity)}</span>`:""}<br><span class="muted">${esc(i.desc)}</span></td><td>${coins(i.price)} <span class="reroll" data-act="rm" data-i="${k}" title="Remove">✕</span></td></tr>`).join("")}</table>
+    <div class="dm"><b>Quirk:</b> ${esc(s.quirk)}${rr("quirk","Reroll")}<br><b>Rumor:</b> ${esc(s.rumor)}${rr("rumor","Reroll")}<br><b>Haggling:</b> ${esc(s.haggle)}${rr("haggle","Reroll")}</div>
+    ${s.note?`<p class="muted" style="font-size:14px;margin:0">${esc(s.note)}</p>`:""}
+    <div class="actions"><button class="btn small primary" data-act="ai">${s.ai?"Rewrite with Claude":"Write up with Claude"}</button>
+      <button class="btn small" data-act="keep">${s.kept?"★ Kept":"☆ Keep"}</button><button class="btn small" data-act="copy">Copy</button><button class="btn small" data-act="del">✕</button></div>`;
+    if(s.prompt)d.querySelector(".actions").appendChild(aiButtons(s,r=>{fromAI(s,r);commit();render()}));
+    d.addEventListener("click",e=>{const a=e.target.dataset.act;if(!a)return;
+      if(a==="ai"){writeUp(s,e.target);return}
+      if(a==="copy"){copyText(shopText(s));return}
+      if(a==="re"){const f=e.target.dataset.f;
+        if(f==="name")s.name=rollName(s.type,s.staff[0]?.name||"Someone");
+        if(f==="look")s.look=rollLook(s);
+        if(f==="staff")s.staff=rollStaff(s);
+        if(f==="stock")s.stock=rollStock(s);
+        if(f==="quirk")s.quirk=pickFresh(T.quirks,"squirk");
+        if(f==="rumor")s.rumor=pickFresh(T.rumors,"srumor");
+        if(f==="haggle")s.haggle=pick(T.haggle)}
+      if(a==="add"){const it=rollItem(s,new Set(s.stock.map(i=>i.name)));if(it){s.stock.push(it);sortStock(s.stock)}else toast("No new items left in this shop's tables")}
+      if(a==="rm")s.stock.splice(+e.target.dataset.i,1);
+      if(a==="keep")s.kept=!s.kept;
+      if(a==="del")C.shops.splice(C.shops.indexOf(s),1);
+      commit();render()});
+    return d}
+  function sheetHTML(s){return `<div class="shopsheet"><div class="sh-type">${esc(typeName(s))}</div><div class="sh-name">${esc(s.name)}</div>${s.tagline?`<div class="sh-tag">“${esc(s.tagline)}”</div>`:""}
+    <div class="sh-by">Proprietor: ${esc(s.staff[0]?.name||"")}</div>
+    <table>${s.stock.map(i=>`<tr><td>${esc(i.name)}${i.rarity?` <i>(${esc(i.rarity)})</i>`:""}<div class="d">${esc(i.desc)}</div></td><td class="p">${coins(i.price)}</td></tr>`).join("")}</table>
+    <div class="sh-foot">gp = gold · sp = silver · cp = copper</div></div>`}
+  function playerCard(s){const w=document.createElement("div");w.innerHTML=sheetHTML(s)+`<div class="actions" style="justify-content:center"><button class="btn small">Copy price list</button></div>`;
+    w.querySelector("button").onclick=()=>copyText(`${s.name}\n${s.tagline||""}\n\n${s.stock.map(i=>`${i.name}: ${coins(i.price)}`).join("\n")}`);return w}
+  function shopText(s){const L=s.look||{};return `${s.name} (${typeName(s)}, ${s.wealth}, ${s.place})${s.tagline?`\n"${s.tagline}"`:""}
+Outside: ${L.exterior}\nInside: ${L.interior}\nSenses: ${L.sensory}\nDetail: ${L.detail}${s.readAloud?`\nRead aloud: ${s.readAloud}`:""}
+Staff:\n${s.staff.map(p=>`- ${p.name}, ${p.role} (${p.ancestry}). ${p.look}. ${p.personality}; ${p.voice}. DM: ${p.want}`).join("\n")}
+Stock:\n${s.stock.map(i=>`- ${i.name}${i.rarity?` (${i.rarity})`:""}: ${coins(i.price)}. ${i.desc}`).join("\n")}
+Quirk: ${s.quirk}\nRumor: ${s.rumor}\nHaggling: ${s.haggle}`}
+  function tableHTML(){const k=C.shops.filter(s=>s.kept);if(!k.length)return '<p class="muted">Keep shops in the Shop Generator and they show up here.</p>';
+    return k.map(s=>`<details class="addons" style="margin-bottom:6px"><summary><b style="color:var(--ink)">${esc(s.name)}</b> <span class="muted">${esc(typeName(s))} · ${esc(s.staff[0]?.name||"")}</span></summary>
+      <p class="hint">${esc(s.haggle)}</p><table class="ref">${s.stock.map(i=>`<tr><td>${esc(i.name)}</td><td>${coins(i.price)}</td></tr>`).join("")}</table></details>`).join("")}
+  function printHTML(){const k=C.shops.filter(s=>s.kept);return k.length?`<div class="pr-shops">${k.map(s=>`<div class="pr-shop">${sheetHTML(s)}</div>`).join("")}</div>`:""}
+  const PRINT_CSS=`.shopsheet{background:#f4e9cf;color:#2b1d0e;font-family:"IM Fell English",Georgia,serif;border:2px solid #7a5a2e;border-radius:4px;padding:16px 22px;max-width:620px;margin:0 auto;box-shadow:inset 0 0 40px rgba(120,80,30,.25);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.shopsheet .sh-type{text-align:center;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#6b4d26}
+.shopsheet .sh-name{font-family:"IM Fell English SC",serif;font-size:28px;text-align:center;line-height:1.1}
+.shopsheet .sh-tag{text-align:center;font-style:italic}.shopsheet .sh-by{text-align:center;font-size:14px;color:#6b4d26;margin-top:2px}
+.shopsheet table{width:100%;border-collapse:collapse;margin-top:8px}.shopsheet td{padding:4px 2px;border-bottom:1px dotted #a88a5c;vertical-align:top;font-size:16px}
+.shopsheet td.p{text-align:right;white-space:nowrap;font-weight:bold;padding-left:10px}.shopsheet .d{font-size:13.5px;font-style:italic;color:#5a4123}
+.shopsheet .sh-foot{text-align:center;font-size:12px;margin-top:8px;color:#6b4d26}.pr-shops{display:grid;gap:24px}.pr-shop{break-inside:avoid;page-break-inside:avoid}`;
+  document.head.insertAdjacentHTML("beforeend",`<style>${PRINT_CSS}.board.shops{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}.sh4{margin:6px 0 0;font:600 14px "Cinzel",serif;color:var(--leaf);letter-spacing:.03em}table.ref.stock td:last-child{vertical-align:top}</style>`);
+  if(UI.print&&UI.print.shops===undefined)UI.print.shops=true;
+  return {reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,tables:()=>T};
+})();
+
 /* ================= FRIENDLY TABLE EDITOR (form view over any table JSON) ================= */
 const TableEditor=(()=>{
   const HIDE=new Set(["version","tiers"]);
@@ -5420,7 +5683,9 @@ const TableEditor=(()=>{
     goldBaseByLevel:"Job gold by party level",rarityByTier:"Incentive rarity by tier",xpBudget:"XP budget per character",fightPlan:"Fight plan",goldMult:"Gold multiplier",
     perkLabels:"Perk type labels",typeWeightsByTier:"Peddler type weights by tier",dealReasons:"Deal reasons",jobs:"Price (in jobs)",gp:"Price override (gp)",days:"Build days",
     tier:"Recommended tier",types:"Perk types (P/A/B/C)",op:"Operator",makes:"Makes (per level)",cat:"Category",s:"Skill",g:"Grade",cap:"Rarity cap",output:"Items per downtime",
-    first:"First names",last:"Last names",rows:"Rows",rule:"Rule of thumb",arch:"Archetype"};
+    first:"First names",last:"Last names",rows:"Rows",rule:"Rule of thumb",arch:"Archetype",
+    shopTypes:"Shop types",quickTypes:"Quick buttons",namePatterns:"Shop name patterns",adjectives:"Name adjectives",placeNouns:"Name places",magicRarityByTier:"Magic item rarity by tier",magicItems:"Magic items",
+    stock:"Stock",price:"Base price (gp)",desc:"Description",mult:"Price ×",itemCount:"Items (min, max)",staffCount:"Staff (min, max)",magic:"Magic item chance (0–1)",kinds:"Shop words",nouns:"Name nouns",keywords:"Custom-idea keywords",roles:"Staff roles (first = owner)",interiors:"Interiors",places:"Locations",haggle:"Haggling rules",npc:"Shopkeeper parts"};
   const HINTS={jobTypes:"How often each job type appears at each tier. Bigger number = more common; 0 = never.",
     sizes:"How often each job size appears per tier, plus its gold multiplier and contribution value.",locations:"Where jobs happen, weighted per tier.",
     fantasyShare:"Share of fantasy-flavored worlds at Iron vs. Platinum (0 to 1).",genres:"World genres: weight, places, quirks, and fill-in words used in job text.",
@@ -5430,7 +5695,9 @@ const TableEditor=(()=>{
     rarityByTier:"Which incentive rarities each tier can roll.",items:"Incentive items by kind and rarity.",xpBudget:"XP per character for Low / Moderate / High encounters, by level.",
     grades:"Operator grades: items per downtime, rarity cap, and hire price (tier + jobs).",catalog:"Every Facility, Service, and Staff upgrade with its three levels and add-ons.",
     offers:"Peddlers: type weights per tier, discounts, vendors, one-of-a-kind upgrades, rare hires.",names:"Name parts for generated NPCs.",perkLabels:"What the perk-type letters mean.",
-    rows:"Item and price, one row each.",rule:"Shown above the price table."};
+    rows:"Item and price, one row each.",
+    shopTypes:"Each shop type: name words, staff roles, interiors, magic chance, and stock with base prices (0.1 gp = 1 sp).",quickTypes:"Shop types shown as one-click buttons.",namePatterns:"Words in {braces}: {owner} {adj} {noun} {noun2} {kind} {place}.",
+    magicRarityByTier:"Chance of each magic rarity (common, uncommon, rare, very rare, legendary) per tier.",magicItems:"Magic items shops can stock, by rarity.",wealth:"Shop wealth levels: price multiplier and how many items and staff.",places:"Where a shop is: exterior and sensory details.",npc:"Parts for shopkeepers and staff.",rule:"Shown above the price table."};
   const human=k=>LABELS[k]||String(k).replace(/([a-z])([A-Z])/g,"$1 $2").replace(/^./,c=>c.toUpperCase());
   const isNum=v=>typeof v==="number",isStr=v=>typeof v==="string",isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
   const sig=v=>Array.isArray(v)?"a"+(v.length?sig(v[0]):""):isObj(v)?"o":typeof v;
@@ -5514,7 +5781,7 @@ const TableEditor=(()=>{
 
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","print","settings"],TABLE_TABS=["table","print","settings"];
+  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -5524,8 +5791,8 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
-  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Jobs.initControls();render()}
+  function render(){nav();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings}[UI.tab]||(()=>{}))()}
+  function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();Jobs.initControls();render()}
 
   /* ---------- table mode ---------- */
   function renderTable(){
@@ -5544,6 +5811,7 @@ const App=(()=>{
     const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
     rv.querySelector("#rvLvl").oninput=upd;upd();
     col("Who's in the hall",`<table class="ref">${Roster.sorted().map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
+    col("Shops in play",Shops.tableHTML());
     col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
   }
 
@@ -5552,9 +5820,10 @@ const App=(()=>{
     if(p.notices)out+=Jobs.noticesPrintHTML();
     if(p.ledger)out+=(out?'<div class="pr-break"></div>':"")+Upgrades.ledgerHTML(p.full,p.offers);
     if(p.cards){const c=Upgrades.cardsHTML();if(c)out+=(out?'<div class="pr-break"></div>':"")+c}
+    if(p.shops){const s=Shops.printHTML();if(s)out+=(out?'<div class="pr-break"></div>':"")+s}
     if(p.roster)out+=(out?'<div class="pr-break"></div>':"")+Roster.printHTML();
     return out}
-  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS;
+  const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
     $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
@@ -5577,7 +5846,7 @@ const App=(()=>{
     loadTblEditor();
   }
   let tblKey="jobs",draft=null;
-  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES}[tblKey]);
+  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES}[tblKey]);
   function loadTblEditor(){
     $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
     const cur=C.tables[tblKey],def=tblDefaults(),stale=cur&&def.version&&(cur.version||0)<def.version;
@@ -5617,7 +5886,7 @@ const App=(()=>{
       replaceCampaign(newCampaign());commit();e.target.dataset.sure="";e.target.textContent="Start a new campaign";toast("New campaign started")};
   }
   async function boot(){
-    Jobs.reloadTables();Upgrades.reloadTables();Jobs.initControls();
+    Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();Jobs.initControls();
     Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
