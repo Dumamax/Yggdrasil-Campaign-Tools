@@ -110,8 +110,8 @@ Return ONLY JSON:
   /* ---------- UI ---------- */
   const attSel=m=>`<select class="att" data-att="${m.id}">${ATT.map(a=>`<option${a===(m.attitude||"Neutral")?" selected":""}>${a}</option>`).join("")}</select>`;
   const attCls=a=>({Hostile:"t-hostile",Wary:"t-wary",Friendly:"leaf",Devoted:"gold"}[a]||"");
-  function profileHTML(m,dm=true){
-    const sb=m.sb;return `${m.ancestry||m.genre?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
+  function profileHTML(m,dm=true,noAnc=false){
+    const sb=m.sb;return `${!noAnc&&(m.ancestry||m.genre)?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
     ${m.look||m.voice||m.manner?`<div class="row">${esc(cap(m.look||""))}${m.look?". ":""}${m.voice?`<i>${esc(cap(m.voice))}</i>`:""}${m.manner?`; ${esc(m.manner)}`:""}.</div>`:""}
     ${m.public?`<div class="row"><b>Known for:</b> ${esc(m.public)}</div>`:""}
     ${m.want?`<div class="row"><b>Wants:</b> ${esc(m.want)}</div>`:""}

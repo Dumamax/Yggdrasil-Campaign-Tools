@@ -48,7 +48,7 @@ const App=(()=>{
   const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
-    $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
+    $$("#tab-print input[data-p]").forEach(i=>{i.checked=!!p[i.dataset.p];if(i.dataset.p==="full"||i.dataset.p==="offers"){i.disabled=!p.ledger;i.parentElement.classList.toggle("off",!p.ledger)}});
     $("#pNoticeCount").textContent=`(${finals} marked final)`;
     $("#printGo").textContent=FRAMED?"Download printable":"Print";
     const body=printBody();
@@ -84,6 +84,7 @@ const App=(()=>{
     $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
     $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
     $("#saveCamp").onclick=$("#bannerSave").onclick=saveCampaign;
+    $("#undoBtn").onclick=undo;
     $("#loadCamp").onclick=()=>$("#fileIn").click();
     $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)loadCampaignFile(f);e.target.value=""};
     $("#tab-print").onchange=e=>{const k=e.target.dataset.p;if(!k)return;UI.print[k]=e.target.checked;saveUI();renderPrint()};
@@ -109,7 +110,7 @@ const App=(()=>{
   }
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
-    Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
+    Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();undoBtn();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
       try{downloads=await claude.use("downloads")}catch(e){downloads=null}

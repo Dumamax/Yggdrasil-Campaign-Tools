@@ -87,7 +87,7 @@ Use official names for standard gear and magic items, add a few invented local g
       <label>Wealth <select id="mWealth">${opts(Object.keys(T.wealth),m.wealth)}</select></label>
       <label>Magic stock tier <select id="mTier"><option value="">Guild tier (${TIERS[gt]})</option>${TIERS.map((t,i)=>`<option value="${i}" ${m.tier===i?"selected":""}>${t}</option>`).join("")}</select></label>
       <label style="flex:1;min-width:260px">Custom shop idea (optional) <input id="mCustom" placeholder="e.g. a mushroom-folk tea house that also sells memories" value="${esc(m.custom)}"></label>
-      <button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI">Generate + Claude write-up</button>
+      <span class="btn-pair"><button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI" title="Generate, then have Claude write it up">+ Claude write-up</button></span>
     </div>
     <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
     <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
@@ -138,7 +138,7 @@ Use official names for standard gear and magic items, add a few invented local g
       if(a==="add"){const it=rollItem(s,new Set(s.stock.map(i=>i.name)));if(it){s.stock.push(it);sortStock(s.stock)}else toast("No new items left in this shop's tables")}
       if(a==="rm")s.stock.splice(+e.target.dataset.i,1);
       if(a==="keep")s.kept=!s.kept;
-      if(a==="del")C.shops.splice(C.shops.indexOf(s),1);
+      if(a==="del"){C.shops.splice(C.shops.indexOf(s),1);setTimeout(()=>toast("Shop deleted · Ctrl+Z to undo"),0)}
       commit();render()});
     return d}
   function sheetHTML(s){return `<div class="shopsheet"><div class="sh-type">${esc(typeName(s))}</div><div class="sh-name">${esc(s.name)}</div>${s.tagline?`<div class="sh-tag">“${esc(s.tagline)}”</div>`:""}

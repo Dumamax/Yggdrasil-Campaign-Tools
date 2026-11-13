@@ -11,13 +11,15 @@
 </style>
 </head>
 <body>
+<div class="topbar">
 <header>
   <h1>⟡ Yggdrasil Guild Hall</h1>
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
+    <button class="btn ghost" id="undoBtn" title="Undo last change (Ctrl+Z)" disabled>↶ Undo</button>
     <button class="btn" id="tmToggle">Table Mode</button>
-    <button class="btn primary" id="saveCamp">Save Campaign</button>
+    <button class="btn primary" id="saveCamp" title="Save Campaign (Ctrl+S)">Save Campaign</button>
     <button class="btn" id="loadCamp">Load Campaign</button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
@@ -32,6 +34,7 @@
   <button data-tab="print">Print</button>
   <button data-tab="settings">Settings &amp; Tables</button>
 </nav>
+</div>
 <main>
   <section id="tab-jobs">
     <div class="controls">
@@ -79,16 +82,20 @@
   </section>
 
   <section id="tab-print" hidden>
-    <div class="controls">
-      <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
-      <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
-      <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
-      <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
-      <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
-      <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
-      <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
-      <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned, DM only)</label>
-      <label class="inline"><input type="checkbox" data-p="council"> Council Notice (players)</label>
+    <div class="controls print-opts">
+      <fieldset><legend>For the players</legend>
+        <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
+        <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
+        <label class="inline sub"><input type="checkbox" data-p="full"> full I–III paths</label>
+        <label class="inline sub"><input type="checkbox" data-p="offers"> with Peddlers</label>
+        <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+        <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
+        <label class="inline"><input type="checkbox" data-p="council"> Council Notice</label>
+      </fieldset>
+      <fieldset><legend>DM only</legend>
+        <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+        <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned)</label>
+      </fieldset>
       <button class="btn primary" id="printGo">Print</button>
     </div>
     <div class="preview" id="preview"></div>

@@ -49,8 +49,12 @@ let S=C.settings;
 let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
-function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
-function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);App.reloadAll()}
+/* undo: snapshots of C before each commit (session only) */
+const UNDO=[];let lastSnap=JSON.stringify(C);
+function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
+function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
+function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
 
 /* tiers */
 const tierOf=r=>Math.floor(r/3);
@@ -98,6 +102,9 @@ function banner(){
   b.classList.toggle("show",dirty);
   $("#bannerText").textContent=C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
 }
+window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();
+  if(k==="s"){e.preventDefault();saveCampaign()}
+  else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});
 window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
 
 /* ---------- AI: Claude-in-artifact, API key, or copy/paste ---------- */

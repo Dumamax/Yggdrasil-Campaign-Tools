@@ -111,9 +111,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
       <button class="btn small" data-act="paid">Paid → treasury</button>
-      <button class="btn small" data-act="reroll">Reroll</button>
-      <button class="btn small" data-act="copy">Copy</button>
-      <button class="btn small" data-act="del">✕</button></div>`}`;
+      <span class="act-end"><button class="btn small ghost" data-act="reroll" title="Reroll the whole job">↻ Reroll</button>
+      <button class="btn small ghost" data-act="copy" title="Copy as text">Copy</button>
+      <button class="btn small ghost danger" data-act="del" title="Delete (Ctrl+Z to undo)">✕</button></span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
     d.addEventListener("click",ev=>{const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
       if(f)rerollField(h,f);
@@ -128,7 +128,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
         sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
-      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
+      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1);setTimeout(()=>toast("Job deleted · Ctrl+Z to undo"),0)}
       else if(a==="copy"){copyText(cardText(h));return}
       commit();App.render()});
     return d;

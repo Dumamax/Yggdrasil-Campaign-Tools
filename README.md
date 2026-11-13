@@ -13,7 +13,7 @@ Download **[`dist/Yggdrasil-Guild-Hall.html`](dist/Yggdrasil-Guild-Hall.html)** 
 - **Print**: Quest Notices, the Builder's Ledger, upgrade cards, and a roster sheet.
 
 ## Saving (important)
-The **campaign file** (`Save Campaign` → `yggdrasil-campaign-YYYY-MM-DD-HHMM.json`) is the source of truth. The browser keeps a working copy, but save a file after every prep session and keep the files somewhere safe. `Load Campaign` restores one. The page warns about unsaved changes.
+The **campaign file** (`Save Campaign` → `yggdrasil-campaign-YYYY-MM-DD-HHMM.json`) is the source of truth. The browser keeps a working copy, but save a file after every prep session and keep the files somewhere safe. `Load Campaign` restores one. The page warns about unsaved changes. Shortcuts: **Ctrl/Cmd+S** saves the campaign file; **Ctrl/Cmd+Z** (or ↶ Undo) reverses the last change this session, including deletes.
 
 ## Claude features
 Expand (job prep cards, upgrade write-ups) works three ways:

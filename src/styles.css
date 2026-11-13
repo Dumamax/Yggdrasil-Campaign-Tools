@@ -142,3 +142,35 @@ table.te-matrix .te-txt{min-width:160px}
 select.att{padding:2px 6px;font-size:14px}
 table.council td{vertical-align:top}table.council a{color:var(--gold)}
 table.council select{max-width:230px}
+/* ---- polish v2: sticky top bar, button hierarchy, focus, print groups ---- */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(29,26,22,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+header{padding:12px 22px 4px}
+nav{padding:6px 22px 8px}
+nav button,.btn{transition:background .15s,border-color .15s,color .15s,transform .05s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mute)}
+.btn.ghost:hover:not(:disabled){border-color:var(--line);color:var(--ink)}
+.btn.ghost.danger{color:var(--mute)}.btn.ghost.danger:hover{color:var(--red);border-color:var(--red)}
+.act-end{margin-left:auto;display:flex;gap:2px}
+.btn-pair{display:flex;gap:6px;align-items:end}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(214,168,74,.25)}
+.card{transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:#5d5140}
+.toast{bottom:22px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+table.ref td:first-child{min-width:11em}
+.print-opts{align-items:stretch}
+.print-opts fieldset{border:1px solid var(--line);border-radius:8px;padding:6px 12px 8px;margin:0;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.print-opts legend{font:600 13px "Cinzel",serif;color:var(--gold);padding:0 4px;letter-spacing:.03em}
+.print-opts label.sub{color:var(--mute);margin-left:-8px}
+.print-opts label.sub::before{content:"↳";margin-right:-2px}
+.print-opts label.off{opacity:.45}
+.print-opts #printGo{align-self:center;margin-left:auto}
+@media (max-width:700px){
+  header .sub{display:none}
+  header{padding:10px 14px 2px}.hdr-right{margin-left:0}
+  nav{flex-wrap:nowrap;overflow-x:auto;padding:6px 14px 8px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+  nav button{white-space:nowrap}
+  main{padding:12px 14px 40px}
+  .board,.tm-grid{grid-template-columns:1fr}
+}

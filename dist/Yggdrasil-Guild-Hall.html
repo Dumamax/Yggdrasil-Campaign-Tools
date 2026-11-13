@@ -151,6 +151,38 @@ table.te-matrix .te-txt{min-width:160px}
 select.att{padding:2px 6px;font-size:14px}
 table.council td{vertical-align:top}table.council a{color:var(--gold)}
 table.council select{max-width:230px}
+/* ---- polish v2: sticky top bar, button hierarchy, focus, print groups ---- */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(29,26,22,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+header{padding:12px 22px 4px}
+nav{padding:6px 22px 8px}
+nav button,.btn{transition:background .15s,border-color .15s,color .15s,transform .05s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mute)}
+.btn.ghost:hover:not(:disabled){border-color:var(--line);color:var(--ink)}
+.btn.ghost.danger{color:var(--mute)}.btn.ghost.danger:hover{color:var(--red);border-color:var(--red)}
+.act-end{margin-left:auto;display:flex;gap:2px}
+.btn-pair{display:flex;gap:6px;align-items:end}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(214,168,74,.25)}
+.card{transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:#5d5140}
+.toast{bottom:22px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+table.ref td:first-child{min-width:11em}
+.print-opts{align-items:stretch}
+.print-opts fieldset{border:1px solid var(--line);border-radius:8px;padding:6px 12px 8px;margin:0;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.print-opts legend{font:600 13px "Cinzel",serif;color:var(--gold);padding:0 4px;letter-spacing:.03em}
+.print-opts label.sub{color:var(--mute);margin-left:-8px}
+.print-opts label.sub::before{content:"↳";margin-right:-2px}
+.print-opts label.off{opacity:.45}
+.print-opts #printGo{align-self:center;margin-left:auto}
+@media (max-width:700px){
+  header .sub{display:none}
+  header{padding:10px 14px 2px}.hdr-right{margin-left:0}
+  nav{flex-wrap:nowrap;overflow-x:auto;padding:6px 14px 8px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+  nav button{white-space:nowrap}
+  main{padding:12px 14px 40px}
+  .board,.tm-grid{grid-template-columns:1fr}
+}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -172,13 +204,15 @@ table.council select{max-width:230px}
 </style>
 </head>
 <body>
+<div class="topbar">
 <header>
   <h1>⟡ Yggdrasil Guild Hall</h1>
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
+    <button class="btn ghost" id="undoBtn" title="Undo last change (Ctrl+Z)" disabled>↶ Undo</button>
     <button class="btn" id="tmToggle">Table Mode</button>
-    <button class="btn primary" id="saveCamp">Save Campaign</button>
+    <button class="btn primary" id="saveCamp" title="Save Campaign (Ctrl+S)">Save Campaign</button>
     <button class="btn" id="loadCamp">Load Campaign</button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
@@ -193,6 +227,7 @@ table.council select{max-width:230px}
   <button data-tab="print">Print</button>
   <button data-tab="settings">Settings &amp; Tables</button>
 </nav>
+</div>
 <main>
   <section id="tab-jobs">
     <div class="controls">
@@ -240,16 +275,20 @@ table.council select{max-width:230px}
   </section>
 
   <section id="tab-print" hidden>
-    <div class="controls">
-      <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
-      <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
-      <label class="inline"><input type="checkbox" data-p="full"> full I–III paths</label>
-      <label class="inline"><input type="checkbox" data-p="offers"> with Peddlers</label>
-      <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
-      <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
-      <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
-      <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned, DM only)</label>
-      <label class="inline"><input type="checkbox" data-p="council"> Council Notice (players)</label>
+    <div class="controls print-opts">
+      <fieldset><legend>For the players</legend>
+        <label class="inline"><input type="checkbox" data-p="notices"> Quest Notices <span class="muted" id="pNoticeCount"></span></label>
+        <label class="inline"><input type="checkbox" data-p="ledger"> Builder's Ledger</label>
+        <label class="inline sub"><input type="checkbox" data-p="full"> full I–III paths</label>
+        <label class="inline sub"><input type="checkbox" data-p="offers"> with Peddlers</label>
+        <label class="inline"><input type="checkbox" data-p="cards"> Upgrade cards</label>
+        <label class="inline"><input type="checkbox" data-p="shops"> Shop price lists (kept)</label>
+        <label class="inline"><input type="checkbox" data-p="council"> Council Notice</label>
+      </fieldset>
+      <fieldset><legend>DM only</legend>
+        <label class="inline"><input type="checkbox" data-p="roster"> Roster sheet</label>
+        <label class="inline"><input type="checkbox" data-p="npcs"> NPC cheat sheet (pinned)</label>
+      </fieldset>
       <button class="btn primary" id="printGo">Print</button>
     </div>
     <div class="preview" id="preview"></div>
@@ -356,8 +395,12 @@ let S=C.settings;
 let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
-function commit(){lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner()}
-function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);App.reloadAll()}
+/* undo: snapshots of C before each commit (session only) */
+const UNDO=[];let lastSnap=JSON.stringify(C);
+function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
+function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
+function replaceCampaign(c){C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
 
 /* tiers */
 const tierOf=r=>Math.floor(r/3);
@@ -405,6 +448,9 @@ function banner(){
   b.classList.toggle("show",dirty);
   $("#bannerText").textContent=C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
 }
+window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();
+  if(k==="s"){e.preventDefault();saveCampaign()}
+  else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});
 window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
 
 /* ---------- AI: Claude-in-artifact, API key, or copy/paste ---------- */
@@ -5060,9 +5106,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small" data-act="keep">${h.kept?"★ Kept":"☆ Keep"}</button>
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
       <button class="btn small" data-act="paid">Paid → treasury</button>
-      <button class="btn small" data-act="reroll">Reroll</button>
-      <button class="btn small" data-act="copy">Copy</button>
-      <button class="btn small" data-act="del">✕</button></div>`}`;
+      <span class="act-end"><button class="btn small ghost" data-act="reroll" title="Reroll the whole job">↻ Reroll</button>
+      <button class="btn small ghost" data-act="copy" title="Copy as text">Copy</button>
+      <button class="btn small ghost danger" data-act="del" title="Delete (Ctrl+Z to undo)">✕</button></span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
     d.addEventListener("click",ev=>{const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
       if(f)rerollField(h,f);
@@ -5077,7 +5123,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
         sel.onchange=()=>{if(sel.value){NPCs.usePatron(h,sel.value);App.render()}};row.appendChild(sel);return}
       else if(a==="paid"){const fee=guildFee(h);C.guild.treasury=(C.guild.treasury||0)+fee;toast(`+${fmt(fee)} gp to the treasury`)}
       else if(a==="reroll"){const k=h.kept;Object.assign(h,newHook(),{kept:k})}
-      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1)}
+      else if(a==="del"){C.jobs.splice(C.jobs.indexOf(h),1);setTimeout(()=>toast("Job deleted · Ctrl+Z to undo"),0)}
       else if(a==="copy"){copyText(cardText(h));return}
       commit();App.render()});
     return d;
@@ -5343,7 +5389,7 @@ const Roster=(()=>{
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
-      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
+      ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
         if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
@@ -5639,7 +5685,7 @@ Use official names for standard gear and magic items, add a few invented local g
       <label>Wealth <select id="mWealth">${opts(Object.keys(T.wealth),m.wealth)}</select></label>
       <label>Magic stock tier <select id="mTier"><option value="">Guild tier (${TIERS[gt]})</option>${TIERS.map((t,i)=>`<option value="${i}" ${m.tier===i?"selected":""}>${t}</option>`).join("")}</select></label>
       <label style="flex:1;min-width:260px">Custom shop idea (optional) <input id="mCustom" placeholder="e.g. a mushroom-folk tea house that also sells memories" value="${esc(m.custom)}"></label>
-      <button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI">Generate + Claude write-up</button>
+      <span class="btn-pair"><button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI" title="Generate, then have Claude write it up">+ Claude write-up</button></span>
     </div>
     <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
     <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
@@ -5690,7 +5736,7 @@ Use official names for standard gear and magic items, add a few invented local g
       if(a==="add"){const it=rollItem(s,new Set(s.stock.map(i=>i.name)));if(it){s.stock.push(it);sortStock(s.stock)}else toast("No new items left in this shop's tables")}
       if(a==="rm")s.stock.splice(+e.target.dataset.i,1);
       if(a==="keep")s.kept=!s.kept;
-      if(a==="del")C.shops.splice(C.shops.indexOf(s),1);
+      if(a==="del"){C.shops.splice(C.shops.indexOf(s),1);setTimeout(()=>toast("Shop deleted · Ctrl+Z to undo"),0)}
       commit();render()});
     return d}
   function sheetHTML(s){return `<div class="shopsheet"><div class="sh-type">${esc(typeName(s))}</div><div class="sh-name">${esc(s.name)}</div>${s.tagline?`<div class="sh-tag">“${esc(s.tagline)}”</div>`:""}
@@ -5945,8 +5991,8 @@ Return ONLY JSON:
   /* ---------- UI ---------- */
   const attSel=m=>`<select class="att" data-att="${m.id}">${ATT.map(a=>`<option${a===(m.attitude||"Neutral")?" selected":""}>${a}</option>`).join("")}</select>`;
   const attCls=a=>({Hostile:"t-hostile",Wary:"t-wary",Friendly:"leaf",Devoted:"gold"}[a]||"");
-  function profileHTML(m,dm=true){
-    const sb=m.sb;return `${m.ancestry||m.genre?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
+  function profileHTML(m,dm=true,noAnc=false){
+    const sb=m.sb;return `${!noAnc&&(m.ancestry||m.genre)?`<div class="row">${esc(m.ancestry||"")}${m.genre?` <span class="muted">· ${esc(m.genre)}</span>`:""}${m.guild?` <span class="muted">· ${esc(m.guild)}</span>`:""}</div>`:""}
     ${m.look||m.voice||m.manner?`<div class="row">${esc(cap(m.look||""))}${m.look?". ":""}${m.voice?`<i>${esc(cap(m.voice))}</i>`:""}${m.manner?`; ${esc(m.manner)}`:""}.</div>`:""}
     ${m.public?`<div class="row"><b>Known for:</b> ${esc(m.public)}</div>`:""}
     ${m.want?`<div class="row"><b>Wants:</b> ${esc(m.want)}</div>`:""}
@@ -6194,7 +6240,7 @@ const App=(()=>{
   const printCSS=()=>Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
   function renderPrint(){
     const p=UI.print,finals=C.jobs.filter(h=>h.final).length;
-    $$("#tab-print input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p]);
+    $$("#tab-print input[data-p]").forEach(i=>{i.checked=!!p[i.dataset.p];if(i.dataset.p==="full"||i.dataset.p==="offers"){i.disabled=!p.ledger;i.parentElement.classList.toggle("off",!p.ledger)}});
     $("#pNoticeCount").textContent=`(${finals} marked final)`;
     $("#printGo").textContent=FRAMED?"Download printable":"Print";
     const body=printBody();
@@ -6230,6 +6276,7 @@ const App=(()=>{
     $("#mainNav").onclick=e=>{const t=e.target.dataset.tab;if(!t)return;UI.tab=t;saveUI();render()};
     $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
     $("#saveCamp").onclick=$("#bannerSave").onclick=saveCampaign;
+    $("#undoBtn").onclick=undo;
     $("#loadCamp").onclick=()=>$("#fileIn").click();
     $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)loadCampaignFile(f);e.target.value=""};
     $("#tab-print").onchange=e=>{const k=e.target.dataset.p;if(!k)return;UI.print[k]=e.target.checked;saveUI();renderPrint()};
@@ -6255,7 +6302,7 @@ const App=(()=>{
   }
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
-    Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();render();
+    Jobs.bind();Upgrades.bind();Roster.bind();bind();banner();undoBtn();render();
     if(window.claude?.use){
       try{AI.sample=await claude.use("sample")}catch(e){AI.sample=null}
       try{downloads=await claude.use("downloads")}catch(e){downloads=null}

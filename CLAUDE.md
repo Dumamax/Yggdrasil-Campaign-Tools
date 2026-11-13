@@ -23,7 +23,7 @@ Roster → Import character accepts the JSON in the project doc `claude/Guild Ha
 
 ## Conventions
 - Everything the DM must keep lives in `C`; UI prefs in `ygh.ui`; API key only in `ygh.apikey` (never in `C`).
-- Call `commit()` after every mutation of `C`.
+- Call `commit()` after every mutation of `C`. Each `commit()` pushes an undo snapshot (`UNDO`, session only); commits in the same tick coalesce into one undo step.
 - Use `pickFresh(list, key)` (not `pick`) for anything players would notice repeating; recent picks are remembered in `C.recent`.
 - When default tables change, bump their `version`; customized tables get an "Add new default content" merge (`mergeNew`) in Settings.
 - `tools/` holds one-off content scripts (e.g. `content-v2.js`), already applied to `src/`.
