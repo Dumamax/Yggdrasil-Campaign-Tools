@@ -1019,17 +1019,17 @@ const Sync=(()=>{
   const dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
   const canPush=()=>isDM()&&!!token();
   function setStatus(s){status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
-  async function fetchRemote(){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
-    if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403?"GitHub rate limit or no access":"GitHub error "+r.status);
-    const j=await r.json();let text;if(j.content&&j.encoding==="base64")text=dec(j.content);else text=await (await fetch(api(true),{headers:hdr(true),cache:"no-cache"})).text();
+  async function fetchRemote(skipIfSha){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
+    if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403||r.status===429?"GitHub is busy (too many checks from this network); retrying shortly":"GitHub error "+r.status);
+    const j=await r.json();if(skipIfSha&&j.sha===skipIfSha)return {sha:j.sha,same:true};let text;if(j.content&&j.encoding==="base64")text=dec(j.content);else text=await (await fetch(api(true),{headers:hdr(true),cache:"no-cache"})).text();
     return {sha:j.sha,data:JSON.parse(text)}}
-  function adopt(r,msg){const wasDM=isDM();replaceCampaign(r.data,"Before loading the GitHub save");sha=r.sha;lsSet("ygh.sha",sha);dirty=false;lsSet("ygh.dirty",false);banner();
+  function adopt(r,msg){const wasDM=isDM();replaceCampaign(r.data,"Before loading the GitHub save");sha=r.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);dirty=false;lsSet("ygh.dirty",false);banner();
     if(wasDM&&!isDM())lsSet("ygh.dm",S.dmHash); // a password change elsewhere shouldn't lock out a DM mid-session
     if(msg)toast(msg)}
   async function pull(manual){if(busy)return;busy=true;try{
-      const r=await fetchRemote();last=Date.now();
+      const fresh=sha&&C.savedAt&&C.savedAt===lsGet("ygh.shaAt",null);const r=await fetchRemote(fresh?sha:null);last=Date.now();
       if(r.missing){setStatus(isDM()?(canPush()?"Not on GitHub yet: press Save":"Not on GitHub yet"):"Nothing published yet");return}
-      if(r.sha===sha&&C.savedAt===r.data.savedAt){setStatus("Up to date");if(manual)toast("Already up to date");return}
+      if(r.same||r.sha===sha&&C.savedAt===r.data.savedAt){if(!r.same)lsSet("ygh.shaAt",C.savedAt);setStatus("Up to date");if(manual)toast("Already up to date");return}
       if(!isDM()){adopt(r,sha?"Updated with the DM's latest save":"");setStatus("Up to date");return}
       const localEmpty=!C.savedAt&&!C.jobs.length&&!C.guild.cp.log.length;
       if(sha&&!dirty||localEmpty){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date");return}
@@ -1053,9 +1053,9 @@ const Sync=(()=>{
       if(i===0&&remote&&!remote.missing){sha=remote.sha;return push()}if(i===0&&remote?.missing){sha=null;return push()}
       if(i===1&&remote&&!remote.missing){adopt(remote,"Loaded their save (yours is in Backups)");setStatus("Up to date")}return false}
     if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}throw new Error((r.status===401?"GitHub refused the token (mistyped or expired)":r.status===403||r.status===404?`The token can't write to ${c.repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""))}
-    const j=await r.json();sha=j.content.sha;lsSet("ygh.sha",sha);setStatus("Saved to GitHub");return true}
+    const j=await r.json();sha=j.content.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");return true}
   let timer=null;
-  function start(){pull();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:60e3);
+  function start(){pull();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:2*60e3);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden&&last&&Date.now()-last>30e3&&(!isDM()||!dirty))pull()})}
   function settingsHTML(){const c=cfg();return `
     <p class="hint">Saves go to <b>${esc(c.repo)}</b> → <code>${esc(c.path)}</code>, and every copy of the app (players included) pulls the latest automatically. Saving needs a GitHub token on this browser; it's kept here only, never in the campaign.</p>
