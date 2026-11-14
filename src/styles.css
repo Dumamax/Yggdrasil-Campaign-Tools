@@ -477,3 +477,35 @@ body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills spa
 .map-row input{flex:1;min-width:160px}
 body.mobile .qs:has(.map-modal){padding-top:0}
 body.mobile .qs-box.map-modal{width:100vw;height:100dvh;border-radius:0}
+/* worlds */
+.world-card .w-head{display:flex;gap:6px;align-items:center}
+.w-name{font:700 19px "Cinzel",serif;color:var(--gold);background:transparent;border:1px solid transparent;flex:1;min-width:0;padding:2px 4px}
+.w-name:hover,.w-name:focus{border-color:var(--line)}
+.w-gate{width:96px;text-align:center;font:inherit;font-size:13px;color:var(--ink)}
+.w-status{font-size:13px;padding:2px 6px}.w-status.s-Rotting,.w-status.s-Dying,.w-status.s-Lost{color:var(--red)}.w-status.s-Saved,.w-status.s-Thriving{color:#9fd08a}
+.w-notes{display:grid;gap:4px}.w-notes textarea{width:100%}
+.w-unlink{cursor:pointer;color:var(--mute);font-size:12px}
+.world-card select[data-wlink]{max-width:200px;margin-left:6px}
+.w-sel{max-width:220px;margin-left:6px;font-size:13px}
+.nwhere{font-size:.92em;font-style:italic;margin:6px 0;line-height:1.35}
+/* phone: editors never wider than the screen */
+body.mobile #editorHost,body.mobile .editor,body.mobile .npc-prof,body.mobile .editor *{min-width:0;max-width:100%;box-sizing:border-box}
+body.mobile .editor .grid,body.mobile .editor [class*="grid"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.mobile .editor input,body.mobile .editor select,body.mobile .editor textarea{width:100%}
+body.mobile .board>#editorHost.inline-ed{width:100%}
+/* worlds */
+.world-card .w-head{display:flex;gap:6px;align-items:center}
+.w-name{font:700 19px "Cinzel",serif;color:var(--gold);background:transparent;border:1px solid transparent;flex:1;min-width:0;padding:2px 4px}
+.w-name:hover,.w-name:focus{border-color:var(--line)}
+.w-gate{width:96px;text-align:center;font:inherit;font-size:13px;color:var(--ink)}
+.w-status{font-size:13px;padding:2px 6px}.w-status.s-Rotting,.w-status.s-Dying,.w-status.s-Lost{color:var(--red)}.w-status.s-Saved,.w-status.s-Thriving{color:#9fd08a}
+.w-notes{display:grid;gap:4px}.w-notes textarea{width:100%}
+.w-unlink{cursor:pointer;color:var(--mute);font-size:12px}
+.world-card select[data-wlink]{max-width:200px;margin-left:6px}
+.w-sel{max-width:220px;margin-left:6px;font-size:13px}
+.nwhere{font-size:.92em;font-style:italic;margin:6px 0;line-height:1.35}
+/* phone: editors never wider than the screen */
+body.mobile #editorHost,body.mobile .editor,body.mobile .editor *{min-width:0;max-width:100%;box-sizing:border-box}
+body.mobile .editor .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.mobile .editor input,body.mobile .editor select,body.mobile .editor textarea{width:100%}
+.world-card a{color:var(--gold)}

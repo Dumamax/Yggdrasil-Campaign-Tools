@@ -7,8 +7,12 @@ const SYNC_DEF={repo:"Dumamax/Yggdrasil-Campaign-Tools",branch:"main",path:"data
 async function hashPw(pw){const s="ygh-dm:"+pw;
   try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
   catch(e){let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return "d"+h.toString(16)}}
-const isDM=()=>!!S.dmHash&&lsGet("ygh.dm",null)===S.dmHash;
-function lockDM(){lsSet("ygh.dm",null);UI.tab="p-board";saveUI();App.render();toast("Player View")}
+const unlocked=()=>!!S.dmHash&&lsGet("ygh.dm",null)===S.dmHash;
+const isDM=()=>unlocked()&&!UI.preview;
+/* Player View from DM View is just a preview: this browser stays unlocked, so DM View comes back without the password */
+function previewPlayer(){UI.preview=true;UI.tab="p-board";saveUI();App.render();toast("Player View (DM View is one tap away)")}
+function backToDM(){UI.preview=false;UI.tab="jobs";saveUI();App.render()}
+function lockDM(){lsSet("ygh.dm",null);UI.preview=false;UI.tab="p-board";saveUI();App.render();toast("Locked: this browser will ask for the password again")}
 
 /* small modal helper: returns {el,close} */
 function modal(html,cls=""){const w=document.createElement("div");w.className="qs";w.innerHTML=`<div class="qs-box modal ${cls}">${html}</div>`;document.body.appendChild(w);
@@ -27,7 +31,7 @@ function dmGate(){
   m.el.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),pw=f.get("pw");
     if(first){if(pw!==f.get("pw2")){$("#gateMsg").textContent="Passwords don't match.";return}S.dmHash=await hashPw(pw);commit()}
     else if(await hashPw(pw)!==S.dmHash){$("#gateMsg").textContent="That's not it.";e.target.pw.select();return}
-    lsSet("ygh.dm",S.dmHash);m.close();UI.tab="jobs";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM View unlocked")}}
+    lsSet("ygh.dm",S.dmHash);m.close();UI.preview=false;UI.tab="jobs";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM View unlocked")}}
 
 const Sync=(()=>{
   const cfg=()=>Object.assign({},SYNC_DEF,lsGet("ygh.sync",{}));

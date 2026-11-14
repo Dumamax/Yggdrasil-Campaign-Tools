@@ -26,7 +26,7 @@
     <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM View</span></button>
     <details class="more" id="hdrMore"><summary class="btn ghost hb" title="More" aria-label="More">⋯</summary><div class="menu">
       <button class="btn small ghost" data-proxy="tmToggle">Table Mode</button><button class="btn small ghost" data-proxy="loadCamp">Load Campaign</button>
-      <button class="btn small ghost" data-proxy="syncBtn">Check for a newer save</button><button class="btn small ghost" data-proxy="dmBtn">Lock (Player View)</button><div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
+      <button class="btn small ghost" data-proxy="syncBtn">Check for a newer save</button><button class="btn small ghost" data-proxy="dmBtn">Player View</button><div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
     <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
@@ -73,7 +73,7 @@
 
   <section id="tab-roster" hidden>
     <div class="controls">
-      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button><button class="btn" data-sub="council">Council</button></div>
+      <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button><button class="btn" data-sub="council">Council</button><button class="btn" data-sub="worlds">Worlds</button></div>
       <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
       <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
@@ -147,7 +147,7 @@
       <div class="panel">
         <h2>DM password</h2>
         <p class="hint">Keeps players from wandering into DM View. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
-        <form class="actions" id="pwForm"><input type="password" name="pw" placeholder="New password" required><input type="password" name="pw2" placeholder="Repeat" required><button class="btn">Change password</button><button type="button" class="btn ghost" id="lockNow">Lock now (Player View)</button></form>
+        <form class="actions" id="pwForm"><input type="password" name="pw" placeholder="New password" required><input type="password" name="pw2" placeholder="Repeat" required><button class="btn">Change password</button><button type="button" class="btn ghost" id="lockNow">Lock this browser</button></form>
       </div>
       <div class="panel">
         <h2>Guild standing</h2>
@@ -184,7 +184,7 @@
       </div>
       <div class="panel">
         <h2>Tables (JSON)</h2>
-        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option><option value="npcs">NPCs &amp; Council</option></select><span class="muted" id="tblState"></span></div>
+        <div class="actions"><div class="seg"><button class="btn" id="tmEasy">Easy editor</button><button class="btn" id="tmJson">JSON (advanced)</button></div><select id="tblSel"><option value="jobs">Job Board tables</option><option value="upgrades">Upgrade catalog &amp; Peddlers</option><option value="prices">Price reference</option><option value="shops">Shop Generator</option><option value="npcs">NPCs &amp; Council</option><option value="places">Places &amp; world names</option></select><span class="muted" id="tblState"></span></div>
         <div id="tblEasy" class="te"></div>
         <textarea class="json" id="tblJson" spellcheck="false"></textarea>
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>

@@ -1,5 +1,5 @@
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=6;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=7;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -45,7 +45,7 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
 /* v3: "The Trunk" was renamed "The Roots" */
 function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
-  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null},o.tables||{});o.shops=o.shops||[];o.maps=o.maps||[]; /* v6: maps shown in Player View */o.schema=SCHEMA;
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null,places:null},o.tables||{});o.shops=o.shops||[];o.maps=o.maps||[];o.worlds=o.worlds||[]; /* v7: worlds registry */ /* v6: maps shown in Player View */o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   /* v5: guild standing (points toward the next rank) */
   o.guild.cp=Object.assign({pts:0,log:[]},o.guild.cp||{});const sc=o.settings.cp||{};o.settings.cp=Object.assign(clone(DEFAULT_CP),sc,{stepJobs:Object.assign(clone(DEFAULT_CP.stepJobs),sc.stepJobs||{}),deeds:Object.assign(clone(DEFAULT_CP.deeds),sc.deeds||{})});
