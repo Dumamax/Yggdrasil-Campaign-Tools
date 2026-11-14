@@ -25,7 +25,7 @@ const App=(()=>{
       "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
       "p-ledger":()=>Upgrades.ledgerHTML(false,true),
-      "p-map":()=>C.maps.length?C.maps.map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
+      "p-map":()=>C.maps.some(m=>!m.hidden)?C.maps.filter(m=>!m.hidden).map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
     el.onclick=e=>{const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
   /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
@@ -45,10 +45,11 @@ const App=(()=>{
     window.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
   /* Settings → Maps (DM) */
   function renderMaps(){const h=$("#mapSettings");if(!h)return;
-    h.innerHTML=`${C.maps.map((m,i)=>`<div class="map-row" data-i="${i}"><img src="${m.img}" alt=""><input data-mapname value="${esc(m.name||"")}" placeholder="Map name"><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move up">↑</button><button class="btn small ghost danger" data-mapdel>Remove</button></div>`).join("")}
+    h.innerHTML=`${C.maps.map((m,i)=>`<div class="map-row" data-i="${i}"><img src="${m.img}" alt=""><input data-mapname value="${esc(m.name||"")}" placeholder="Map name"><label class="inline map-vis${m.hidden?" off":""}" title="Show this map in Player View"><input type="checkbox" data-mapvis${m.hidden?"":" checked"}> ${m.hidden?"Hidden from players":"Players can see"}</label><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move up">↑</button><button class="btn small ghost danger" data-mapdel>Remove</button></div>`).join("")}
       <label class="btn">＋ Add a map image<input type="file" accept="image/*" id="mapAdd" hidden></label>`;
     h.onchange=async e=>{if(e.target.id==="mapAdd"&&e.target.files[0]){const f=e.target.files[0];toast("Preparing map…");
-        try{C.maps.push({id:uid(),name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});commit();renderMaps();toast("Map added. Save to share it with players")}catch(err){toast("Couldn't read that image")}}};
+        try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});commit();renderMaps();toast("Map added, hidden from players until you tick \"Players can see\"")}catch(err){toast("Couldn't read that image")}}};
+    h.addEventListener("change",e=>{if(e.target.dataset.mapvis==null)return;const m=C.maps[+e.target.closest(".map-row").dataset.i];m.hidden=!e.target.checked;commit();renderMaps();toast(m.hidden?`${m.name||"Map"} hidden from players`:`${m.name||"Map"} visible to players after you save`)});
     h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-row").dataset.i].name=e.target.value;commit()}};
     h.onclick=e=>{const r=e.target.closest(".map-row");if(!r)return;const i=+r.dataset.i;
       if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
