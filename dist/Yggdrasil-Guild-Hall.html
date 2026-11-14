@@ -6541,7 +6541,7 @@ Return ONLY JSON:
     f.querySelector("#npcQ").oninput=e=>{q=e.target.value;drawList()};
     h.appendChild(f);const b=document.createElement("div");b.className="board";b.id="npcList";h.appendChild(b);bindAtt(b);drawList()}
   function drawList(){const b=$("#npcList");if(!b)return;b.innerHTML="";
-    let L=all();if(filt==="patron")L=L.filter(m=>m.connection==="Patron");if(filt==="council")L=L.filter(m=>m.seat);if(filt==="rival")L=L.filter(m=>m.rival);if(filt==="pinned")L=L.filter(m=>m.pinned);
+    let L=all().filter(m=>!m.seat);if(filt==="patron")L=L.filter(m=>m.connection==="Patron");if(filt==="council")L=L.filter(m=>m.seat);if(filt==="rival")L=L.filter(m=>m.rival);if(filt==="pinned")L=L.filter(m=>m.pinned);
     if(q.trim()){const s=q.toLowerCase();L=L.filter(m=>JSON.stringify([m.name,m.title,m.occupation,m.notes,m.guild,m.ancestry]).toLowerCase().includes(s))}
     if(!L.length){b.innerHTML='<p class="muted">No NPCs here yet. Roll some above, or save patrons from the Job Board.</p>';return}
     L.forEach(m=>b.appendChild(card(m)))}
