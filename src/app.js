@@ -51,9 +51,18 @@ const App=(()=>{
     col("NPCs in play",NPCs.tableEl());
     col("Also in the hall",`<table class="ref">${Roster.sorted().filter(m=>m.kind!=="Active PC").map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
     col("Shops in play",Shops.tableHTML());
-    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
+    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p>${priceHTML()}`);
   }
 
+  /* price rows like ["Inn, one night (modest / comfortable)","5 sp / 8 sp"] → label each price instead of matching slashes by eye */
+  function priceItems([name,val]){const V=String(val).split(/\s+\/\s+/),unit=(V[V.length-1].match(/\s(cp|sp|gp|pp)(\/\w+)?$/)||[""])[0];
+    const vals=V.map(v=>/\d$/.test(v.trim())&&unit?v.trim()+unit:v.trim());
+    const pm=String(name).match(/^(.*?)\s*\(([^)]*\/[^)]*)\)\s*$/),cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+    if(pm){const L=pm[2].split(/\s*\/\s*/);if(L.length===vals.length)return {cat:pm[1],items:L.map((l,i)=>[cap(l),vals[i]])}}
+    const N=String(name).split(/\s+\/\s+/);if(N.length===vals.length)return {cat:"",items:N.map((l,i)=>[cap(l),vals[i]])};
+    return {cat:"",items:[[name,val]]}}
+  function priceHTML(){return `<div class="prices">${prices().rows.map(r=>{const {cat,items}=priceItems(r);
+    return `<div class="pr-row">${cat?`<div class="pr-cat">${esc(cat)}</div>`:""}${items.map(([l,v])=>`<div class="pr-it"><span>${esc(l)}</span><em></em><b>${esc(v)}</b></div>`).join("")}</div>`}).join("")}</div>`}
   /* ---------- print center ---------- */
   /* print: every handout is its own section starting on a new page; players' handouts first, DM-only last.
      Two-sided: a blank back is added after any section with an odd page count, so each section starts on a fresh sheet. */
