@@ -437,6 +437,12 @@ body.mobile .pc-big .grid{grid-template-columns:1fr 1fr}
 body.mobile .pc-big .pc-edit-top .grid{grid-template-columns:repeat(3,1fr);min-width:0}
 body.mobile .pc-portrait{width:100%}
 .pc-edit-top .grid label.wide{grid-column:span 2}
+/* popups never run past the bottom of the screen: the overlay leaves 12vh at the top, so cap height to what's left and scroll inside */
+.qs-box.modal{max-height:calc(88vh - 16px);max-height:calc(88dvh - 16px);overflow:auto}
+.qs:has(.pc-modal){padding-top:3vh;padding-top:3dvh}
+.qs-box.pc-modal{max-height:94vh;max-height:94dvh}
+body.mobile .qs:has(.pc-modal){padding-top:0}
+body.mobile .qs-box.pc-modal{max-height:100vh;max-height:100dvh;height:100dvh}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
