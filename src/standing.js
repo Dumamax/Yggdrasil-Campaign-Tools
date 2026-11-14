@@ -69,15 +69,26 @@ const Standing=(()=>{
   function tablePanel(){const d=document.createElement("div");d.className="standing-host";strip(d);return d}
 
   /* ---- Print: player-facing Guild Standing ---- */
-  function printHTML(){const n=need(),p=G().pts,deeds=G().log.filter(e=>e.kind!=="Adjust").slice(0,14);
+  /* every rank from Iron 3 to Platinum 1, left to right: reached ranks filled, the next one filling with progress */
+  function ladderHTML(){const r=S.tierRank,n=need(),f=n?Math.min(1,G().pts/n):0;
+    return `<div class="ps-ladder" aria-label="Guild rank ${esc(rankName(r))}">${TIERS.map((t,ti)=>`<div class="pl-tier pl-${t.toLowerCase()}"><div class="pl-cells">${[0,1,2].map(k=>{const i=ti*3+k,
+      fill=i<=r?100:i===r+1?Math.round(f*100):0;return `<span class="pl-cell${i===r?" pl-here":""}" title="${esc(rankName(i))}"><i style="width:${fill}%"></i><b>${subOf(i)}</b></span>`}).join("")}</div><div class="pl-name">${t}</div></div>`).join("")}</div>`}
+  function printHTML(opt={}){const n=need(),p=G().pts,deeds=G().log.filter(e=>e.kind!=="Adjust").slice(0,14);
     return `<div class="pr pr-sheet pr-standing"><h1>Guild Standing</h1><div class="prsub">Recorded by the Council of Five</div>
-      <div class="ps-rank">${rankName(S.tierRank)}</div>
+      <div class="ps-rank">${rankName(S.tierRank)}</div>${opt.ladder?ladderHTML():""}
       ${n==null?'<p class="ps-next">The highest standing in the Tree.</p>':`<div class="ps-bar"><span style="width:${Math.min(100,p/n*100)}%"></span></div><p class="ps-next">${p>=n?`Eligible to rise to ${rankName(S.tierRank+1)}, pending the Council's seal`:`${fmt(p)} of ${fmt(n)} ${N()} toward ${rankName(S.tierRank+1)}`}</p>`}
       <h2>Recent deeds</h2>${deeds.length?`<table>${deeds.map(e=>`<tr><td class="nm" style="width:22%">${new Date(e.t).toLocaleDateString()}</td><td>${esc(e.label)}</td><td class="c">${e.pts?`+${fmt(e.pts)}`:"★"}</td></tr>`).join("")}</table>`:'<p class="ps-next">No deeds recorded yet. The Council is waiting.</p>'}
       <div class="foot">Guilds rise through completed work, service to the community, and acts of heroism.</div></div>`}
   const PRINT_CSS=`.pr-standing .ps-rank{font:700 34px "IM Fell English SC",serif;text-align:center;margin:10px 0 6px;color:#5a1e10}
 .pr-standing .ps-bar{height:16px;border:2px solid #5a3e1e;border-radius:9px;margin:4px 40px;overflow:hidden}.pr-standing .ps-bar span{display:block;height:100%;background:#8a6a3a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pr-standing .ps-next{text-align:center;font-style:italic;margin:6px 0}
+.ps-ladder{display:flex;gap:6px;margin:8px 4px 14px}.pl-tier{flex:1;min-width:0}.pl-cells{display:flex;gap:2px}
+.pl-cell{position:relative;flex:1;height:20px;border:1.5px solid #5a3e1e;border-radius:3px;overflow:hidden;background:rgba(90,62,30,.08)}
+.pl-cell i{position:absolute;inset:0 auto 0 0;background:var(--pl);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pl-cell b{position:relative;display:block;text-align:center;font:700 12px/17px "IM Fell English SC",serif;color:#3a2a14}
+.pl-here{box-shadow:0 0 0 2px #5a1e10;border-color:#5a1e10}.pl-here b{color:#5a1e10}
+.pl-name{text-align:center;font:700 12px "IM Fell English SC",serif;margin-top:3px;color:#3a2a14;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-iron{--pl:#8d8f93}.pl-bronze{--pl:#b07a3e}.pl-silver{--pl:#c9ccd1}.pl-gold{--pl:#d6a84a}.pl-platinum{--pl:#9fc3cf}
 .ink .pr-standing .ps-bar span{background:repeating-linear-gradient(45deg,#111 0 2px,transparent 2px 6px)!important}`;
 
   /* ---- Settings ---- */
@@ -98,5 +109,5 @@ const Standing=(()=>{
     else if(t.dataset.step)c.stepJobs[t.dataset.step]=Math.max(0.5,+t.value||1);else if(t.dataset.deed)c.deeds[t.dataset.deed]=Math.max(0,+t.value||0);else return;
     commit();host.innerHTML=settingsHTML()}}
 
-  return {need,jobPts,completeJob,reopenJob,render,strip,tablePanel,printHTML,PRINT_CSS,settingsHTML,bindSettings,promote,ready,name:()=>cfg().name,short:()=>cfg().short};
+  return {ladderHTML,need,jobPts,completeJob,reopenJob,render,strip,tablePanel,printHTML,PRINT_CSS,settingsHTML,bindSettings,promote,ready,name:()=>cfg().name,short:()=>cfg().short};
 })();

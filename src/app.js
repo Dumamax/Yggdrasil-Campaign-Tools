@@ -22,7 +22,7 @@ const App=(()=>{
   function renderPlayer(){const el=$("#tab-p");
     const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
       "p-party":()=>"",
-      "p-guild":()=>Standing.printHTML()+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
+      "p-guild":()=>Standing.printHTML({ladder:true})+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
       "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
       "p-ledger":()=>Upgrades.ledgerHTML(false,true),
