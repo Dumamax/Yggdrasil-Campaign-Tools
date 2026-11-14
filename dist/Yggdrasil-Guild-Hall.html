@@ -443,6 +443,11 @@ body.mobile .pc-portrait{width:100%}
 .qs-box.pc-modal{max-height:94vh;max-height:94dvh}
 body.mobile .qs:has(.pc-modal){padding-top:0}
 body.mobile .qs-box.pc-modal{max-height:100vh;max-height:100dvh;height:100dvh}
+/* skills: two columns read top-to-bottom, with a divider */
+.pc-skills{display:block;columns:2;column-gap:22px;column-rule:1px solid var(--line)}
+.pc-skills span{break-inside:avoid;padding:1px 0}
+.pc-grid .pc-sk{grid-column:span 2}
+body.mobile .pc-grid .pc-sk{grid-column:auto}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -6124,7 +6129,7 @@ const PCs=(()=>{
       <div class="pc-grid">
         <section><h3>Abilities</h3><table class="pc-tab"><tr><th></th><th>Score</th><th>Mod</th><th>Save</th></tr>${AB.map(a=>`<tr><td>${ABN[a]}</td><td>${score(m,a)}</td><td><b>${sg(mod(m,a))}</b></td><td class="${(p.saves||[]).includes(a)?"sv":""}">${sg(save(m,a))}</td></tr>`).join("")}</table>
           <h3>Passives</h3><div class="pc-pass">Perception <b>${passive(m,"Perception")}</b> · Insight <b>${passive(m,"Insight")}</b> · Investigation <b>${passive(m,"Investigation")}</b></div></section>
-        <section><h3>Skills</h3><div class="pc-skills">${SKILLS.map(([n,a])=>{const pr=prof(m,n);return `<span class="${pr?"on":""}${pr===2?" exp":""}">${n} <i>${ABN[a]}</i><b>${sg(skill(m,n))}</b></span>`}).join("")}</div></section>
+        <section class="pc-sk"><h3>Skills</h3><div class="pc-skills">${SKILLS.map(([n,a])=>{const pr=prof(m,n);return `<span class="${pr?"on":""}${pr===2?" exp":""}">${n} <i>${ABN[a]}</i><b>${sg(skill(m,n))}</b></span>`}).join("")}</div></section>
         ${at.length?`<section><h3>Attacks</h3><table class="pc-tab">${at.map(x=>`<tr><td><b>${esc(x.n)}</b></td><td>${esc(x.h)}</td><td>${esc(x.d)}</td></tr>`).join("")}</table></section>`:""}
         ${ft.length?`<section><h3>Features &amp; abilities</h3><ul class="pc-feat">${ft.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></section>`:""}
         <section><h3>Other</h3>${[["Movement",moves(m)&&p.speed],["Senses",p.senses],["Resistances",p.resist],["Languages",p.langs],["Tools",tl.join(", ")],["In the guild",[m.status,m.assign&&("operating "+Roster.assignName(m))].filter(Boolean).join(" · ")]].filter(x=>x[1]).map(([k,v])=>`<div class="row"><b>${k}:</b> ${esc(v)}</div>`).join("")||'<p class="muted">Nothing else recorded.</p>'}</section>
