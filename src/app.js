@@ -42,9 +42,9 @@ const App=(()=>{
     v.addEventListener("touchstart",e=>{if(e.touches.length===2){d0=dist(e.touches);z0=z}},{passive:true});
     v.addEventListener("touchmove",e=>{if(e.touches.length===2&&d0){e.preventDefault();const r=v.getBoundingClientRect();set(z0*dist(e.touches)/d0,(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,(e.touches[0].clientY+e.touches[1].clientY)/2-r.top)}},{passive:false});
     v.addEventListener("touchend",e=>{if(e.touches.length<2)d0=0});
-    let drag=null;v.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;drag={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};v.classList.add("dragging")});
-    window.addEventListener("pointermove",e=>{if(drag){v.scrollLeft=drag.l-(e.clientX-drag.x);v.scrollTop=drag.t-(e.clientY-drag.y)}});
-    window.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
+    let drag=null;v.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;try{v.setPointerCapture(e.pointerId)}catch(_){}drag={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};v.classList.add("dragging")});
+    v.addEventListener("pointermove",e=>{if(drag){v.scrollLeft=drag.l-(e.clientX-drag.x);v.scrollTop=drag.t-(e.clientY-drag.y)}});
+    v.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
   /* Maps tab (DM): gallery, upload, players-can-see toggle, link to a world */
   function renderMaps(){const h=$("#mapGallery");if(!h)return;const W=C.worlds||[];
     h.innerHTML=`<div class="controls"><label class="btn primary">＋ Upload a map<input type="file" accept="image/*" id="mapAdd" hidden multiple></label>
@@ -190,9 +190,10 @@ const App=(()=>{
     const row=b=>`<tr><td><b>${new Date(b.t).toLocaleString()}</b> <span class="muted">${esc(b.reason)}</span><br><span class="muted" style="font-size:14px">${esc(b.summary||"")}</span></td><td><button class="btn small" data-restore="${b.t}">Restore</button> <button class="btn small ghost" data-dl="${b.t}">Download</button></td></tr>`;
     el.innerHTML=L.length?`<table class="ref backups">${row(L[0])}</table>${L.length>1?`<details class="older-backups"><summary>Older backups (${L.length-1})</summary><table class="ref backups">${L.slice(1).map(row).join("")}</table></details>`:""}`:'<p class="muted">No backups yet.</p>';
     el.onclick=async e=>{const t=+(e.target.dataset.restore||e.target.dataset.dl);if(!t)return;const b=L.find(x=>x.t===t);if(!b)return;
-      if(e.target.dataset.dl){saveFile(`yggdrasil-backup-${stamp()}.json`,b.data);return}
+      const data=await backupData(b);if(!data){toast("That backup is missing its data");return}
+      if(e.target.dataset.dl){saveFile(`yggdrasil-backup-${stamp()}.json`,data);return}
       if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Replace current? Click again";return}
-      replaceCampaign(JSON.parse(b.data),"Before restoring a backup");commit();toast("Backup restored. The state before it was backed up too")}}
+      replaceCampaign(JSON.parse(data),"Before restoring a backup");commit();toast("Backup restored. The state before it was backed up too")}}
   let tblKey="jobs",draft=null;
   const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES,npcs:DEFAULT_NPC_TABLES,places:DEFAULT_PLACES}[tblKey]);
   function loadTblEditor(){
@@ -287,7 +288,7 @@ const App=(()=>{
     window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"&&isDM()){e.preventDefault();$("#qs").hidden?qsOpen():qsClose()}else if(e.key==="Escape"&&!$("#qs").hidden)qsClose()});
   }
   async function boot(){
-    if(lsGet("ygh.store","ls")==="idb")try{const t=await IDB.get("campaign");if(t){C=normalize(JSON.parse(t));S=C.settings;lastSnap=JSON.stringify(C)}}catch(e){}
+    if(lsGet("ygh.store","ls")==="idb")try{const t=await IDB.get("campaign");if(t){C=normalize(JSON.parse(t));S=C.settings;lastSnap=snap()}}catch(e){}
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
     $("#dmBtn").onclick=()=>isDM()?previewPlayer():unlocked()?backToDM():dmGate();

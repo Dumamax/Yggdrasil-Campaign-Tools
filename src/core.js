@@ -28,7 +28,8 @@ async function copyText(t){try{await navigator.clipboard.writeText(t);toast("Cop
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
 /* campaigns with map images outgrow localStorage (~5 MB): fall back to IndexedDB, flagged by ygh.store */
-function persist(){if(lsSet("ygh.campaign",C)){lsSet("ygh.store","ls");IDB.del("campaign").catch(()=>{});return}
+let persistT=null;function persist(){clearTimeout(persistT);persistT=setTimeout(persistNow,400)}
+function persistNow(){clearTimeout(persistT);persistT=null;if(lsSet("ygh.campaign",C)){lsSet("ygh.store","ls");IDB.del("campaign").catch(()=>{});return}
   try{localStorage.removeItem("ygh.campaign")}catch(e){}lsSet("ygh.store","idb");IDB.set("campaign",JSON.stringify(C)).catch(()=>toast("This browser couldn't store the campaign: save to GitHub or a file"))}
 const FRAMED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 
@@ -60,11 +61,14 @@ let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shop
 let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
 /* undo: snapshots of C before each commit (session only) */
-const UNDO=[];let lastSnap=JSON.stringify(C);
-function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+const UNDO=[],BIGS=new Map(),BIGL=[];
+const snap=()=>JSON.stringify(C,(k,v)=>{if(typeof v!=="string"||v.length<20000)return v;let i=BIGS.get(v);if(i==null){i=BIGL.length;BIGL.push(v);BIGS.set(v,i)}return "\u0000big:"+i});
+const unsnap=s=>JSON.parse(s,(k,v)=>typeof v==="string"&&v.startsWith("\u0000big:")?BIGL[+v.slice(5)]:v);
+let lastSnap=snap();
+function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
 function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
-function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
-function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;persist();UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
+function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(unsnap(s));S=C.settings;lastSnap=s;persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
+function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;persist();UNDO.length=0;BIGS.clear();BIGL.length=0;lastSnap=snap();undoBtn();App.reloadAll()}
 
 /* tiers */
 const tierOf=r=>Math.floor(r/3);
@@ -89,13 +93,15 @@ const IDB=(()=>{let dbp;const db=()=>dbp||(dbp=new Promise((res,rej)=>{const r=i
     r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("kv");d.createObjectStore("backups",{keyPath:"t"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
   const tx=async(st,mode,fn)=>{const d=await db();return new Promise((res,rej)=>{const t=d.transaction(st,mode),r=fn(t.objectStore(st));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})};
   return {get:k=>tx("kv","readonly",s=>s.get(k)),set:(k,v)=>tx("kv","readwrite",s=>s.put(v,k)),del:k=>tx("kv","readwrite",s=>s.delete(k)),
-    list:()=>tx("backups","readonly",s=>s.getAll()),put:b=>tx("backups","readwrite",s=>s.put(b)),drop:t=>tx("backups","readwrite",s=>s.delete(t))}})();
+    list:()=>tx("backups","readonly",s=>s.getAll()),keys:()=>tx("backups","readonly",s=>s.getAllKeys()),put:b=>tx("backups","readwrite",s=>s.put(b)),drop:t=>tx("backups","readwrite",s=>s.delete(t))}})();
 const BACKUP_KEEP=25;
-async function backup(reason){try{const data=JSON.stringify(C),p=C.roster.filter(m=>m.kind!=="NPC").length,n=C.roster.length-p,
+const qhash=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return s.length+":"+(h>>>0)};
+async function backupData(b){return b.data!=null?b.data:await IDB.get("bk:"+b.t)}
+async function backup(reason){if(!isDM())return;try{const data=JSON.stringify(C),h=qhash(data),p=C.roster.filter(m=>m.kind!=="NPC").length,n=C.roster.length-p,
     summary=`${C.jobs.length} jobs · ${p} members · ${n} NPCs · ${C.shops.length} shops · treasury ${C.guild.treasury==null?"—":fmt(C.guild.treasury)+" gp"}`;
-  const L=(await IDB.list()).sort((a,b)=>a.t-b.t);if(L.length&&L[L.length-1].data===data)return;
-  await IDB.put({t:Date.now(),reason,data,summary});
-  for(const b of L.slice(0,Math.max(0,L.length+1-BACKUP_KEEP)))await IDB.drop(b.t)}catch(e){}}
+  if(lsGet("ygh.backupHash",null)===h)return;const t=Date.now();
+  await IDB.set("bk:"+t,data);await IDB.put({t,reason,summary,h});lsSet("ygh.backupHash",h);
+  const K=(await IDB.keys()).sort((a,b)=>a-b);for(const k of K.slice(0,Math.max(0,K.length-BACKUP_KEEP))){await IDB.drop(k);await IDB.del("bk:"+k)}}catch(e){}}
 let backupAt=lsGet("ygh.backupAt",0);
 setInterval(()=>{if(dirty&&Date.now()-backupAt>5*60e3){backupAt=Date.now();lsSet("ygh.backupAt",backupAt);backup("Auto (every 5 min of changes)")}},60e3);
 /* linked campaign file (Chrome / Edge): pick once, then Save overwrites it */
@@ -159,7 +165,8 @@ document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.
 window.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey||!isDM())return;const k=e.key.toLowerCase();
   if(k==="s"){e.preventDefault();saveCampaign()}
   else if(k==="z"&&!e.shiftKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")){e.preventDefault();undo()}});
-window.addEventListener("beforeunload",e=>{if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
+["pagehide","visibilitychange"].forEach(ev=>window.addEventListener(ev,()=>{if(persistT&&(ev==="pagehide"||document.hidden))persistNow()}));
+window.addEventListener("beforeunload",e=>{if(persistT)persistNow();if(dirty&&!FRAMED){e.preventDefault();e.returnValue=""}});
 
 /* ---------- AI: Claude-in-artifact, API key, or copy/paste ---------- */
 const AI={
