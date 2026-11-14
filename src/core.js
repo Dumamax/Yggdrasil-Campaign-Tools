@@ -26,7 +26,10 @@ function mergeNew(cur,def){
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2000)}
 async function copyText(t){try{await navigator.clipboard.writeText(t);toast("Copied")}catch(e){toast("Copy blocked: select and copy manually")}}
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
-function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+/* campaigns with map images outgrow localStorage (~5 MB): fall back to IndexedDB, flagged by ygh.store */
+function persist(){if(lsSet("ygh.campaign",C)){lsSet("ygh.store","ls");IDB.del("campaign").catch(()=>{});return}
+  try{localStorage.removeItem("ygh.campaign")}catch(e){}lsSet("ygh.store","idb");IDB.set("campaign",JSON.stringify(C)).catch(()=>toast("This browser couldn't store the campaign: save to GitHub or a file"))}
 const FRAMED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 
 /* ---------- campaign state (the thing that gets saved to file) ---------- */
@@ -58,10 +61,10 @@ let dirty=lsGet("ygh.dirty",false);
 function saveUI(){lsSet("ygh.ui",UI)}
 /* undo: snapshots of C before each commit (session only) */
 const UNDO=[];let lastSnap=JSON.stringify(C);
-function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=JSON.stringify(C)},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
 function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
-function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;lsSet("ygh.campaign",C);dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
-function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;lsSet("ygh.campaign",C);UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
+function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(JSON.parse(s));S=C.settings;lastSnap=s;persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
+function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;persist();UNDO.length=0;lastSnap=JSON.stringify(C);undoBtn();App.reloadAll()}
 
 /* tiers */
 const tierOf=r=>Math.floor(r/3);
@@ -103,7 +106,7 @@ async function linkHandle(h){fileHandle=h;try{await IDB.set("fileHandle",h)}catc
 async function unlinkFile(){fileHandle=null;try{await IDB.del("fileHandle")}catch(e){}banner();App.render();toast("Unlinked: Save will ask where to save next time")}
 async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"}))!=="granted"&&(await h.requestPermission({mode:"readwrite"}))!=="granted")throw new Error("permission");
   const w=await h.createWritable();await w.write(text);await w.close()}
-function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
+function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);persist();banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
 /* show that a save is in progress (GitHub saves can take a while) and ignore repeat presses meanwhile */
 let saving=false;
 function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…")}
