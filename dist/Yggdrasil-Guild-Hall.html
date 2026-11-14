@@ -565,6 +565,7 @@ body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 
 .np-noimg{display:flex;align-items:center;justify-content:center;font:700 54px "Cinzel",serif;color:var(--gold)}
 .np-name{font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 12px 0}.np-sub{color:var(--mute);font-size:14px;padding:2px 12px 0}.np-pub{font-size:15px;padding:6px 12px 0}
 body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.mobile .np-name{font-size:16px}
+.pv-sub{display:flex;justify-content:center;margin:0 auto 14px;width:max-content;max-width:100%}body.mobile .pv-sub{width:100%}body.mobile .pv-sub .btn{flex:1}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -607,7 +608,7 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
-  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
   <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
   <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
@@ -998,7 +999,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 14 16:39";
+const BUILD="Nov 14 16:41";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -6906,7 +6907,7 @@ Return ONLY JSON:
   /* Player View: NPCs the DM marked "Player viewable" */
   function playerSection(){const L=C.roster.filter(m=>m.shown&&m.kind!=="Active PC"&&m.kind!=="Retired PC");const d=document.createElement("section");d.className="pc-section";
     if(!L.length)return d;
-    d.innerHTML=`<h2 class="pc-title">Notable Figures</h2><div class="np-cards">${L.map(m=>`<button class="np-card" data-np="${m.id}">${m.img?`<img src="${esc(m.img)}" alt="">`:`<div class="np-noimg">${esc((m.name||"?").trim()[0]||"?")}</div>`}<div class="np-name">${esc(m.name)}</div>${sub(m)?`<div class="np-sub">${sub(m)}</div>`:""}${m.public?`<div class="np-pub">${esc(m.public)}</div>`:""}</button>`).join("")}</div>`;
+    d.innerHTML=`<div class="np-cards">${L.map(m=>`<button class="np-card" data-np="${m.id}">${m.img?`<img src="${esc(m.img)}" alt="">`:`<div class="np-noimg">${esc((m.name||"?").trim()[0]||"?")}</div>`}<div class="np-name">${esc(m.name)}</div>${sub(m)?`<div class="np-sub">${sub(m)}</div>`:""}${m.public?`<div class="np-pub">${esc(m.public)}</div>`:""}</button>`).join("")}</div>`;
     d.onclick=e=>{const b=e.target.closest("[data-np]");if(!b)return;const m=byId(b.dataset.np);if(m)openBig(m)};return d}
   function card(m,candidate){
     const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;
@@ -7370,14 +7371,14 @@ const App=(()=>{
     const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
       "p-party":()=>"",
       "p-guild":()=>Standing.printHTML({ladder:true})+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
-      "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
+      "p-council":()=>`<div class="seg pv-sub">${[["people","Notable Figures"],["council","The Council"]].map(([k,l])=>`<button class="btn${(UI.pNpc||"people")===k?" on":""}" data-pnpc="${k}">${l}</button>`).join("")}</div>`+((UI.pNpc||"people")==="council"?NPCs.councilHTML()||none("The Council hasn't published its roll yet."):""),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
       "p-ledger":()=>Upgrades.ledgerHTML(false,true),
       "p-map":()=>C.maps.some(m=>!m.hidden)?C.maps.filter(m=>!m.hidden).map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
     if(UI.tab==="p-party")el.querySelector(".pv").append(PCs.tableSection());
-    if(UI.tab==="p-council"){const s=NPCs.playerSection();if(s.childElementCount){if(!NPCs.councilHTML())el.querySelector(".pv").innerHTML="";el.querySelector(".pv").append(s)}}
-    el.onclick=e=>{const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
+    if(UI.tab==="p-council"&&(UI.pNpc||"people")==="people"){const s=NPCs.playerSection();el.querySelector(".pv").insertAdjacentHTML("beforeend",s.childElementCount?"":none("No notable figures have been introduced yet."));el.querySelector(".pv").append(s)}
+    el.onclick=e=>{const sb=e.target.closest("[data-pnpc]");if(sb){UI.pNpc=sb.dataset.pnpc;saveUI();renderPlayer();return}const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
   /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
   function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");
     const v=md.el.querySelector(".mapv-view"),img=v.querySelector("img");let z=1;
