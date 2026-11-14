@@ -53,7 +53,7 @@ const Sync=(()=>{
   async function pull(manual){if(busy)return;busy=true;try{
       const r=await fetchRemote();last=Date.now();
       if(r.missing){setStatus(isDM()?(canPush()?"Not on GitHub yet: press Save":"Not on GitHub yet"):"Nothing published yet");return}
-      if(r.sha===sha){setStatus("Up to date");if(manual)toast("Already up to date");return}
+      if(r.sha===sha&&C.savedAt===r.data.savedAt){setStatus("Up to date");if(manual)toast("Already up to date");return}
       if(!isDM()){adopt(r,sha?"Updated with the DM's latest save":"");setStatus("Up to date");return}
       const localEmpty=!C.savedAt&&!C.jobs.length&&!C.guild.cp.log.length;
       if(sha&&!dirty||localEmpty){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date");return}
