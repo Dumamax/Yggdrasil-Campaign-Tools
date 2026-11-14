@@ -160,7 +160,7 @@ const AI={
   key(){return lsGet("ygh.apikey","")},
   mode(){return this.sample?"claude":this.key()?"api":"none"},
   label(){return {claude:"Claude: built in",api:"Claude: API key",none:"Claude: copy/paste"}[this.mode()]},
-  parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
+  parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.search(/[\[{]/),b=a>=0?t.lastIndexOf(t[a]==="["?"]":"}"):-1;if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
   async json(prompt,pdfBase64){
     if(this.sample&&!pdfBase64)return await this.sample.json(prompt,{modelTier:"default"});
     const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}

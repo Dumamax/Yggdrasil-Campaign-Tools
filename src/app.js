@@ -28,9 +28,14 @@ const App=(()=>{
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`}
   /* ---------- table mode ---------- */
   function renderTable(){
-    const el=$("#tableView");el.innerHTML="";
+    const el=$("#tableView");el.innerHTML="";el.className="tm-layout";
+    el.appendChild(PCs.tableSection());
+    const side=document.createElement("aside");side.className="tm-side";el.appendChild(side);
+    const closed=UI.tmClosed||(UI.tmClosed=[]);
     const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
-    const col=(title,inner)=>{const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>${title}</h2>`;if(typeof inner==="string")p.insertAdjacentHTML("beforeend",inner);else p.appendChild(inner);el.appendChild(p);return p};
+    const col=(title,inner)=>{const p=document.createElement("details");p.className="panel side-panel";p.open=!closed.includes(title);p.innerHTML=`<summary><h2>${title}</h2></summary>`;
+      p.ontoggle=()=>{const i=closed.indexOf(title);if(p.open&&i>=0)closed.splice(i,1);else if(!p.open&&i<0)closed.push(title);saveUI()};
+      const b=document.createElement("div");b.className="side-body";if(typeof inner==="string")b.innerHTML=inner;else b.appendChild(inner);p.appendChild(b);side.appendChild(p);return b};
     col("Guild standing",Standing.tablePanel());
     const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
     if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
@@ -44,7 +49,7 @@ const App=(()=>{
     const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
     rv.querySelector("#rvLvl").oninput=upd;upd();
     col("NPCs in play",NPCs.tableEl());
-    col("Who's in the hall",`<table class="ref">${Roster.sorted().map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
+    col("Also in the hall",`<table class="ref">${Roster.sorted().filter(m=>m.kind!=="Active PC").map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
     col("Shops in play",Shops.tableHTML());
     col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
   }
