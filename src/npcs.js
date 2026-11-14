@@ -141,7 +141,7 @@ Return ONLY JSON:
     d.onclick=e=>{const b=e.target.closest("[data-np]");if(!b)return;const m=byId(b.dataset.np);if(m)openBig(m)};return d}
   function card(m,candidate){
     const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;
-    d.innerHTML=`${m.img&&!candidate?`<img class="npc-thumb" src="${esc(m.img)}" alt="" data-a="view" title="Open full view">`:""}<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
+    d.innerHTML=`<div class="card-head">${candidate?"":Roster.thumb(m)}<h3>${esc(m.name)}</h3></div>${badges(m)}${profileHTML(m)}
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${Roster.gradeOf(m,s)}</b></span>`).join("")}${m.role?` <span class="muted" style="font-size:14px">suits: ${esc(m.role)}</span>`:""}</div>`:""}
       ${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions">${candidate?`<button class="btn small primary" data-a="keep">Save NPC</button><button class="btn small" data-a="reroll">Reroll</button>`:

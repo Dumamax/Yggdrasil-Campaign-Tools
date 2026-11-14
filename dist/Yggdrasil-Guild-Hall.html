@@ -566,6 +566,8 @@ body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 
 .np-name{font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 12px 0}.np-sub{color:var(--mute);font-size:14px;padding:2px 12px 0}.np-pub{font-size:15px;padding:6px 12px 0}
 body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.mobile .np-name{font-size:16px}
 .pv-sub{display:flex;justify-content:center;margin:0 auto 14px;width:max-content;max-width:100%}body.mobile .pv-sub{width:100%}body.mobile .pv-sub .btn{flex:1}
+.card .npc-thumb{object-position:top}.card .npc-noimg{display:flex;align-items:center;justify-content:center;font:700 26px "Cinzel",serif;color:var(--gold);opacity:.7}
+.card-head{display:flex;align-items:center;gap:12px}.card-head h3{margin:0}.card-head .npc-thumb{float:none;width:64px;height:64px;margin:0;flex:none}.card-head .npc-noimg{font-size:20px}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -999,7 +1001,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 14 16:41";
+const BUILD="Nov 14 16:48";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -6143,13 +6145,14 @@ const Roster=(()=>{
     if(filter==="hall")list=list.filter(m=>m.kind!=="Active PC"&&m.status==="In the hall");
     if(!list.length){el.innerHTML=`<p class="muted">${C.roster.length?"No one matches this filter.":"The roster is empty."}</p>`;return}
     list.forEach(m=>{const d=document.createElement("div");d.className="card";d.dataset.member=m.id;
-      d.innerHTML=`<h3>${esc(m.name)}</h3>
+      d.innerHTML=`<div class="card-head">${thumb(m)}<h3>${esc(m.name)}</h3></div>
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
       ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
+        if(a==="view"){openFull(m);return}
         if(a==="edit"){editing=clone(m);renderEditor();place(true)}
         else if(a==="leave"){NPCs.leaveGuild(m);return}
         else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
@@ -6257,6 +6260,10 @@ ${t}`:""}`;
       <label>Council seat ${sel("seat",TIERS,1)}</label>
       <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
+  /* at-a-glance picture for DM cards: PC portrait (or full-body), else the NPC image, else initials. Click opens the full card. */
+  function thumb(m){const src=m.pc?.portrait||m.pc?.body||m.img;
+    return src?`<img class="npc-thumb" src="${esc(src)}" alt="" data-a="view" title="Open full view">`:`<div class="npc-thumb npc-noimg" data-a="view" title="Open full view">${esc(((m.name||"?").trim().match(/\S+/g)||["?"]).slice(0,2).map(w=>w[0]).join("").toUpperCase())}</div>`}
+  function openFull(m){/^(Active|Retired) PC$/.test(m.kind)?PCs.openBig(m):NPCs.openBig(m)}
   function edit(m){editing=clone(m);renderEditor();if(!document.querySelector(`.card[data-npc="${m.id}"],.card[data-member="${m.id}"]`)){$("#editorHost").scrollIntoView({behavior:"smooth"});return}place(true)}
   function bind(){
     $("#rSub").onclick=e=>{const s=e.target.dataset.sub;if(!s)return;UI.rosterSub=s;saveUI();editing=null;render()};
@@ -6265,7 +6272,7 @@ ${t}`:""}`;
     $("#copyRoster").onclick=()=>copyText(text());
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {park,place,render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+  return {thumb,park,place,render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();
 
 /* ===== PCs: play stats + portraits for Table Mode character cards =====
@@ -6390,7 +6397,7 @@ const PCs=(()=>{
     if(x.portrait)o.portrait=String(x.portrait);if(x.bodyImage||x.body)o.body=String(x.bodyImage||x.body);
     return Object.keys(o).length?o:null}
 
-  return {shrink,tableSection,editorHTML,bindEditor,fromImport,list};
+  return {openBig,shrink,tableSection,editorHTML,bindEditor,fromImport,list};
 })();
 
 /* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
@@ -6911,7 +6918,7 @@ Return ONLY JSON:
     d.onclick=e=>{const b=e.target.closest("[data-np]");if(!b)return;const m=byId(b.dataset.np);if(m)openBig(m)};return d}
   function card(m,candidate){
     const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;
-    d.innerHTML=`${m.img&&!candidate?`<img class="npc-thumb" src="${esc(m.img)}" alt="" data-a="view" title="Open full view">`:""}<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
+    d.innerHTML=`<div class="card-head">${candidate?"":Roster.thumb(m)}<h3>${esc(m.name)}</h3></div>${badges(m)}${profileHTML(m)}
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${Roster.gradeOf(m,s)}</b></span>`).join("")}${m.role?` <span class="muted" style="font-size:14px">suits: ${esc(m.role)}</span>`:""}</div>`:""}
       ${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions">${candidate?`<button class="btn small primary" data-a="keep">Save NPC</button><button class="btn small" data-a="reroll">Reroll</button>`:

@@ -120,5 +120,5 @@ const PCs=(()=>{
     if(x.portrait)o.portrait=String(x.portrait);if(x.bodyImage||x.body)o.body=String(x.bodyImage||x.body);
     return Object.keys(o).length?o:null}
 
-  return {shrink,tableSection,editorHTML,bindEditor,fromImport,list};
+  return {openBig,shrink,tableSection,editorHTML,bindEditor,fromImport,list};
 })();

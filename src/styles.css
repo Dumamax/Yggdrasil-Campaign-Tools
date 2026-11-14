@@ -556,3 +556,5 @@ body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 
 .np-name{font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 12px 0}.np-sub{color:var(--mute);font-size:14px;padding:2px 12px 0}.np-pub{font-size:15px;padding:6px 12px 0}
 body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.mobile .np-name{font-size:16px}
 .pv-sub{display:flex;justify-content:center;margin:0 auto 14px;width:max-content;max-width:100%}body.mobile .pv-sub{width:100%}body.mobile .pv-sub .btn{flex:1}
+.card .npc-thumb{object-position:top}.card .npc-noimg{display:flex;align-items:center;justify-content:center;font:700 26px "Cinzel",serif;color:var(--gold);opacity:.7}
+.card-head{display:flex;align-items:center;gap:12px}.card-head h3{margin:0}.card-head .npc-thumb{float:none;width:64px;height:64px;margin:0;flex:none}.card-head .npc-noimg{font-size:20px}
