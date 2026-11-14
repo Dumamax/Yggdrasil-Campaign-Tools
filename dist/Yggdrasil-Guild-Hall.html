@@ -583,7 +583,7 @@ const FRAMED=(()=>{try{return window.self!==window.top}catch(e){return true}})()
 
 /* ---------- campaign state (the thing that gets saved to file) ---------- */
 const DEFAULT_CP={name:"Contribution Points",short:"pts",
-  stepJobs:{Iron:4,Bronze:5,Silver:6,Gold:7,Platinum:8},
+  stepJobs:{Iron:1.5,Bronze:2.5,Silver:4,Gold:5,Platinum:7},
   deeds:{Minor:0.5,Notable:1,Major:3,Legendary:8},
   councilBonus:50,failPct:0};
 const DEFAULT_SETTINGS={cp:null,tierRank:0,partyLevel:3,partySize:4,
@@ -601,6 +601,7 @@ function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assi
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   /* v5: guild standing (points toward the next rank) */
   o.guild.cp=Object.assign({pts:0,log:[]},o.guild.cp||{});const sc=o.settings.cp||{};o.settings.cp=Object.assign(clone(DEFAULT_CP),sc,{stepJobs:Object.assign(clone(DEFAULT_CP.stepJobs),sc.stepJobs||{}),deeds:Object.assign(clone(DEFAULT_CP.deeds),sc.deeds||{})});
+  {const s=o.settings.cp.stepJobs;if(s.Iron===4&&s.Bronze===5&&s.Silver===6&&s.Gold===7&&s.Platinum===8)o.settings.cp.stepJobs=clone(DEFAULT_CP.stepJobs)} /* old v1 pacing → new default */
   o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
