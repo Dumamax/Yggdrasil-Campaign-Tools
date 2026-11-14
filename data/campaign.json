@@ -1,0 +1,684 @@
+{
+ "app": "yggdrasil-guild-hall",
+ "schema": 5,
+ "savedAt": "2026-11-14T05:48:55.918Z",
+ "settings": {
+  "cp": {
+   "name": "Contribution Points",
+   "short": "pts",
+   "stepJobs": {
+    "Iron": 4,
+    "Bronze": 5,
+    "Silver": 6,
+    "Gold": 7,
+    "Platinum": 8
+   },
+   "deeds": {
+    "Minor": 0.5,
+    "Notable": 1,
+    "Major": 3,
+    "Legendary": 8
+   },
+   "councilBonus": 50,
+   "failPct": 0
+  },
+  "tierRank": 0,
+  "partyLevel": 3,
+  "partySize": 6,
+  "mapping": {
+   "Iron": [
+    3,
+    5
+   ],
+   "Bronze": [
+    6,
+    8
+   ],
+   "Silver": [
+    9,
+    12
+   ],
+   "Gold": [
+    13,
+    16
+   ],
+   "Platinum": [
+    17,
+    20
+   ]
+  },
+  "jobComp": 30,
+  "hMin": 6,
+  "hMax": 8,
+  "feePct": 25,
+  "offerCount": 3,
+  "buildComp": 10,
+  "revive": 50,
+  "dmHash": "325f8b24a27d1ad03d1077d749ae88cb2dcc6fa5dd5a22419fbaddfda1caaba8"
+ },
+ "tables": {
+  "jobs": null,
+  "upgrades": null,
+  "prices": null,
+  "shops": null,
+  "npcs": null
+ },
+ "jobs": [
+  {
+   "id": "mgttn6tr",
+   "rank": 0,
+   "type": "Hunt",
+   "size": "Standard",
+   "location": "A nearby world",
+   "world": {
+    "genre": "High fantasy",
+    "line": "A river kingdom, where dragons are a protected species, to everyone's annoyance"
+   },
+   "patron": {
+    "cat": "Merchant",
+    "arch": "Jeweler",
+    "name": "Ilsabet Marrow",
+    "quirk": "is suspicious of anyone taller than them"
+   },
+   "objective": "hunt the wyvern stalking a goblin-infested mine",
+   "incentive": {
+    "kind": "wondrous",
+    "rarity": "common",
+    "item": "Charlatan's Die"
+   },
+   "gold": 120,
+   "complication": null,
+   "contribution": 3,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "y5oao0bw",
+   "rank": 0,
+   "type": "Extermination",
+   "size": "Major",
+   "location": "A nearby world",
+   "world": {
+    "genre": "High fantasy",
+    "line": "A kingdom of floating isles, where river spirits demand a loaf of bread at every bridge"
+   },
+   "patron": {
+    "cat": "Merchant",
+    "arch": "Blacksmith",
+    "name": "Lady Ottoline Crest",
+    "quirk": "brings snacks to every meeting"
+   },
+   "objective": "stop whatever keeps eating the prize hogs",
+   "incentive": {
+    "kind": "weapon",
+    "rarity": "rare",
+    "item": "Flame Tongue"
+   },
+   "gold": 295,
+   "complication": "The patron dies, disappears, or changes their mind mid-job.",
+   "contribution": 8,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "oumu6mn4",
+   "rank": 0,
+   "type": "Rescue",
+   "size": "Small",
+   "location": "A nearby world",
+   "world": {
+    "genre": "Steampunk / gaslamp",
+    "line": "A smog-wrapped industrial empire, where the smog is so thick that streets are named by smell"
+   },
+   "patron": {
+    "cat": "Noble",
+    "arch": "Dowager",
+    "name": "Nim Whistledown",
+    "quirk": "overpays and then regrets it"
+   },
+   "objective": "find a factory whistleblower, last seen near the airship docks",
+   "incentive": {
+    "kind": "favor",
+    "rarity": "common",
+    "item": "A small favor owed"
+   },
+   "gold": 70,
+   "complication": null,
+   "contribution": 1,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "s4f87ixm",
+   "rank": 0,
+   "type": "Rescue",
+   "size": "Small",
+   "location": "A nearby world",
+   "world": {
+    "genre": "High fantasy",
+    "line": "A kingdom of floating isles, where the royal wizards tax every spell cast inside city walls"
+   },
+   "patron": {
+    "cat": "Local commoner",
+    "arch": "Fisher",
+    "name": "Mother Quill",
+    "quirk": "keeps checking over their shoulder"
+   },
+   "objective": "find an elven envoy, last seen near a root-tunnel nobody maps",
+   "incentive": {
+    "kind": "wondrous",
+    "rarity": "common",
+    "item": "Charlatan's Die"
+   },
+   "gold": 25,
+   "complication": null,
+   "contribution": 1,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "zzi73jqq",
+   "rank": 0,
+   "type": "Heist",
+   "size": "Major",
+   "location": "A nearby world",
+   "world": {
+    "genre": "Steampunk / gaslamp",
+    "line": "A brass canal city, where airship mail is reliable except on Tuesdays (union rules)"
+   },
+   "patron": {
+    "cat": "Council",
+    "arch": "Council archivist",
+    "name": "Tamsin Rook",
+    "quirk": "is related to someone important (and mentions it)"
+   },
+   "objective": "recover grandmother's recipe book, now held in a sealed patent-office vault",
+   "incentive": {
+    "kind": "scroll",
+    "rarity": "uncommon",
+    "item": "Spell Scroll (2nd–3rd level)"
+   },
+   "gold": 375,
+   "complication": null,
+   "contribution": 8,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "ircpkx4a",
+   "rank": 0,
+   "type": "Rescue",
+   "size": "Small",
+   "location": "Inside the Tree",
+   "world": {
+    "genre": null,
+    "line": "Home ground, where the carved halls rearrange slightly each season"
+   },
+   "patron": {
+    "cat": "Merchant",
+    "arch": "Alchemist",
+    "name": "Sir Pellam Vane",
+    "quirk": "is clearly lying about one detail"
+   },
+   "objective": "find a guild apprentice, last seen near the undercellars of the Iron Quarter",
+   "incentive": {
+    "kind": "potion",
+    "rarity": "common",
+    "item": "Potion of Healing"
+   },
+   "gold": 50,
+   "complication": "Something follows them back to the Tree.",
+   "contribution": 1,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "g0ukqxqj",
+   "rank": 0,
+   "type": "Extermination",
+   "size": "Small",
+   "location": "A distant world",
+   "world": {
+    "genre": "High fantasy",
+    "line": "A river kingdom, where griffon-post beats the roads, but the griffons just unionized"
+   },
+   "patron": {
+    "cat": "Local commoner",
+    "arch": "Street urchin crew",
+    "name": "Ilsabet Marrow",
+    "quirk": "brings snacks to every meeting"
+   },
+   "objective": "drive goblins away from a ruined elven shrine for good",
+   "incentive": {
+    "kind": "info",
+    "rarity": "common",
+    "item": "A useful rumor"
+   },
+   "gold": 25,
+   "complication": null,
+   "contribution": 1,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  },
+  {
+   "id": "042fi46u",
+   "rank": 0,
+   "type": "Fetch",
+   "size": "Standard",
+   "location": "A nearby world",
+   "world": {
+    "genre": "Fey / whimsical",
+    "line": "A storybook kingdom, where promises are legally binding, even in jest"
+   },
+   "patron": {
+    "cat": "Council",
+    "arch": "Tier-mandated order",
+    "name": "Grubb",
+    "quirk": "talks to their hat"
+   },
+   "objective": "deliver a borrowed name to the Winter Queen's ice garden before it spoils",
+   "incentive": {
+    "kind": "favor",
+    "rarity": "uncommon",
+    "item": "A standing discount with the patron"
+   },
+   "gold": 135,
+   "complication": null,
+   "contribution": 3,
+   "kept": false,
+   "final": false,
+   "worldBlock": null,
+   "expanded": null
+  }
+ ],
+ "shops": [],
+ "guild": {
+  "treasury": null,
+  "owned": {},
+  "addons": {},
+  "offers": [
+   {
+    "id": "pm9jc0ki",
+    "type": "unique",
+    "genre": "High fantasy",
+    "vendor": "a dwarven building clan",
+    "tier": 0,
+    "name": "Hall of Echoes",
+    "cat": "Facilities",
+    "cost": 55,
+    "days": 4,
+    "perk": "Speak a member's name and they hear you, anywhere in the city."
+   },
+   {
+    "id": "hoxeiong",
+    "type": "unique",
+    "genre": "Swashbuckling / nautical",
+    "vendor": "a retired shipwright",
+    "tier": 0,
+    "name": "Crow's Nest Spyglass",
+    "cat": "Services",
+    "cost": 40,
+    "days": 1,
+    "perk": "+1 hook from coastal and seafaring worlds on each Job Board roll."
+   },
+   {
+    "id": "nemf55al",
+    "type": "deal",
+    "genre": "High fantasy",
+    "vendor": "a dwarven building clan",
+    "tier": 0,
+    "ref": {
+     "id": "forge",
+     "lvl": 0
+    },
+    "name": "Forge I: Anvil & Bellows",
+    "cat": "Facilities",
+    "orig": 95,
+    "cost": 70,
+    "discount": 25,
+    "days": 2,
+    "perk": "Free repairs; mundane weapons, armor, and ammo at half cost.",
+    "reason": "a branch-merchant who owes Mordecai a favor"
+   }
+  ],
+  "uniques": [],
+  "cp": {
+   "pts": 0,
+   "log": []
+  }
+ },
+ "roster": [
+  {
+   "id": "mordecai",
+   "name": "Mordecai",
+   "kind": "Founder",
+   "status": "In the hall",
+   "level": null,
+   "ancestry": "Changeling (currently Rat Folk)",
+   "player": "",
+   "role": "Guild founder",
+   "skills": [
+    {
+     "s": "Guild Administration",
+     "g": "Expert"
+    }
+   ],
+   "assign": "",
+   "notes": "Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders.",
+   "forms": [
+    "Rat Folk (current form)"
+   ],
+   "motive": "",
+   "occupation": "Adventurer",
+   "archetype": "Support",
+   "look": "a scruffy, grey-whiskered rat-folk with tired eyes and a stained vest",
+   "voice": "a gravelly mutter, mostly complaints",
+   "manner": "gruff, sarcastic, secretly caring"
+  },
+  {
+   "id": "eyqdszas",
+   "name": "Rowan Sorrel",
+   "kind": "Active PC",
+   "status": "Adventuring",
+   "level": 3,
+   "ancestry": "Human Barbarian (Path of the World Tree)",
+   "player": "Max",
+   "role": "Tank",
+   "assign": "",
+   "notes": "\"Root\": upbeat, reckless, fiercely loyal guild kid raised in Yggdrasil; lean, wiry, scarred chest, goofy grin.",
+   "skills": [
+    {
+     "s": "Athletics",
+     "g": "Prof"
+    },
+    {
+     "s": "Perception",
+     "g": "Prof"
+    },
+    {
+     "s": "Survival",
+     "g": "Prof"
+    },
+    {
+     "s": "Animal Handling",
+     "g": "Prof"
+    },
+    {
+     "s": "Nature",
+     "g": "Prof"
+    },
+    {
+     "s": "Stealth",
+     "g": "Prof"
+    },
+    {
+     "s": "Carpenter's Tools",
+     "g": "Prof"
+    }
+   ]
+  },
+  {
+   "id": "dvwswwzp",
+   "name": "Goblin Archivist (name TBD)",
+   "kind": "Active PC",
+   "status": "Adventuring",
+   "level": 3,
+   "ancestry": "Goblin Cleric (Knowledge Domain)",
+   "player": "Kelsie",
+   "role": "Archivist",
+   "assign": "",
+   "notes": "Elderly goblin scholar in lavender spectacles; the guild's founding archivist who writes everything down. \"Citation, dear?\"",
+   "skills": [
+    {
+     "s": "History",
+     "g": "Exp"
+    },
+    {
+     "s": "Religion",
+     "g": "Exp"
+    },
+    {
+     "s": "Arcana",
+     "g": "Prof"
+    },
+    {
+     "s": "Insight",
+     "g": "Prof"
+    },
+    {
+     "s": "Investigation",
+     "g": "Prof"
+    },
+    {
+     "s": "Medicine",
+     "g": "Prof"
+    },
+    {
+     "s": "Nature",
+     "g": "Prof"
+    },
+    {
+     "s": "Perception",
+     "g": "Prof"
+    },
+    {
+     "s": "Persuasion",
+     "g": "Prof"
+    },
+    {
+     "s": "Calligrapher's Supplies",
+     "g": "Prof"
+    }
+   ]
+  },
+  {
+   "id": "jaukuhz9",
+   "kind": "NPC",
+   "status": "",
+   "skills": [],
+   "role": "",
+   "player": "",
+   "assign": "",
+   "notes": "",
+   "rival": false,
+   "pinned": true,
+   "seat": "Iron",
+   "name": "Marigold \"Goldie\" Thrushwhistle",
+   "ancestry": "halfling",
+   "genre": "Tree-born",
+   "occupation": "Adventurer",
+   "title": "guild master of the Cellar Lanterns (Iron 1)",
+   "connection": "Contact",
+   "archetype": "Support",
+   "level": 6,
+   "label": "lantern-bearer who never lets anyone fall behind",
+   "guild": "The Cellar Lanterns",
+   "look": "a brass lantern hat and a satchel of overdue paperwork",
+   "voice": "talks in numbered checklists",
+   "manner": "brisk, warm, always mid-errand",
+   "public": "The tireless champion of small guilds; hands out mandated jobs in person, with snacks.",
+   "want": "better pay and safer jobs for Iron guilds",
+   "secret": "She has been quietly paying other Iron guilds' revival fees from her own pocket and is nearly broke. She and Mordecai have history, and she won't say what.",
+   "attitude": "Friendly"
+  },
+  {
+   "id": "2h292dfl",
+   "kind": "NPC",
+   "status": "",
+   "skills": [],
+   "role": "",
+   "player": "",
+   "assign": "",
+   "notes": "",
+   "rival": false,
+   "pinned": false,
+   "seat": "Bronze",
+   "name": "Captain Odessa Varn",
+   "ancestry": "human",
+   "genre": "Swashbuckling / nautical",
+   "occupation": "Adventurer",
+   "title": "captain of the Tin Gale Company (Bronze 1)",
+   "connection": "Contact",
+   "archetype": "Skirmisher",
+   "level": 9,
+   "label": "ex-sky-pirate with a hook blade and a grin",
+   "guild": "The Tin Gale Company",
+   "look": "a weathered sky-captain's coat with one sleeve pinned back",
+   "voice": "loud, laughs at her own threats",
+   "manner": "generous with drinks, stingy with trust",
+   "public": "Brash champion of expansion into new worlds; pushes for more branch permits and fewer rules.",
+   "want": "open every branch the Council keeps sealed",
+   "secret": "Her company smuggles cargo through sealed paths in the Roots, and one of those cargoes may be carrying rot.",
+   "attitude": "Neutral"
+  },
+  {
+   "id": "upwnn7xo",
+   "kind": "NPC",
+   "status": "",
+   "skills": [],
+   "role": "",
+   "player": "",
+   "assign": "",
+   "notes": "",
+   "rival": false,
+   "pinned": false,
+   "seat": "Silver",
+   "name": "Professor Quillon Ashgrave-Mott",
+   "ancestry": "owlin",
+   "genre": "Tree-born",
+   "occupation": "Scholar",
+   "title": "head archivist of the Lamplit Archive (Silver 2)",
+   "connection": "Bystander",
+   "archetype": "Arcane Caster",
+   "level": 12,
+   "label": "spell-archivist who fights with footnotes",
+   "guild": "The Lamplit Archive",
+   "look": "spectacles stacked three deep and ink on every feather",
+   "voice": "pauses mid-sentence to correct himself",
+   "manner": "fussy, exact, quietly kind",
+   "public": "The Council's stickler for procedure; nothing advances a tier without his stamp.",
+   "want": "a complete record of every world the Tree has touched",
+   "secret": "His archive's records show the rot follows a pattern, and he has found a name tied to it in an old guild ledger: one of Mordecai's former aliases.",
+   "attitude": "Neutral"
+  },
+  {
+   "id": "f4qz73on",
+   "kind": "NPC",
+   "status": "",
+   "skills": [],
+   "role": "",
+   "player": "",
+   "assign": "",
+   "notes": "",
+   "rival": false,
+   "pinned": false,
+   "seat": "Gold",
+   "name": "Sister Verdance",
+   "ancestry": "dryad-touched firbolg",
+   "genre": "Tree-born",
+   "occupation": "Clergy",
+   "title": "Root-warden of the Green Vein Wardens (Gold 1)",
+   "connection": "Bystander",
+   "archetype": "Nature Caster",
+   "level": 15,
+   "label": "Root-warden who speaks with the Tree's sap",
+   "guild": "The Green Vein Wardens",
+   "look": "bark-textured skin and moss that blooms when she's pleased",
+   "voice": "slow and gentle, as if listening to something else",
+   "manner": "serene, then suddenly fierce about the Tree",
+   "public": "The Tree's caretaker on the Council, said to be closest to the First.",
+   "want": "stop the rot before another world's Tree dies",
+   "secret": "She hasn't heard from the First in over a year and is terrified of what that silence means.",
+   "attitude": "Neutral"
+  },
+  {
+   "id": "3231g1ek",
+   "kind": "NPC",
+   "status": "",
+   "skills": [],
+   "role": "",
+   "player": "",
+   "assign": "",
+   "notes": "",
+   "rival": false,
+   "pinned": false,
+   "seat": "Platinum",
+   "name": "Aurelian Vey",
+   "ancestry": "elf",
+   "genre": "High fantasy",
+   "occupation": "Adventurer",
+   "title": "guild master of the Gilded Spiral (Platinum 1)",
+   "connection": "Bystander",
+   "archetype": "Guardian",
+   "level": 18,
+   "label": "living legend in battered gold armor",
+   "guild": "The Gilded Spiral",
+   "look": "ageless, with one hand always gloved",
+   "voice": "rarely speaks; when he does, the room goes quiet",
+   "manner": "courteous, distant, faintly amused",
+   "public": "Legend of the Tree; he hasn't lost a Council vote in forty years.",
+   "want": "a worthy successor, though he'd never admit it",
+   "secret": "A planar wound under his glove is slowly killing him. He watches new guilds closely, looking for whoever might one day hold the line after him.",
+   "attitude": "Neutral"
+  },
+  {
+   "id": "1anu6qi9",
+   "name": "Tabaxi Monk (name TBD)",
+   "kind": "Active PC",
+   "status": "Adventuring",
+   "level": 3,
+   "ancestry": "Tabaxi Monk (Warrior of the Open Hand)",
+   "player": "Hannah",
+   "role": "Herbalist",
+   "assign": "",
+   "notes": "Disciplined, blunt temple disciple in an indigo robe; trains before dawn, slow to trust, never leaves an ally behind.",
+   "skills": [
+    {
+     "s": "Acrobatics",
+     "g": "Prof"
+    },
+    {
+     "s": "Athletics",
+     "g": "Prof"
+    },
+    {
+     "s": "History",
+     "g": "Prof"
+    },
+    {
+     "s": "Insight",
+     "g": "Prof"
+    },
+    {
+     "s": "Perception",
+     "g": "Prof"
+    },
+    {
+     "s": "Stealth",
+     "g": "Prof"
+    },
+    {
+     "s": "Herbalism Kit",
+     "g": "Prof"
+    }
+   ]
+  }
+ ],
+ "expanded": {},
+ "recent": {},
+ "councilSeeded": true
+}
