@@ -26,13 +26,14 @@ const Roster=(()=>{
     if(filter==="hall")list=list.filter(m=>m.kind!=="Active PC"&&m.status==="In the hall");
     if(!list.length){el.innerHTML=`<p class="muted">${C.roster.length?"No one matches this filter.":"The roster is empty."}</p>`;return}
     list.forEach(m=>{const d=document.createElement("div");d.className="card";d.dataset.member=m.id;
-      d.innerHTML=`<h3>${esc(m.name)}</h3>
+      d.innerHTML=`<div class="card-head">${thumb(m)}<h3>${esc(m.name)}</h3></div>
       <div class="badges"><span class="badge gold">${esc(m.kind)}</span><span class="badge${m.status==="In the hall"?" leaf":""}">${esc(m.status||"")}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>
       <div class="row">${m.level?`Level ${esc(m.level)} `:""}${esc(m.ancestry||"")}${m.player?` <span class="muted">· played by ${esc(m.player)}</span>`:""}</div>
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${gradeOf(m,s)}</b></span>`).join("")}</div>`:'<div class="muted" style="font-size:14px">No working skills listed.</div>'}
       ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
+        if(a==="view"){openFull(m);return}
         if(a==="edit"){editing=clone(m);renderEditor();place(true)}
         else if(a==="leave"){NPCs.leaveGuild(m);return}
         else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
@@ -140,6 +141,10 @@ ${t}`:""}`;
       <label>Council seat ${sel("seat",TIERS,1)}</label>
       <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
+  /* at-a-glance picture for DM cards: PC portrait (or full-body), else the NPC image, else initials. Click opens the full card. */
+  function thumb(m){const src=m.pc?.portrait||m.pc?.body||m.img;
+    return src?`<img class="npc-thumb" src="${esc(src)}" alt="" data-a="view" title="Open full view">`:`<div class="npc-thumb npc-noimg" data-a="view" title="Open full view">${esc(((m.name||"?").trim().match(/\S+/g)||["?"]).slice(0,2).map(w=>w[0]).join("").toUpperCase())}</div>`}
+  function openFull(m){/^(Active|Retired) PC$/.test(m.kind)?PCs.openBig(m):NPCs.openBig(m)}
   function edit(m){editing=clone(m);renderEditor();if(!document.querySelector(`.card[data-npc="${m.id}"],.card[data-member="${m.id}"]`)){$("#editorHost").scrollIntoView({behavior:"smooth"});return}place(true)}
   function bind(){
     $("#rSub").onclick=e=>{const s=e.target.dataset.sub;if(!s)return;UI.rosterSub=s;saveUI();editing=null;render()};
@@ -148,5 +153,5 @@ ${t}`:""}`;
     $("#copyRoster").onclick=()=>copyText(text());
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {park,place,render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+  return {thumb,park,place,render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();
