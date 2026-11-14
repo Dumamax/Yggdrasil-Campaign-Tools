@@ -56,8 +56,13 @@ const Sync=(()=>{
   function setStatus(s){if(s==="Up to date"&&C.savedAt)s+=` · save from ${whenStr(C.savedAt)}`;status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
   async function fetchRemote(skipIfSha){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
     if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403||r.status===429?"GitHub is busy (too many checks from this network); retrying shortly":"GitHub error "+r.status);
-    const j=await r.json();if(skipIfSha&&j.sha===skipIfSha)return {sha:j.sha,same:true};let text;if(j.content&&j.encoding==="base64")text=dec(j.content);else text=await (await fetch(api(true),{headers:hdr(true),cache:"no-cache"})).text();
-    return {sha:j.sha,data:JSON.parse(text)}}
+    const j=await r.json();if(skipIfSha&&j.sha===skipIfSha)return {sha:j.sha,same:true};let text;
+    /* big files: download the blob by sha. The contents URL serves both the metadata and the raw file under one ETag, and phone caches could hand back the metadata as "the campaign" */
+    if(j.content&&j.encoding==="base64")text=dec(j.content);
+    else{const b=await fetch(`https://api.github.com/repos/${cfg().repo}/git/blobs/${j.sha}`,{headers:hdr(true)});if(!b.ok)throw new Error("GitHub error "+b.status+" downloading the save");text=await b.text()}
+    let data;try{data=JSON.parse(text)}catch(e){throw new Error("The GitHub save didn't download completely")}
+    if(!data||data.app!==APP_ID)throw new Error("Downloaded something that isn't the campaign");
+    return {sha:j.sha,data}}
   function adopt(r,msg){const wasDM=isDM();replaceCampaign(r.data,"Before loading the GitHub save");sha=r.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);dirty=false;lsSet("ygh.dirty",false);banner();
     if(wasDM&&!isDM())lsSet("ygh.dm",S.dmHash); // a password change elsewhere shouldn't lock out a DM mid-session
     if(msg)toast(msg)}
