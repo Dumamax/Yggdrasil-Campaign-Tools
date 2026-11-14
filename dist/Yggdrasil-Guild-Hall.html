@@ -554,6 +554,18 @@ body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 
 /* Player View: party cards */
 .pv .pc-section{width:min(1100px,100%);justify-self:stretch}
 
+/* NPC images + Player View "Notable Figures" */
+.card .npc-thumb{float:right;width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid var(--gold);margin:0 0 8px 12px;cursor:zoom-in;background:#16130f}
+.npc-imgrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.npc-imgrow .npc-thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.npc-big h2{font:700 28px "Cinzel",serif;color:var(--gold);margin:0 0 4px}.npc-big .pc-bodyimg{cursor:zoom-in}.npc-big .row{margin:8px 0}
+.np-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.np-card{display:flex;flex-direction:column;text-align:left;background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:0 0 12px;overflow:hidden;color:var(--ink);font:inherit;cursor:pointer}
+.np-card:hover{border-color:var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.np-card img,.np-noimg{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:top;background:#16130f;display:block}
+.np-noimg{display:flex;align-items:center;justify-content:center;font:700 54px "Cinzel",serif;color:var(--gold)}
+.np-name{font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 12px 0}.np-sub{color:var(--mute);font-size:14px;padding:2px 12px 0}.np-pub{font-size:15px;padding:6px 12px 0}
+body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.mobile .np-name{font-size:16px}
+
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
   radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),
@@ -986,7 +998,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 14 15:37";
+const BUILD="Nov 14 16:39";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -6164,11 +6176,13 @@ const Roster=(()=>{
       <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
     rows();PCs.bindEditor($("#pcEd"),m,renderEditor);
-    h.oninput=h.onchange=e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
+    h.oninput=h.onchange=async e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
+      if(t.dataset.npcimg!=null){if(e.type==="change"&&t.files[0]){try{m.img=await PCs.shrink(t.files[0],1000,0.8,true);renderEditor()}catch(err){toast("Couldn't read that image")}}return}
       if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
     h.onclick=e=>{const t=e.target;
+      if(t.dataset.npcimgx!=null){delete m.img;renderEditor();return}
       if(t.id==="addSkill"){(m.skills=m.skills||[]).push({s:"",g:m.kind==="Active PC"?"Prof":"Skilled"});rows()}
       else if(t.dataset.sx!=null){m.skills.splice(+t.dataset.sx,1);rows()}
       else if(t.id==="cancelMem"){editing=null;renderEditor();park()}
@@ -6238,6 +6252,7 @@ ${t}`:""}`;
       ${inp("label","Fighting flavor","e.g. ex-sky-pirate with a hook blade")}${inp("guild","Guild")}
       ${inp("look","Look")}${inp("voice","Voice")}${inp("manner","Manner")}${inp("want","Wants")}
       ${inp("secret","Secret (DM)")}${inp("public","Public face (players)")}
+      ${/^(Active|Retired) PC$/.test(m.kind)?"":`<div class="npc-imgrow" style="grid-column:1/-1">${m.img?`<img class="npc-thumb" src="${esc(m.img)}" alt="">`:""}<label class="btn small">${m.img?"Replace image":"＋ Image"}<input type="file" accept="image/*" data-npcimg hidden></label>${m.img?'<button class="btn small ghost" data-npcimgx>Remove image</button>':""}<label class="inline"><input type="checkbox" data-k="shown"${m.shown?" checked":""}> Player viewable</label></div>`}
       <label>Council seat ${sel("seat",TIERS,1)}</label>
       <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
@@ -6879,20 +6894,35 @@ Return ONLY JSON:
       ${(sb.attacks||[]).length?`<br><b>Attacks:</b> ${sb.attacks.map(esc).join("; ")}`:""}${(sb.traits||[]).length?`<br><b>Traits:</b> ${sb.traits.map(esc).join("; ")}`:""}
       ${sb.tactics?`<br><i>${esc(sb.tactics)}</i>`:""}${sb.adjust?`<br>${esc(sb.adjust)}`:""}${sb.reskin?`<br><span class="muted">${esc(sb.reskin)}</span>`:""}${sb.note?`<br><span class="muted">${esc(sb.note)}</span>`:""}</div>`:""}`}
   function badges(m){return `<div class="badges">${m.seat?`<span class="badge gold">${esc(m.seat)} Seat</span>`:""}${m.occupation?`<span class="badge">${esc(m.occupation)}${m.title?`: ${esc(m.title)}`:""}</span>`:""}${m.connection?`<span class="badge">${esc(m.connection)}</span>`:""}
-    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 Pinned</span>':""}</div>`}
+    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 Pinned</span>':""}${m.shown?'<span class="badge">👁 Players can see</span>':""}</div>`}
+  /* full view (click a card): one image + profile. Players get only the public side. */
+  function sub(m){return [m.title&&cap(m.title),m.guild,m.ancestry].filter(Boolean).map(esc).join(" · ")}
+  function bigHTML(m,dm){return `<div class="pc-big npc-big${m.img?" has-body":""}">${m.img?`<img class="pc-bodyimg" src="${esc(m.img)}" alt="" data-zoom title="Zoom">`:""}<div><div class="pc-tools">${dm?'<button class="btn small" data-edit>✎ Edit</button>':""}<button class="btn ghost" data-close aria-label="Close">✕</button></div>
+      <h2>${esc(m.name)}</h2>${sub(m)?`<div class="pc-sub">${sub(m)}</div>`:""}${dm?badges(m)+profileHTML(m,true,true):publicHTML(m)}</div></div>`}
+  function publicHTML(m){return `${m.look||m.voice||m.manner?`<div class="row">${esc(cap(m.look||""))}${m.look?". ":""}${m.voice?`<i>${esc(cap(m.voice))}</i>`:""}${m.manner?`; ${esc(m.manner)}`:""}.</div>`:""}
+      ${m.public?`<div class="row"><b>Known for:</b> ${esc(m.public)}</div>`:""}${m.seat?`<div class="row"><b>Council:</b> ${esc(m.seat)} Seat</div>`:""}`}
+  function openBig(m){const dm=isDM(),md=modal(bigHTML(m,dm),"pc-modal");
+    md.el.addEventListener("click",e=>{if(e.target.closest("[data-close]"))md.close();else if(e.target.closest("[data-edit]")){md.close();Roster.edit(m)}else if(e.target.closest("[data-zoom]"))App.openMap(m.img,m.name)})}
+  /* Player View: NPCs the DM marked "Player viewable" */
+  function playerSection(){const L=C.roster.filter(m=>m.shown&&m.kind!=="Active PC"&&m.kind!=="Retired PC");const d=document.createElement("section");d.className="pc-section";
+    if(!L.length)return d;
+    d.innerHTML=`<h2 class="pc-title">Notable Figures</h2><div class="np-cards">${L.map(m=>`<button class="np-card" data-np="${m.id}">${m.img?`<img src="${esc(m.img)}" alt="">`:`<div class="np-noimg">${esc((m.name||"?").trim()[0]||"?")}</div>`}<div class="np-name">${esc(m.name)}</div>${sub(m)?`<div class="np-sub">${sub(m)}</div>`:""}${m.public?`<div class="np-pub">${esc(m.public)}</div>`:""}</button>`).join("")}</div>`;
+    d.onclick=e=>{const b=e.target.closest("[data-np]");if(!b)return;const m=byId(b.dataset.np);if(m)openBig(m)};return d}
   function card(m,candidate){
     const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;
-    d.innerHTML=`<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
+    d.innerHTML=`${m.img&&!candidate?`<img class="npc-thumb" src="${esc(m.img)}" alt="" data-a="view" title="Open full view">`:""}<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${Roster.gradeOf(m,s)}</b></span>`).join("")}${m.role?` <span class="muted" style="font-size:14px">suits: ${esc(m.role)}</span>`:""}</div>`:""}
       ${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions">${candidate?`<button class="btn small primary" data-a="keep">Save NPC</button><button class="btn small" data-a="reroll">Reroll</button>`:
-      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="pin">${m.pinned?"Unpin":"📌 Pin"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
+      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="view">Full view</button><button class="btn small" data-a="shown">${m.shown?"Hide from players":"👁 Show players"}</button><button class="btn small" data-a="pin">${m.pinned?"Unpin":"📌 Pin"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
       <button class="btn small primary" data-a="write">${m.x?.ai?"Rewrite":"Write up"}</button><button class="btn small" data-a="sb">${m.sb?"Re-roll stat block":"Roll stat block"}</button><button class="btn small" data-a="join">Add to Guild</button><button class="btn small danger" data-a="del">Delete</button>`}</div>`;
     if(!candidate){const acts=d.querySelector(".actions");if(m.x&&m.x.prompt)acts.appendChild(aiButtons(m.x,r=>{merge(m,r);commit();App.render()}));
       if(m.sb&&m.sb.prompt){const w=aiButtons(m.sb,r=>{m.sb=r;commit();App.render()});w.querySelectorAll("button").forEach(b=>b.textContent=b.textContent.replace("Claude prompt","stat block prompt").replace("Paste result","Paste stat block"));acts.appendChild(w)}}
     d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
       if(candidate){if(a==="keep"){add(m);cands=cands.filter(x=>x!==m)}else if(a==="reroll")cands[cands.indexOf(m)]=generate(genOpts());render();return}
       if(a==="edit"){Roster.edit(m);return}
+      if(a==="view"){openBig(m);return}
+      if(a==="shown"){m.shown=!m.shown;commit();render();toast(m.shown?`${m.name} is visible in Player View`:`${m.name} is hidden from players`);return}
       if(a==="pin")m.pinned=!m.pinned;else if(a==="rival")m.rival=!m.rival;
       else if(a==="write"){writeUp(m,ev.target);return}else if(a==="sb"){statBlock(m,ev.target);return}
       else if(a==="join"){addToGuild(m);return}
@@ -6964,7 +6994,7 @@ Return ONLY JSON:
     return `<div class="council-notice notice"><div class="nhead">BY THE AUTHORITY OF THE TREE</div><div class="ntitle">The Council of Five</div><hr class="nrule">${L.map(([t,m])=>`<div class="cn-seat"><div class="nreward">${esc((T.council.seats[t]||{}).title||t)}</div><b>${esc(m.name)}</b>${m.guild?`, ${esc(m.guild)}`:""}<br><span>${esc(cap(m.look||""))}${m.look?". ":""}${esc(m.public||"")}</span></div>`).join("")}<hr class="nrule"><div class="sig">Petitions are heard at the Iron Seat each morning, snacks permitting.</div></div>`}
   const PRINT_CSS=`.npc-sheet h1{font:700 22px Cinzel,serif;text-align:center;margin:0 0 10px}.npc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.npc-c{border:1px solid #7a5a2e;border-radius:4px;padding:8px 10px;font-size:13.5px;line-height:1.3;break-inside:avoid;page-break-inside:avoid}.npc-c h3{margin:0;font:700 15px Cinzel,serif}.npc-c .lvl{font-size:12px;color:#5a3e1e;margin-bottom:3px}
   .council-notice{max-width:620px;margin:24px auto 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.council-notice .cn-seat{margin:9px 0;font-size:16px;line-height:1.35}.council-notice .nreward{font-size:16px}`;
-  return {reset:()=>{filt="all";q=""},reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
+  return {openBig,playerSection,reset:()=>{filt="all";q=""},reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
 })();
 
 /* ===== Places: the Tree's gazetteer (one area per map) + world names and gate IDs =====
@@ -7346,6 +7376,7 @@ const App=(()=>{
       "p-map":()=>C.maps.some(m=>!m.hidden)?C.maps.filter(m=>!m.hidden).map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
     if(UI.tab==="p-party")el.querySelector(".pv").append(PCs.tableSection());
+    if(UI.tab==="p-council"){const s=NPCs.playerSection();if(s.childElementCount){if(!NPCs.councilHTML())el.querySelector(".pv").innerHTML="";el.querySelector(".pv").append(s)}}
     el.onclick=e=>{const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
   /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
   function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");

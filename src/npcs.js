@@ -125,20 +125,35 @@ Return ONLY JSON:
       ${(sb.attacks||[]).length?`<br><b>Attacks:</b> ${sb.attacks.map(esc).join("; ")}`:""}${(sb.traits||[]).length?`<br><b>Traits:</b> ${sb.traits.map(esc).join("; ")}`:""}
       ${sb.tactics?`<br><i>${esc(sb.tactics)}</i>`:""}${sb.adjust?`<br>${esc(sb.adjust)}`:""}${sb.reskin?`<br><span class="muted">${esc(sb.reskin)}</span>`:""}${sb.note?`<br><span class="muted">${esc(sb.note)}</span>`:""}</div>`:""}`}
   function badges(m){return `<div class="badges">${m.seat?`<span class="badge gold">${esc(m.seat)} Seat</span>`:""}${m.occupation?`<span class="badge">${esc(m.occupation)}${m.title?`: ${esc(m.title)}`:""}</span>`:""}${m.connection?`<span class="badge">${esc(m.connection)}</span>`:""}
-    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 Pinned</span>':""}</div>`}
+    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 Pinned</span>':""}${m.shown?'<span class="badge">👁 Players can see</span>':""}</div>`}
+  /* full view (click a card): one image + profile. Players get only the public side. */
+  function sub(m){return [m.title&&cap(m.title),m.guild,m.ancestry].filter(Boolean).map(esc).join(" · ")}
+  function bigHTML(m,dm){return `<div class="pc-big npc-big${m.img?" has-body":""}">${m.img?`<img class="pc-bodyimg" src="${esc(m.img)}" alt="" data-zoom title="Zoom">`:""}<div><div class="pc-tools">${dm?'<button class="btn small" data-edit>✎ Edit</button>':""}<button class="btn ghost" data-close aria-label="Close">✕</button></div>
+      <h2>${esc(m.name)}</h2>${sub(m)?`<div class="pc-sub">${sub(m)}</div>`:""}${dm?badges(m)+profileHTML(m,true,true):publicHTML(m)}</div></div>`}
+  function publicHTML(m){return `${m.look||m.voice||m.manner?`<div class="row">${esc(cap(m.look||""))}${m.look?". ":""}${m.voice?`<i>${esc(cap(m.voice))}</i>`:""}${m.manner?`; ${esc(m.manner)}`:""}.</div>`:""}
+      ${m.public?`<div class="row"><b>Known for:</b> ${esc(m.public)}</div>`:""}${m.seat?`<div class="row"><b>Council:</b> ${esc(m.seat)} Seat</div>`:""}`}
+  function openBig(m){const dm=isDM(),md=modal(bigHTML(m,dm),"pc-modal");
+    md.el.addEventListener("click",e=>{if(e.target.closest("[data-close]"))md.close();else if(e.target.closest("[data-edit]")){md.close();Roster.edit(m)}else if(e.target.closest("[data-zoom]"))App.openMap(m.img,m.name)})}
+  /* Player View: NPCs the DM marked "Player viewable" */
+  function playerSection(){const L=C.roster.filter(m=>m.shown&&m.kind!=="Active PC"&&m.kind!=="Retired PC");const d=document.createElement("section");d.className="pc-section";
+    if(!L.length)return d;
+    d.innerHTML=`<h2 class="pc-title">Notable Figures</h2><div class="np-cards">${L.map(m=>`<button class="np-card" data-np="${m.id}">${m.img?`<img src="${esc(m.img)}" alt="">`:`<div class="np-noimg">${esc((m.name||"?").trim()[0]||"?")}</div>`}<div class="np-name">${esc(m.name)}</div>${sub(m)?`<div class="np-sub">${sub(m)}</div>`:""}${m.public?`<div class="np-pub">${esc(m.public)}</div>`:""}</button>`).join("")}</div>`;
+    d.onclick=e=>{const b=e.target.closest("[data-np]");if(!b)return;const m=byId(b.dataset.np);if(m)openBig(m)};return d}
   function card(m,candidate){
     const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;
-    d.innerHTML=`<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
+    d.innerHTML=`${m.img&&!candidate?`<img class="npc-thumb" src="${esc(m.img)}" alt="" data-a="view" title="Open full view">`:""}<h3>${esc(m.name)}</h3>${badges(m)}${profileHTML(m)}
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${Roster.gradeOf(m,s)}</b></span>`).join("")}${m.role?` <span class="muted" style="font-size:14px">suits: ${esc(m.role)}</span>`:""}</div>`:""}
       ${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions">${candidate?`<button class="btn small primary" data-a="keep">Save NPC</button><button class="btn small" data-a="reroll">Reroll</button>`:
-      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="pin">${m.pinned?"Unpin":"📌 Pin"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
+      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="view">Full view</button><button class="btn small" data-a="shown">${m.shown?"Hide from players":"👁 Show players"}</button><button class="btn small" data-a="pin">${m.pinned?"Unpin":"📌 Pin"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
       <button class="btn small primary" data-a="write">${m.x?.ai?"Rewrite":"Write up"}</button><button class="btn small" data-a="sb">${m.sb?"Re-roll stat block":"Roll stat block"}</button><button class="btn small" data-a="join">Add to Guild</button><button class="btn small danger" data-a="del">Delete</button>`}</div>`;
     if(!candidate){const acts=d.querySelector(".actions");if(m.x&&m.x.prompt)acts.appendChild(aiButtons(m.x,r=>{merge(m,r);commit();App.render()}));
       if(m.sb&&m.sb.prompt){const w=aiButtons(m.sb,r=>{m.sb=r;commit();App.render()});w.querySelectorAll("button").forEach(b=>b.textContent=b.textContent.replace("Claude prompt","stat block prompt").replace("Paste result","Paste stat block"));acts.appendChild(w)}}
     d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
       if(candidate){if(a==="keep"){add(m);cands=cands.filter(x=>x!==m)}else if(a==="reroll")cands[cands.indexOf(m)]=generate(genOpts());render();return}
       if(a==="edit"){Roster.edit(m);return}
+      if(a==="view"){openBig(m);return}
+      if(a==="shown"){m.shown=!m.shown;commit();render();toast(m.shown?`${m.name} is visible in Player View`:`${m.name} is hidden from players`);return}
       if(a==="pin")m.pinned=!m.pinned;else if(a==="rival")m.rival=!m.rival;
       else if(a==="write"){writeUp(m,ev.target);return}else if(a==="sb"){statBlock(m,ev.target);return}
       else if(a==="join"){addToGuild(m);return}
@@ -210,5 +225,5 @@ Return ONLY JSON:
     return `<div class="council-notice notice"><div class="nhead">BY THE AUTHORITY OF THE TREE</div><div class="ntitle">The Council of Five</div><hr class="nrule">${L.map(([t,m])=>`<div class="cn-seat"><div class="nreward">${esc((T.council.seats[t]||{}).title||t)}</div><b>${esc(m.name)}</b>${m.guild?`, ${esc(m.guild)}`:""}<br><span>${esc(cap(m.look||""))}${m.look?". ":""}${esc(m.public||"")}</span></div>`).join("")}<hr class="nrule"><div class="sig">Petitions are heard at the Iron Seat each morning, snacks permitting.</div></div>`}
   const PRINT_CSS=`.npc-sheet h1{font:700 22px Cinzel,serif;text-align:center;margin:0 0 10px}.npc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.npc-c{border:1px solid #7a5a2e;border-radius:4px;padding:8px 10px;font-size:13.5px;line-height:1.3;break-inside:avoid;page-break-inside:avoid}.npc-c h3{margin:0;font:700 15px Cinzel,serif}.npc-c .lvl{font-size:12px;color:#5a3e1e;margin-bottom:3px}
   .council-notice{max-width:620px;margin:24px auto 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.council-notice .cn-seat{margin:9px 0;font-size:16px;line-height:1.35}.council-notice .nreward{font-size:16px}`;
-  return {reset:()=>{filt="all";q=""},reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
+  return {openBig,playerSection,reset:()=>{filt="all";q=""},reloadTables,render,ensure,generate,fromPatron,usePatron,fromOffer,fromStaff,addToGuild,leaveGuild,profileHTML,badges,bindAtt,tableEl,cheatHTML,councilHTML,PRINT_CSS,all,isMember,tables:()=>T,ATT,GUILD_KINDS};
 })();
