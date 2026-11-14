@@ -349,6 +349,79 @@ body.mobile .board,body.mobile .tm-grid{grid-template-columns:minmax(0,1fr)}
 body.mobile .card,body.mobile .panel{min-width:0;overflow-wrap:anywhere}
 body.mobile .actions{flex-wrap:wrap}
 body.mobile select{max-width:100%;text-overflow:ellipsis}
+/* ---- Table Mode: characters main, panels in a side column ---- */
+.tm-layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
+@media (min-width:1600px){.tm-layout{grid-template-columns:minmax(0,1fr) 440px}}
+.tm-side{display:grid;gap:10px;position:sticky;top:110px;max-height:calc(100vh - 124px);overflow:auto;padding-right:2px}
+.side-panel{padding:0}
+.side-panel>summary{list-style:none;cursor:pointer;padding:9px 14px;display:flex;align-items:center;gap:8px}
+.side-panel>summary::-webkit-details-marker{display:none}
+.side-panel>summary::before{content:"▸";color:var(--mute);font-size:13px;transition:transform .15s}
+.side-panel[open]>summary::before{transform:rotate(90deg)}
+.side-panel>summary h2{margin:0;font-size:16px}
+.side-body{padding:0 14px 12px;font-size:15px}
+.pc-title{font:700 24px "Cinzel",serif;color:var(--gold);margin:0 0 10px}
+.pc-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.pc-card{display:flex;gap:14px;text-align:left;background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:14px;color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,transform .1s,box-shadow .15s}
+.pc-card:hover{border-color:var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.pc-card:active{transform:scale(.99)}
+.pc-pic{width:92px;height:92px;border-radius:12px;object-fit:cover;flex:none;border:2px solid #5d5140;background:#16130f}
+.pc-noimg{display:flex;align-items:center;justify-content:center;font:700 30px "Cinzel",serif;color:var(--gold)}
+.pc-body{min-width:0;flex:1;display:grid;gap:6px;align-content:start}
+.pc-name{font:700 20px "Cinzel",serif;color:var(--gold);line-height:1.1}
+.pc-sub{color:var(--mute);font-size:14px}
+.pc-chips{display:flex;gap:6px;flex-wrap:wrap}
+.pc-chips span{display:flex;flex-direction:column;align-items:center;min-width:46px;padding:3px 6px;border:1px solid var(--line);border-radius:8px;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;background:#16130f}
+.pc-chips b{font-size:19px;color:var(--ink);letter-spacing:0;text-transform:none}
+.pc-abs{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+.pc-abs span{display:flex;flex-direction:column;align-items:center;font-size:16px;font-weight:600;padding:2px 0;border-radius:6px;background:#16130f}
+.pc-abs i{font-style:normal;font-size:10.5px;color:var(--mute);letter-spacing:.05em}
+.pc-abs .sv{box-shadow:inset 0 -2px 0 var(--gold)}
+.pc-pass{font-size:13.5px;color:var(--mute)}.pc-pass b{color:var(--ink)}
+.pc-note{font-size:13.5px;color:#c9b88f;font-style:italic}
+/* big card */
+.qs-box.pc-modal{width:min(980px,96vw);max-height:92vh;overflow:auto;padding:0}
+.pc-big{position:relative;padding:20px 22px}
+.pc-x{position:absolute;top:10px;right:10px;font-size:18px}
+.pc-big-head{display:flex;gap:18px;align-items:flex-start;margin-bottom:14px}
+.pc-bigpic{width:150px;height:150px;border-radius:14px;object-fit:cover;flex:none;border:2px solid var(--gold);background:#16130f}
+.pc-bigpic.pc-noimg{font-size:46px}
+.pc-big h2{font:700 28px "Cinzel",serif;color:var(--gold);margin:0}
+.pc-chips.big{margin-top:10px}.pc-chips.big span{min-width:62px}.pc-chips.big b{font-size:22px}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pc-grid section{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pc-grid h3{font:700 15px "Cinzel",serif;color:var(--gold);margin:0 0 6px;letter-spacing:.04em}
+.pc-tab{width:100%;border-collapse:collapse;font-size:15px}.pc-tab td,.pc-tab th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:left}.pc-tab th{font-size:12px;color:var(--mute);font-weight:400}
+.pc-tab td.sv{color:var(--gold);font-weight:700}
+.pc-skills{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:14px}
+.pc-skills span{display:flex;gap:4px;align-items:baseline;color:var(--mute)}.pc-skills i{font-style:normal;font-size:10px;opacity:.7}.pc-skills b{margin-left:auto;color:var(--ink)}
+.pc-skills .on{color:var(--ink)}.pc-skills .on::before{content:"●";color:var(--gold);font-size:9px}.pc-skills .exp::before{content:"◆"}
+.pc-feat{margin:0;padding-left:18px;font-size:15px}.pc-feat li{margin:3px 0}
+/* editor */
+.pc-edit{border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;gap:10px}
+.pc-edit>summary{cursor:pointer}
+.pc-edit-top{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.pc-edit-top .grid{flex:1;min-width:260px;grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+.pc-portrait{display:grid;gap:6px;justify-items:start;width:200px}
+.pc-portrait input{width:100%}
+/* phone */
+body.mobile .tm-layout{grid-template-columns:minmax(0,1fr);gap:12px}
+body.mobile .tm-side{position:static;max-height:none;overflow:visible}
+body.mobile .pc-cards{grid-template-columns:minmax(0,1fr)}
+body.mobile .pc-pic{width:72px;height:72px}
+body.mobile .qs-box.pc-modal{width:100vw;max-height:100vh;height:100%;border-radius:0}
+body.mobile .pc-big{padding:16px 14px 80px}
+body.mobile .pc-big-head{flex-direction:column;align-items:center;text-align:center}
+body.mobile .pc-big-head .pc-chips{justify-content:center}
+body.mobile .pc-grid{grid-template-columns:minmax(0,1fr)}
+body.mobile .pc-x{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:2;background:var(--panel2)}
+.tm-side{overflow-x:hidden}
+.tm-side .side-body{overflow-wrap:anywhere}
+.tm-side table.ref td:last-child{white-space:normal}
+.tm-side .standing{border:0;padding:0;margin:0;background:none}
+.tm-side .st-btns{margin-left:0;width:100%}
+.pc-card .pc-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.pc-card .pc-chips span{min-width:0;padding:3px 2px}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -712,7 +785,7 @@ const AI={
   key(){return lsGet("ygh.apikey","")},
   mode(){return this.sample?"claude":this.key()?"api":"none"},
   label(){return {claude:"Claude: built in",api:"Claude: API key",none:"Claude: copy/paste"}[this.mode()]},
-  parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
+  parse(text){let t=String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.search(/[\[{]/),b=a>=0?t.lastIndexOf(t[a]==="["?"]":"}"):-1;if(a<0||b<a)throw new Error("No JSON found");return JSON.parse(t.slice(a,b+1))},
   async json(prompt,pdfBase64){
     if(this.sample&&!pdfBase64)return await this.sample.json(prompt,{modelTier:"default"});
     const key=this.key(); if(!key){const e=new Error("no-ai");e.noai=true;throw e}
@@ -775,7 +848,7 @@ const isDM=()=>!!S.dmHash&&lsGet("ygh.dm",null)===S.dmHash;
 function lockDM(){lsSet("ygh.dm",null);UI.tab="p-board";saveUI();App.render();toast("Player View")}
 
 /* small modal helper: returns {el,close} */
-function modal(html){const w=document.createElement("div");w.className="qs";w.innerHTML=`<div class="qs-box modal">${html}</div>`;document.body.appendChild(w);
+function modal(html,cls=""){const w=document.createElement("div");w.className="qs";w.innerHTML=`<div class="qs-box modal ${cls}">${html}</div>`;document.body.appendChild(w);
   const close=()=>w.remove();w.addEventListener("click",e=>{if(e.target===w)close()});w.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
   setTimeout(()=>w.querySelector("input,button")?.focus(),30);return {el:w,close}}
 function ask(title,msg,buttons){return new Promise(res=>{const m=modal(`<h2>${esc(title)}</h2><p>${msg}</p><div class="actions">${buttons.map((b,i)=>`<button class="btn${i===0?" primary":""}" data-i="${i}">${esc(b)}</button>`).join("")}</div>`);
@@ -5890,11 +5963,12 @@ const Roster=(()=>{
       <div><div class="muted" style="font-size:13px">Working skills &amp; tools</div><div id="skillRows"></div><button class="btn small" id="addSkill">＋ skill</button></div>
       <label>Notes <textarea data-k="notes" rows="2">${esc(m.notes||"")}</textarea></label>
       ${profileEditor(m)}
+      <div id="pcEd">${PCs.editorHTML(m)}</div>
       <datalist id="skillList">${SKILL_HINTS.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
       <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
-    rows();
-    h.oninput=h.onchange=e=>{const t=e.target;
+    rows();PCs.bindEditor($("#pcEd"),m,renderEditor);
+    h.oninput=h.onchange=e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
       if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
@@ -5914,19 +5988,19 @@ const Roster=(()=>{
     const anc=x.ancestry||[x.species||x.race,x.class||x.classes].filter(Boolean).join(" ");
     return {id:uid(),name:String(x.name||"").trim(),kind:KINDS.includes(x.kind)?x.kind:"Active PC",status:STATUSES.includes(x.status)?x.status:"Adventuring",
       level:+x.level||null,ancestry:anc,player:x.player||"",role:x.role||"",assign:"",notes:x.notes||"",
-      skills:(x.skills||[]).map(k=>typeof k==="string"?{s:k,g:"Prof"}:{s:k.s||k.name||k.skill||"",g:mapG(k.g||k.grade||k.proficiency)}).filter(k=>k.s)}}
+      skills:(x.skills||[]).map(k=>typeof k==="string"?{s:k,g:"Prof"}:{s:k.s||k.name||k.skill||"",g:mapG(k.g||k.grade||k.proficiency)}).filter(k=>k.s),...(PCs.fromImport(x)?{pc:PCs.fromImport(x)}:{})}}
   function candidates(o){if(Array.isArray(o))return o;if(o&&Array.isArray(o.members))return o.members;if(o&&Array.isArray(o.characters))return o.characters;return [o]}
   function accept(o){
     const list=candidates(o).filter(x=>x&&x.name).map(mapMember);
     if(!list.length){msg("That didn't contain a character with a name.");return false}
     const match=m=>C.roster.find(x=>x.name.toLowerCase()===m.name.toLowerCase());
     if(list.length===1){const m=list[0],ex=match(m);
-      editing=ex?Object.assign(clone(ex),m,{id:ex.id,assign:ex.assign,kind:ex.kind==="Active PC"?m.kind:ex.kind}):m;
+      editing=ex?Object.assign(clone(ex),m,{id:ex.id,assign:ex.assign,kind:ex.kind==="Active PC"?m.kind:ex.kind,pc:m.pc?Object.assign({},ex.pc||{},m.pc,{portrait:m.pc.portrait||ex.pc?.portrait||null}):ex.pc}):m;
       importing=false;render();toast(ex?`Updating ${m.name}: review and save`:`Review ${m.name}, then save`);$("#editorHost").scrollIntoView({behavior:"smooth"});return true}
     list.forEach(m=>{const ex=match(m);if(ex)Object.assign(ex,m,{id:ex.id,assign:ex.assign});else C.roster.push(m)});
     commit();importing=false;render();toast(`Imported ${list.length} characters`);return true}
   const sheetPrompt=t=>`Convert this D&D 5e character into Guild Hall roster JSON. Return ONLY JSON:
-{"guildHall":"character","name":string,"kind":"Active PC","level":number,"ancestry":"Species Class (Subclass)","player":"" or the player's name if given,"role":"" or a guild job they'd suit (e.g. Alchemist),"skills":[{"s":"skill or tool name","g":"Prof" or "Exp"}],"notes":"one line: personality or look"}
+{"guildHall":"character","name":string,"kind":"Active PC","level":number,"ancestry":"Species Class (Subclass)","player":"" or the player's name if given,"role":"" or a guild job they'd suit (e.g. Alchemist),"skills":[{"s":"skill or tool name","g":"Prof" or "Exp"}],"stats":{"str":n,"dex":n,"con":n,"int":n,"wis":n,"cha":n},"ac":n,"hp":max HP,"speed":"30 ft","saves":["str","con"],"senses":"" or e.g. "Darkvision 60 ft","resistances":"","languages":"","spellcasting":{"ability":"wis"} or null,"attacks":[{"name":"Longsword","hit":"+5","damage":"1d8+3 slashing"}],"features":["short rules reminders the DM needs at the table (uses per rest), no backstory"],"notes":"one line: personality or look"}
 List every skill and tool they're proficient with; use "Exp" for expertise.
 ${t?`
 CHARACTER:
@@ -5980,6 +6054,106 @@ ${t}`:""}`;
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
   return {render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+})();
+
+/* ===== PCs: play stats + portraits for Table Mode character cards =====
+   Stored on the roster member as m.pc = {stats:{str..cha}, ac, hp, speed, init (null = Dex), saves:[ab], senses, resist, langs,
+   spell:{ab, dc, atk} (dc/atk blank = auto), attacks (text, one per line "Name | +5 | 1d8+3 slashing"), features (text, one per line), portrait (data URL or URL)}.
+   Nothing about personality or background lives here; that stays in notes. */
+const PCs=(()=>{
+  const AB=["str","dex","con","int","wis","cha"],ABN={str:"STR",dex:"DEX",con:"CON",int:"INT",wis:"WIS",cha:"CHA"};
+  const SKILLS=[["Acrobatics","dex"],["Animal Handling","wis"],["Arcana","int"],["Athletics","str"],["Deception","cha"],["History","int"],["Insight","wis"],["Intimidation","cha"],["Investigation","int"],["Medicine","wis"],["Nature","int"],["Perception","wis"],["Performance","cha"],["Persuasion","cha"],["Religion","int"],["Sleight of Hand","dex"],["Stealth","dex"],["Survival","wis"]];
+  const SK=Object.fromEntries(SKILLS.map(([n,a])=>[n.toLowerCase(),a]));
+  const isPC=m=>m.kind==="Active PC";
+  const P=m=>m.pc||{};
+  const has=m=>{const s=P(m).stats;return !!s&&AB.some(a=>s[a]!=null&&s[a]!=="")};
+  const score=(m,a)=>{const v=P(m).stats?.[a];return v==null||v===""?10:+v};
+  const mod=(m,a)=>Math.floor((score(m,a)-10)/2);
+  const pb=m=>2+Math.floor(((+m.level||1)-1)/4);
+  const sg=n=>(n>=0?"+":"")+n;
+  function prof(m,name){const k=(m.skills||[]).find(s=>String(s.s).toLowerCase()===name.toLowerCase());if(!k)return 0;return /^(exp|expert|master)$/i.test(k.g)?2:/^novice$/i.test(k.g)?0:1}
+  const skill=(m,name)=>mod(m,SK[name.toLowerCase()])+prof(m,name)*pb(m);
+  const save=(m,a)=>mod(m,a)+((P(m).saves||[]).includes(a)?pb(m):0);
+  const passive=(m,name)=>10+skill(m,name);
+  const init=m=>P(m).init!=null&&P(m).init!==""?+P(m).init:mod(m,"dex");
+  function spell(m){const s=P(m).spell||{};if(!s.ab)return null;return {ab:s.ab,dc:s.dc||8+pb(m)+mod(m,s.ab),atk:s.atk||pb(m)+mod(m,s.ab)}}
+  const lines=t=>String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);
+  const attacks=m=>lines(P(m).attacks).map(l=>{const [n,h,d]=l.split("|").map(x=>x.trim());return {n,h:h||"",d:d||""}});
+  const tools=m=>(m.skills||[]).filter(s=>!SK[String(s.s).toLowerCase()]).map(s=>s.s+(/^(exp|expert|master)$/i.test(s.g)?" (expertise)":""));
+  const initials=n=>String(n||"?").split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const pic=(m,cls)=>P(m).portrait?`<img class="${cls}" src="${esc(P(m).portrait)}" alt="">`:`<div class="${cls} pc-noimg">${esc(initials(m.name))}</div>`;
+  const list=()=>Roster.sorted().filter(isPC).filter(m=>m.status!=="Left");
+
+  /* ---------- Table Mode ---------- */
+  function cardHTML(m){const p=P(m);
+    return `<button class="pc-card" data-pc="${m.id}">${pic(m,"pc-pic")}
+      <div class="pc-body"><div class="pc-name">${esc(m.name)}</div><div class="pc-sub">Lv ${m.level||"?"} ${esc(m.ancestry||"")}${m.player?` · ${esc(m.player)}`:""}</div>
+      ${has(m)?`<div class="pc-chips"><span><b>${p.ac||"—"}</b>AC</span><span><b>${p.hp||"—"}</b>HP</span><span><b>${sg(init(m))}</b>Init</span><span><b>${esc(String(p.speed||30).replace(/\s*ft\.?/i,""))}</b>Speed</span></div>
+      <div class="pc-abs">${AB.map(a=>`<span class="${(p.saves||[]).includes(a)?"sv":""}"><i>${ABN[a]}</i>${sg(mod(m,a))}</span>`).join("")}</div>
+      <div class="pc-pass">Passive Perception <b>${passive(m,"Perception")}</b> · Insight <b>${passive(m,"Insight")}</b> · Investigation <b>${passive(m,"Investigation")}</b></div>
+      ${p.senses||p.resist?`<div class="pc-note">${esc([p.senses,p.resist&&("Resist: "+p.resist)].filter(Boolean).join(" · "))}</div>`:""}`
+      :`<div class="pc-note">No play stats yet: Roster → Edit → Play stats.</div>`}</div></button>`}
+  function bigHTML(m){const p=P(m),sp=spell(m),at=attacks(m),ft=lines(p.features),tl=tools(m);
+    return `<div class="pc-big"><button class="btn ghost pc-x" data-close aria-label="Close">✕</button>
+      <div class="pc-big-head">${pic(m,"pc-bigpic")}<div><h2>${esc(m.name)}</h2><div class="pc-sub">Level ${m.level||"?"} ${esc(m.ancestry||"")}${m.player?` · played by ${esc(m.player)}`:""}</div>
+        <div class="pc-chips big"><span><b>${p.ac||"—"}</b>AC</span><span><b>${p.hp||"—"}</b>Max HP</span><span><b>${sg(init(m))}</b>Initiative</span><span><b>${esc(p.speed||"30 ft")}</b>Speed</span><span><b>${sg(pb(m))}</b>Prof.</span>${sp?`<span><b>${sp.dc}</b>Spell DC</span><span><b>${sg(sp.atk)}</b>Spell atk</span>`:""}</div></div></div>
+      <div class="pc-grid">
+        <section><h3>Abilities</h3><table class="pc-tab"><tr><th></th><th>Score</th><th>Mod</th><th>Save</th></tr>${AB.map(a=>`<tr><td>${ABN[a]}</td><td>${score(m,a)}</td><td><b>${sg(mod(m,a))}</b></td><td class="${(p.saves||[]).includes(a)?"sv":""}">${sg(save(m,a))}</td></tr>`).join("")}</table>
+          <h3>Passives</h3><div class="pc-pass">Perception <b>${passive(m,"Perception")}</b> · Insight <b>${passive(m,"Insight")}</b> · Investigation <b>${passive(m,"Investigation")}</b></div></section>
+        <section><h3>Skills</h3><div class="pc-skills">${SKILLS.map(([n,a])=>{const pr=prof(m,n);return `<span class="${pr?"on":""}${pr===2?" exp":""}">${n} <i>${ABN[a]}</i><b>${sg(skill(m,n))}</b></span>`}).join("")}</div></section>
+        ${at.length?`<section><h3>Attacks</h3><table class="pc-tab">${at.map(x=>`<tr><td><b>${esc(x.n)}</b></td><td>${esc(x.h)}</td><td>${esc(x.d)}</td></tr>`).join("")}</table></section>`:""}
+        ${ft.length?`<section><h3>Features &amp; abilities</h3><ul class="pc-feat">${ft.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></section>`:""}
+        <section><h3>Other</h3>${[["Senses",p.senses],["Resistances",p.resist],["Languages",p.langs],["Tools",tl.join(", ")],["In the guild",[m.status,m.assign&&("operating "+Roster.assignName(m))].filter(Boolean).join(" · ")]].filter(x=>x[1]).map(([k,v])=>`<div class="row"><b>${k}:</b> ${esc(v)}</div>`).join("")||'<p class="muted">Nothing else recorded.</p>'}</section>
+      </div></div>`}
+  function tableSection(){const d=document.createElement("section");d.className="pc-section";const L=list();
+    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
+    d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(!m)return;
+      const md=modal(bigHTML(m),"pc-modal");md.el.querySelector("[data-close]").onclick=md.close};
+    return d}
+
+  /* ---------- Roster editor ---------- */
+  function editorHTML(m){if(!/PC/.test(m.kind))return "";const p=P(m);
+    return `<details class="pc-edit"${has(m)?"":" open"}><summary><b>Play stats</b> <span class="muted">for the Table Mode character card</span></summary>
+      <div class="pc-edit-top"><div class="pc-portrait">${pic(m,"pc-pic")}<div class="actions"><label class="btn small">Upload portrait<input type="file" accept="image/*" data-pcimg hidden></label>${p.portrait?'<button class="btn small ghost" data-pcnoimg>Remove</button>':""}</div>
+        <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!p.portrait.startsWith("data:")?esc(p.portrait):""}"></div>
+        <div class="grid">${AB.map(a=>`<label>${ABN[a]} <input type="number" min="1" max="30" data-pcs="${a}" value="${esc(p.stats?.[a]??"")}"></label>`).join("")}
+          <label>AC <input type="number" data-pc="ac" value="${esc(p.ac??"")}"></label><label>Max HP <input type="number" data-pc="hp" value="${esc(p.hp??"")}"></label>
+          <label>Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>
+      <div class="actions"><span class="muted">Saving throws</span>${AB.map(a=>`<label class="inline"><input type="checkbox" data-pcsave="${a}"${(p.saves||[]).includes(a)?" checked":""}> ${ABN[a]}</label>`).join("")}</div>
+      <div class="grid"><label>Spellcasting ability <select data-pcsp="ab"><option value="">— none —</option>${AB.slice(3).map(a=>`<option value="${a}"${p.spell?.ab===a?" selected":""}>${ABN[a]}</option>`).join("")}</select></label>
+        <label>Senses <input data-pc="senses" value="${esc(p.senses||"")}" placeholder="Darkvision 60 ft"></label><label>Resistances <input data-pc="resist" value="${esc(p.resist||"")}"></label><label>Languages <input data-pc="langs" value="${esc(p.langs||"")}"></label></div>
+      <label>Attacks <span class="muted">(one per line: Name | to hit | damage)</span><textarea data-pc="attacks" rows="3" placeholder="Longsword | +5 | 1d8+3 slashing">${esc(p.attacks||"")}</textarea></label>
+      <label>Features the DM should know at the table <span class="muted">(one per line, no backstory)</span><textarea data-pc="features" rows="4" placeholder="Rage (3/long rest): resistance to bludgeoning, piercing, slashing&#10;Lucky (3/long rest)">${esc(p.features||"")}</textarea></label>
+      <p class="hint">Skill and save bonuses, passives and spell DC are worked out from these, the level, and the skills list above.</p></details>`}
+  function bindEditor(host,m,rerender){
+    host.addEventListener("input",e=>{const t=e.target;if(!t.closest(".pc-edit"))return;const p=m.pc=m.pc||{};
+      if(t.dataset.pcs){(p.stats=p.stats||{})[t.dataset.pcs]=t.value===""?null:+t.value}
+      else if(t.dataset.pc==="portraitUrl"){p.portrait=t.value.trim()||null}
+      else if(t.dataset.pc){p[t.dataset.pc]=t.type==="number"?(t.value===""?null:+t.value):t.value}
+      else if(t.dataset.pcsp){(p.spell=p.spell||{})[t.dataset.pcsp]=t.value}});
+    host.addEventListener("change",async e=>{const t=e.target;if(!t.closest(".pc-edit"))return;const p=m.pc=m.pc||{};
+      if(t.dataset.pcsave){const s=new Set(p.saves||[]);t.checked?s.add(t.dataset.pcsave):s.delete(t.dataset.pcsave);p.saves=AB.filter(a=>s.has(a))}
+      else if(t.dataset.pcsp){(p.spell=p.spell||{})[t.dataset.pcsp]=t.value}
+      else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}});
+    host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}})}
+  /* downscale to keep the campaign file small (portraits travel inside it, so they reach GitHub with each save) */
+  function shrink(file,max=320){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
+    const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",0.82))};img.src=r.result};r.readAsDataURL(file)})}
+
+  /* ---------- import (Guild Hall Import Format) ---------- */
+  function fromImport(x){const st=x.stats||x.abilities||null,o={};
+    if(st){o.stats={};AB.forEach(a=>{const v=st[a]??st[a.toUpperCase()]??st[{str:"strength",dex:"dexterity",con:"constitution",int:"intelligence",wis:"wisdom",cha:"charisma"}[a]];if(v!=null)o.stats[a]=+v})}
+    ["ac","hp","init"].forEach(k=>{if(x[k]!=null)o[k]=+x[k]});if(x.speed)o.speed=String(x.speed);
+    if(x.saves)o.saves=x.saves.map(s=>String(s).toLowerCase().slice(0,3)).filter(a=>AB.includes(a));
+    if(x.senses)o.senses=String(x.senses);if(x.resistances||x.resist)o.resist=String(x.resistances||x.resist);if(x.languages)o.langs=[].concat(x.languages).join(", ");
+    const sp=x.spellcasting||x.spell;if(sp)o.spell={ab:String(sp.ability||sp.ab||"").toLowerCase().slice(0,3),dc:sp.dc?+sp.dc:null,atk:sp.attack!=null?+String(sp.attack).replace("+",""):null};
+    if(x.attacks)o.attacks=x.attacks.map(a=>typeof a==="string"?a:[a.name,a.hit??a.toHit??a.bonus,a.damage??a.dmg].filter(v=>v!=null&&v!=="").join(" | ")).join("\n");
+    if(x.features)o.features=x.features.map(f=>typeof f==="string"?f:[f.name,f.text||f.desc].filter(Boolean).join(": ")).join("\n");
+    if(x.portrait)o.portrait=String(x.portrait);
+    return Object.keys(o).length?o:null}
+
+  return {tableSection,editorHTML,bindEditor,fromImport,list};
 })();
 
 /* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
@@ -6699,9 +6873,14 @@ const App=(()=>{
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`}
   /* ---------- table mode ---------- */
   function renderTable(){
-    const el=$("#tableView");el.innerHTML="";
+    const el=$("#tableView");el.innerHTML="";el.className="tm-layout";
+    el.appendChild(PCs.tableSection());
+    const side=document.createElement("aside");side.className="tm-side";el.appendChild(side);
+    const closed=UI.tmClosed||(UI.tmClosed=[]);
     const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
-    const col=(title,inner)=>{const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>${title}</h2>`;if(typeof inner==="string")p.insertAdjacentHTML("beforeend",inner);else p.appendChild(inner);el.appendChild(p);return p};
+    const col=(title,inner)=>{const p=document.createElement("details");p.className="panel side-panel";p.open=!closed.includes(title);p.innerHTML=`<summary><h2>${title}</h2></summary>`;
+      p.ontoggle=()=>{const i=closed.indexOf(title);if(p.open&&i>=0)closed.splice(i,1);else if(!p.open&&i<0)closed.push(title);saveUI()};
+      const b=document.createElement("div");b.className="side-body";if(typeof inner==="string")b.innerHTML=inner;else b.appendChild(inner);p.appendChild(b);side.appendChild(p);return b};
     col("Guild standing",Standing.tablePanel());
     const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
     if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
@@ -6715,7 +6894,7 @@ const App=(()=>{
     const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
     rv.querySelector("#rvLvl").oninput=upd;upd();
     col("NPCs in play",NPCs.tableEl());
-    col("Who's in the hall",`<table class="ref">${Roster.sorted().map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
+    col("Also in the hall",`<table class="ref">${Roster.sorted().filter(m=>m.kind!=="Active PC").map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
     col("Shops in play",Shops.tableHTML());
     col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
   }

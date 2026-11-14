@@ -49,11 +49,12 @@ const Roster=(()=>{
       <div><div class="muted" style="font-size:13px">Working skills &amp; tools</div><div id="skillRows"></div><button class="btn small" id="addSkill">＋ skill</button></div>
       <label>Notes <textarea data-k="notes" rows="2">${esc(m.notes||"")}</textarea></label>
       ${profileEditor(m)}
+      <div id="pcEd">${PCs.editorHTML(m)}</div>
       <datalist id="skillList">${SKILL_HINTS.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
       <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
-    rows();
-    h.oninput=h.onchange=e=>{const t=e.target;
+    rows();PCs.bindEditor($("#pcEd"),m,renderEditor);
+    h.oninput=h.onchange=e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
       if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
@@ -73,19 +74,19 @@ const Roster=(()=>{
     const anc=x.ancestry||[x.species||x.race,x.class||x.classes].filter(Boolean).join(" ");
     return {id:uid(),name:String(x.name||"").trim(),kind:KINDS.includes(x.kind)?x.kind:"Active PC",status:STATUSES.includes(x.status)?x.status:"Adventuring",
       level:+x.level||null,ancestry:anc,player:x.player||"",role:x.role||"",assign:"",notes:x.notes||"",
-      skills:(x.skills||[]).map(k=>typeof k==="string"?{s:k,g:"Prof"}:{s:k.s||k.name||k.skill||"",g:mapG(k.g||k.grade||k.proficiency)}).filter(k=>k.s)}}
+      skills:(x.skills||[]).map(k=>typeof k==="string"?{s:k,g:"Prof"}:{s:k.s||k.name||k.skill||"",g:mapG(k.g||k.grade||k.proficiency)}).filter(k=>k.s),...(PCs.fromImport(x)?{pc:PCs.fromImport(x)}:{})}}
   function candidates(o){if(Array.isArray(o))return o;if(o&&Array.isArray(o.members))return o.members;if(o&&Array.isArray(o.characters))return o.characters;return [o]}
   function accept(o){
     const list=candidates(o).filter(x=>x&&x.name).map(mapMember);
     if(!list.length){msg("That didn't contain a character with a name.");return false}
     const match=m=>C.roster.find(x=>x.name.toLowerCase()===m.name.toLowerCase());
     if(list.length===1){const m=list[0],ex=match(m);
-      editing=ex?Object.assign(clone(ex),m,{id:ex.id,assign:ex.assign,kind:ex.kind==="Active PC"?m.kind:ex.kind}):m;
+      editing=ex?Object.assign(clone(ex),m,{id:ex.id,assign:ex.assign,kind:ex.kind==="Active PC"?m.kind:ex.kind,pc:m.pc?Object.assign({},ex.pc||{},m.pc,{portrait:m.pc.portrait||ex.pc?.portrait||null}):ex.pc}):m;
       importing=false;render();toast(ex?`Updating ${m.name}: review and save`:`Review ${m.name}, then save`);$("#editorHost").scrollIntoView({behavior:"smooth"});return true}
     list.forEach(m=>{const ex=match(m);if(ex)Object.assign(ex,m,{id:ex.id,assign:ex.assign});else C.roster.push(m)});
     commit();importing=false;render();toast(`Imported ${list.length} characters`);return true}
   const sheetPrompt=t=>`Convert this D&D 5e character into Guild Hall roster JSON. Return ONLY JSON:
-{"guildHall":"character","name":string,"kind":"Active PC","level":number,"ancestry":"Species Class (Subclass)","player":"" or the player's name if given,"role":"" or a guild job they'd suit (e.g. Alchemist),"skills":[{"s":"skill or tool name","g":"Prof" or "Exp"}],"notes":"one line: personality or look"}
+{"guildHall":"character","name":string,"kind":"Active PC","level":number,"ancestry":"Species Class (Subclass)","player":"" or the player's name if given,"role":"" or a guild job they'd suit (e.g. Alchemist),"skills":[{"s":"skill or tool name","g":"Prof" or "Exp"}],"stats":{"str":n,"dex":n,"con":n,"int":n,"wis":n,"cha":n},"ac":n,"hp":max HP,"speed":"30 ft","saves":["str","con"],"senses":"" or e.g. "Darkvision 60 ft","resistances":"","languages":"","spellcasting":{"ability":"wis"} or null,"attacks":[{"name":"Longsword","hit":"+5","damage":"1d8+3 slashing"}],"features":["short rules reminders the DM needs at the table (uses per rest), no backstory"],"notes":"one line: personality or look"}
 List every skill and tool they're proficient with; use "Exp" for expertise.
 ${t?`
 CHARACTER:
