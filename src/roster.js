@@ -62,7 +62,7 @@ const Roster=(()=>{
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
     rows();PCs.bindEditor($("#pcEd"),m,renderEditor);
     h.oninput=h.onchange=async e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
-      if(t.dataset.npcimg!=null){if(e.type==="change"&&t.files[0]){try{m.img=await PCs.shrink(t.files[0],1000,0.8,true);renderEditor()}catch(err){toast("Couldn't read that image")}}return}
+      if(t.dataset.npcimg!=null){if(e.type==="change"&&t.files[0]){try{const v=await PCs.cropShrink(t.files[0],0,1000,0.8,true);t.value="";if(v){m.img=v;renderEditor()}}catch(err){toast("Couldn't read that image")}}return}
       if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};

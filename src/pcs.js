@@ -96,10 +96,37 @@ const PCs=(()=>{
     host.addEventListener("change",async e=>{const t=e.target;if(!t.closest(".pc-edit"))return;const p=m.pc=m.pc||{};
       if(t.dataset.pcsave){const s=new Set(p.saves||[]);t.checked?s.add(t.dataset.pcsave):s.delete(t.dataset.pcsave);p.saves=AB.filter(a=>s.has(a))}
       else if(t.dataset.pcsp){(p.spell=p.spell||{})[t.dataset.pcsp]=t.value}
-      else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}
-      else if(t.dataset.pcbody!=null&&t.files[0]){try{p.body=await shrink(t.files[0],1000,0.8,true);rerender()}catch(err){toast("Couldn't read that image")}}});
+      else if(t.dataset.pcimg!=null&&t.files[0]){try{const v=await cropShrink(t.files[0],1);t.value="";if(v){p.portrait=v;rerender()}}catch(err){toast("Couldn't read that image")}}
+      else if(t.dataset.pcbody!=null&&t.files[0]){try{const v=await cropShrink(t.files[0],0,1000,0.8,true);t.value="";if(v){p.body=v;rerender()}}catch(err){toast("Couldn't read that image")}}});
     host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}
       else if(e.target.dataset.pcnobody!=null){e.preventDefault();m.pc.body=null;rerender()}})}
+  /* crop before upload: drag the box, drag a corner to resize (aspect 1 = square). Resolves a PNG Blob, the original file for
+     "Use whole image", or null when cancelled. Works with mouse and touch (pointer events). */
+  function crop(file,aspect=0){return new Promise(resolve=>{const url=URL.createObjectURL(file);let done=false;
+    const md=modal(`<div class="crop"><h2>Crop image</h2><p class="muted">Drag the box to move it; drag a corner to resize.${aspect?" Square for the portrait.":""}</p>
+      <div class="crop-wrap"><img alt=""><div class="crop-box">${["nw","ne","sw","se"].map(h=>`<i data-h="${h}"></i>`).join("")}</div></div>
+      <div class="actions"><button class="btn primary" data-ok>Use crop</button><button class="btn" data-full>Use whole image</button><button class="btn ghost" data-x>Cancel</button></div></div>`,"crop-modal");
+    const el=md.el,img=el.querySelector("img"),box=el.querySelector(".crop-box"),wrap=el.querySelector(".crop-wrap");let r={x:0,y:0,w:0,h:0},W=0,H=0;
+    const fin=v=>{if(done)return;done=true;URL.revokeObjectURL(url);md.close();resolve(v)};
+    const draw=()=>{Object.assign(box.style,{left:r.x+"px",top:r.y+"px",width:r.w+"px",height:r.h+"px"})};
+    img.onload=()=>{W=img.clientWidth;H=img.clientHeight;let w=W*.9,h=H*.9;if(aspect){w=h=Math.min(w,h)}r={x:(W-w)/2,y:(H-h)/2,w,h};draw()};
+    img.onerror=()=>{toast("Couldn't read that image");fin(null)};img.src=url;
+    let drag=null;
+    box.addEventListener("pointerdown",e=>{e.preventDefault();box.setPointerCapture(e.pointerId);drag={h:e.target.dataset.h||"",sx:e.clientX,sy:e.clientY,o:{...r}}});
+    box.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy,o=drag.o,M=30;
+      if(!drag.h){r.x=Math.max(0,Math.min(W-o.w,o.x+dx));r.y=Math.max(0,Math.min(H-o.h,o.y+dy))}
+      else{const L=drag.h.includes("w"),T=drag.h.includes("n");const ax=L?o.x+o.w:o.x,ay=T?o.y+o.h:o.y;   // fixed opposite corner
+        let w=Math.max(M,Math.min(L?ax:W-ax,o.w+(L?-dx:dx))),h=Math.max(M,Math.min(T?ay:H-ay,o.h+(T?-dy:dy)));
+        if(aspect){const s=Math.min(Math.max(w,h),L?ax:W-ax,T?ay:H-ay);w=h=Math.max(M,s)}
+        r={x:L?ax-w:ax,y:T?ay-h:ay,w,h}}
+      draw()});
+    box.addEventListener("pointerup",()=>{drag=null});
+    el.addEventListener("click",e=>{if(e.target===el)fin(null);else if(e.target.closest("[data-x]"))fin(null);else if(e.target.closest("[data-full]"))fin(file);
+      else if(e.target.closest("[data-ok]")){const k=img.naturalWidth/W,sw=r.w*k,sh=r.h*k,z=Math.min(1,3000/Math.max(sw,sh)),c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(sw*z));c.height=Math.max(1,Math.round(sh*z));c.getContext("2d").drawImage(img,r.x*k,r.y*k,sw,sh,0,0,c.width,c.height);
+        c.toBlob(b=>fin(b||file),"image/png")}});
+    el.addEventListener("keydown",e=>{if(e.key==="Escape")fin(null)})})}
+  async function cropShrink(file,aspect,...a){const b=await crop(file,aspect);return b?shrink(b,...a):null}
   /* downscale to keep the campaign file small (portraits travel inside it, so they reach GitHub with each save) */
   /* alpha=true keeps transparent backgrounds (WebP) so cut-out art sits on the dark card; falls back to JPEG on the card colour */
   function shrink(file,max=320,q=0.82,alpha=false){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
@@ -120,5 +147,5 @@ const PCs=(()=>{
     if(x.portrait)o.portrait=String(x.portrait);if(x.bodyImage||x.body)o.body=String(x.bodyImage||x.body);
     return Object.keys(o).length?o:null}
 
-  return {openBig,shrink,tableSection,editorHTML,bindEditor,fromImport,list};
+  return {crop,cropShrink,openBig,shrink,tableSection,editorHTML,bindEditor,fromImport,list};
 })();
