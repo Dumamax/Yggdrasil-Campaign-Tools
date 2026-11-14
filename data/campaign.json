@@ -1,7 +1,7 @@
 {
  "app": "yggdrasil-guild-hall",
  "schema": 7,
- "savedAt": "2026-11-14T21:08:52.368Z",
+ "savedAt": "2026-11-14T21:12:40.708Z",
  "settings": {
   "cp": {
    "name": "Contribution Points",
@@ -879,7 +879,7 @@
   },
   {
    "id": "576abfyw",
-   "name": "Gnome Artificer (Name TBD)",
+   "name": "Gnome Artificer (name TBD)",
    "kind": "Active PC",
    "status": "Adventuring",
    "level": 3,
