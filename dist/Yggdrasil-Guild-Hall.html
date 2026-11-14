@@ -636,7 +636,7 @@ function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign
 async function saveCampaign(asNew){
   if(!isDM())return;
   C.savedAt=new Date().toISOString();
-  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){toast(e.message+": saving a file instead")}}
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){Sync.setStatus("GitHub save failed");if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
   const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
@@ -789,7 +789,7 @@ const Sync=(()=>{
     if(msg)toast(msg)}
   async function pull(manual){if(busy)return;busy=true;try{
       const r=await fetchRemote();last=Date.now();
-      if(r.missing){setStatus(isDM()?"Not on GitHub yet":"Nothing published yet");return}
+      if(r.missing){setStatus(isDM()?(canPush()?"Not on GitHub yet: press Save":"Not on GitHub yet"):"Nothing published yet");return}
       if(r.sha===sha){setStatus("Up to date");if(manual)toast("Already up to date");return}
       if(!isDM()){adopt(r,sha?"Updated with the DM's latest save":"");setStatus("Up to date");return}
       const localEmpty=!C.savedAt&&!C.jobs.length&&!C.guild.cp.log.length;
@@ -798,13 +798,20 @@ const Sync=(()=>{
       const i=await ask("Newer save on GitHub",`Someone saved the campaign to GitHub (${esc(when)}) and this browser has ${dirty?"unsaved changes":"a different copy"}. Your current copy goes to Settings → Backups either way.`,["Load the GitHub save","Keep mine (overwrite on next save)"]);
       if(i===0){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date")}else{sha=r.sha;lsSet("ygh.sha",sha);dirty=true;lsSet("ygh.dirty",true);banner();setStatus("Your copy differs")}
     }catch(e){setStatus(navigator.onLine===false?"Offline":"Can't reach GitHub");if(manual)toast(e.message)}finally{busy=false}}
+  async function check(){const c=cfg();if(!token()){toast("No token saved in this browser");return}
+    try{const r=await fetch(`https://api.github.com/repos/${c.repo}`,{headers:hdr(),cache:"no-store"});
+      if(r.status===401){await ask("Token problem","GitHub refused this token. It may be mistyped, expired, or revoked. Make a new one and paste it in.",["OK"]);return}
+      if(!r.ok){await ask("Token problem",`The token can't see <b>${esc(c.repo)}</b> (error ${r.status}). Check the repo name, and that the token's Repository access includes it.`,["OK"]);return}
+      const j=await r.json(),push=j.permissions?.push;
+      await ask(push?"Token works":"Token can't save",push?`This browser can save to <b>${esc(c.repo)}</b>. Press Save to publish the campaign.`:`The token can read <b>${esc(c.repo)}</b> but not write. Edit the token on GitHub: Repository access must list this repo, and Repository permissions → <b>Contents</b> must be <b>Read and write</b>. Then paste it in again.`,["OK"])}
+    catch(e){await ask("Can't reach GitHub",esc(e.message),["OK"])}}
   async function push(){const c=cfg();const body={message:`Save campaign · ${new Date().toLocaleString()}`,content:enc(JSON.stringify(C,null,1)),branch:c.branch};if(sha)body.sha=sha;
     const r=await fetch(api(false),{method:"PUT",headers:Object.assign(hdr(),{"Content-Type":"application/json"}),body:JSON.stringify(body)});
     if(r.status===409||r.status===422){const remote=await fetchRemote().catch(()=>null);
       const i=await ask("Someone else saved first",`The GitHub copy changed since you loaded it${remote?.data?.savedAt?` (saved ${esc(new Date(remote.data.savedAt).toLocaleString())})`:""}.`,["Overwrite with mine","Load theirs instead","Cancel"]);
       if(i===0&&remote&&!remote.missing){sha=remote.sha;return push()}if(i===0&&remote?.missing){sha=null;return push()}
       if(i===1&&remote&&!remote.missing){adopt(remote,"Loaded their save (yours is in Backups)");setStatus("Up to date")}return false}
-    if(!r.ok)throw new Error(r.status===401?"GitHub token was refused (expired?)":r.status===403||r.status===404?"The token can't write to "+c.repo:"GitHub error "+r.status);
+    if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}throw new Error((r.status===401?"GitHub refused the token (mistyped or expired)":r.status===403||r.status===404?`The token can't write to ${c.repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""))}
     const j=await r.json();sha=j.content.sha;lsSet("ygh.sha",sha);setStatus("Saved to GitHub");return true}
   let timer=null;
   function start(){pull();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:60e3);
@@ -816,7 +823,7 @@ const Sync=(()=>{
       <label>Repo <input id="ghRepo" value="${esc(c.repo)}" style="width:260px"></label>
       <label>Branch <input id="ghBranch" value="${esc(c.branch)}" style="width:90px"></label>
       <label>File <input id="ghPath" value="${esc(c.path)}" style="width:180px"></label></div>
-    <div class="actions"><button class="btn" id="ghSave">Save settings</button><button class="btn" id="ghPull">Check GitHub now</button>${token()?'<button class="btn ghost danger" id="ghForget">Forget token</button>':""}<span class="muted">${esc(status||"")}</span></div>
+    <div class="actions"><button class="btn" id="ghSave">Save settings</button><button class="btn" id="ghCheck">Check my token</button><button class="btn" id="ghPull">Check for a newer save</button>${token()?'<button class="btn ghost danger" id="ghForget">Forget token</button>':""}<span class="muted">${esc(status||"")}</span></div>
     <details class="hint" style="margin-top:8px"><summary>How to make a token (2 minutes)</summary>
       <ol><li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.</li>
       <li>Expiration: up to 1 year (set a reminder to renew). Repository access: <b>Only select repositories</b> → ${esc(c.repo.split("/")[1]||c.repo)}.</li>
@@ -826,8 +833,9 @@ const Sync=(()=>{
     if(id==="ghSave"){const t=$("#ghTok").value.trim();if(t)lsSet("ygh.ghtoken",t);lsSet("ygh.sync",{repo:$("#ghRepo").value.trim()||SYNC_DEF.repo,branch:$("#ghBranch").value.trim()||"main",path:$("#ghPath").value.trim()||SYNC_DEF.path});
       sha=null;lsSet("ygh.sha",null);toast("GitHub settings saved");await pull(true);App.render()}
     else if(id==="ghPull")pull(true);
+    else if(id==="ghCheck")check();
     else if(id==="ghForget"){lsSet("ygh.ghtoken","");toast("Token removed from this browser");App.render()}}}
-  return {pull,push,start,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
+  return {check,pull,push,start,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
 })();
 
 /* Job Board default tables (content v3: expanded quirks, places, items, names) */
