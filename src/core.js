@@ -106,7 +106,7 @@ function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign
 async function saveCampaign(asNew){
   if(!isDM())return;
   C.savedAt=new Date().toISOString();
-  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){toast(e.message+": saving a file instead")}}
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){Sync.setStatus("GitHub save failed");if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
   const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
