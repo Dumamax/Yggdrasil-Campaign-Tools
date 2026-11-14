@@ -1,7 +1,7 @@
 /* ===== Places: the Tree's gazetteer (one area per map) + world names and gate IDs =====
    Place tags: c commoner, m merchant, n noble, g guild, k council, o otherworldly (who you'd find there, matched to patron categories);
    s = a quest can happen here. Area tier (0 Iron … 4 Platinum) is set for the Wards. Editable in Settings → Tables → Places. */
-const DEFAULT_PLACES={version:1,
+const DEFAULT_PLACES={version:2,
  areas:[
   {id:"pinboard",group:"The Bazaar",name:"Pinboard Plaza",blurb:"The cobbled heart of the bazaar, where the great Job Board stands.",places:[
    {n:"the Great Job Board",t:"s",b:"a notice board taller than a house, layered with petitions from a hundred worlds"},
@@ -126,12 +126,10 @@ const DEFAULT_PLACES={version:1,
    {n:"the Updraft Tavern",t:"cg",b:"sky-sailors' tavern with a floor that sways a little"},
    {n:"Shipwright's Crook",t:"mg",b:"airships built and patched in the crook of a branch"},
    {n:"the Lookout Nest",t:"s",b:"the highest open point most people will ever stand"}]},
-  {id:"gatewood",group:"Docks, Gates & Roots",name:"The Gatewood",blurb:"The great concourse of branch gates to other worlds, in five galleries by tier.",places:[
-   {n:"the Iron Gallery",t:"s",b:"the busiest gates, to nearby and friendlier worlds"},
-   {n:"the Bronze Gallery",t:"s",b:"gates to the worlds the working guilds keep running"},
-   {n:"the Silver Gallery",t:"s",b:"gates under study, sealed by default"},
-   {n:"the Gold Gallery",t:"s",b:"gates to worlds that need saving more than visiting"},
-   {n:"the Platinum Gallery",t:"s",b:"gates nobody has finished numbering"},
+  {id:"gatewood",group:"Docks, Gates & Roots",name:"The Gatewood",blurb:"The great concourse of branch gates to other worlds, in three galleries running deeper into the Tree the farther the world.",places:[
+   {n:"the Near Gallery",t:"s",b:"N-gates: bright, busy arches to neighboring worlds, a short walk in"},
+   {n:"the Far Gallery",t:"s",b:"F-gates: quieter arches deeper in, to worlds days away by any other road"},
+   {n:"the Fringe Gallery",t:"s",b:"X-gates: the dim far end, where the arches flicker and the numbering gets creative"},
    {n:"the Gatewardens' Lodge",t:"k",b:"keepers of the gate ledger and the reopening rites"},
    {n:"the Customs Hollow",t:"km",b:"where everything that crosses gets weighed, taxed, or confiscated"},
    {n:"the Arrivals Hall",t:"oc",b:"newcomers from every world, blinking at the light"}]},
@@ -143,7 +141,7 @@ const DEFAULT_PLACES={version:1,
    {n:"the Echo Galleries",t:"s",b:"tunnels that repeat your words a little wrong"},
    {n:"the Smugglers' Seam",t:"os",b:"a crack in the roots nobody officially knows about"}]}],
  tags:{"Local commoner":"c","Merchant":"m","Noble":"n","Guild":"g","Council":"k","Otherworldly being":"o"},
- gatePrefix:["IR","BR","SI","GO","PL"],
+ gateGalleries:{near:"N",far:"F",fringe:"X"},
  worldNames:{
   "High fantasy":{a:["Aelmoor","Valdren","Silverrun","Elandor","Thornhallow","Brightmere","Caer Amon","Ivoryreach","Lindarra","Galespire"],b:["","the Shining Vale","the Seven Crowns","the Dawnlands","the Elder Realms"]},
   "Low fantasy / medieval":{a:["Oxbridge","Mardale","Greyfen","Hollins","Wealdmarch","Ashby","Coldwater","Brackenholt","Dunmere","Saltcote"],b:["","Shire","March","Hundred","Vale"]},
@@ -183,7 +181,9 @@ const Places=(()=>{
   function worldName(genre){const W=T().worldNames||{},g=W[genre]||W["_"]||{a:["Elsewhere"],b:[""]},used=new Set((C.worlds||[]).map(w=>w.name));
     for(let i=0;i<40;i++){const a=pick(g.a),b=pick(g.b||[""]);const n=b&&Math.random()<0.4?(/^the /i.test(b)?`${a}, ${b}`:`${a} ${b}`):a;if(!used.has(n))return n}
     return `${pick(g.a)} ${(C.worlds||[]).length+1}`}
-  function gateId(rank){const pre=(T().gatePrefix||DEFAULT_PLACES.gatePrefix)[tierOf(rank)]||"IR",used=new Set((C.worlds||[]).map(w=>w.gate));
+  /* gallery by how far the world is (the job's location roll), not its tier */
+  function gallery(loc){const g=Object.assign({},DEFAULT_PLACES.gateGalleries,T().gateGalleries||{}),s=String(loc||"");return /far-flung|strange/i.test(s)?g.fringe:/distant/i.test(s)?g.far:g.near}
+  function gateId(loc){const pre=gallery(loc),used=new Set((C.worlds||[]).map(w=>w.gate));
     for(let i=0;i<200;i++){const g=`Gate ${pre}-${String(1+rnd(99)).padStart(2,"0")}`;if(!used.has(g))return g}return `Gate ${pre}-${100+(C.worlds||[]).length}`}
-  return {areas,area,place,label,blurb,giver,site,worldName,gateId};
+  return {areas,area,place,label,blurb,giver,site,worldName,gateId,gallery};
 })();

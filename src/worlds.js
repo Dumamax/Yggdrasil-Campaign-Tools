@@ -7,7 +7,7 @@ const Worlds=(()=>{
   const byId=id=>list().find(w=>w.id===id);
   const jobsOf=w=>C.jobs.filter(h=>h.worldId===w.id);
   const npcsOf=w=>{const ids=new Set(w.npcs||[]);jobsOf(w).forEach(h=>h.patron?.npcId&&ids.add(h.patron.npcId));return C.roster.filter(m=>m.worldId===w.id||ids.has(m.id))};
-  function create(h){const w={id:uid(),name:Places.worldName(h?.world?.genre),gate:Places.gateId(h?h.rank:S.tierRank),genre:h?.world?.genre||"",line:h?.world?.line||"",block:h?.worldBlock||null,status:"Healthy",notes:"",npcs:[],created:Date.now()};list().push(w);return w}
+  function create(h){const w={id:uid(),name:Places.worldName(h?.world?.genre),gate:Places.gateId(h?.location),genre:h?.world?.genre||"",line:h?.world?.line||"",block:h?.worldBlock||null,status:"Healthy",notes:"",npcs:[],created:Date.now()};list().push(w);return w}
   /* called when a job is marked Final */
   function forJob(h){if(!h.world?.genre)return null;if(h.worldId&&byId(h.worldId))return byId(h.worldId);const w=create(h);h.worldId=w.id;return w}
   const label=h=>{const w=h.worldId&&byId(h.worldId);return w?`${w.name}, through ${w.gate}`:""};
@@ -32,9 +32,9 @@ const Worlds=(()=>{
       <div class="actions"><button class="btn small ghost danger" data-wa="del">Delete world</button></div></div>`}
   function render(host){const L=list();
     host.innerHTML=`<div class="controls" style="margin-bottom:12px"><span class="muted" style="flex:1;min-width:220px">Every world the guild has been sent to. Jobs in other worlds get a name and a gate here when marked final.</span>
-      <label>Genre <select id="wGenre">${Object.keys((C.tables.places||DEFAULT_PLACES).worldNames).filter(g=>g!=="_").map(g=>`<option>${esc(g)}</option>`).join("")}</select></label><button class="btn" id="wAdd">＋ Add a world</button></div>
+      <label>Genre <select id="wGenre">${Object.keys((C.tables.places||DEFAULT_PLACES).worldNames).filter(g=>g!=="_").map(g=>`<option>${esc(g)}</option>`).join("")}</select></label><label>Distance <select id="wDist"><option>A nearby world</option><option>A distant world</option><option>A strange, far-flung world</option></select></label><button class="btn" id="wAdd">＋ Add a world</button></div>
       ${L.length?`<div class="board">${L.slice().reverse().map(card).join("")}</div>`:'<p class="muted">No worlds yet. Mark a job in another world as Final, or add one here.</p>'}`;
-    $("#wAdd").onclick=()=>{const g=$("#wGenre").value;const w=create({world:{genre:g,line:""},rank:S.tierRank});commit();render(host);App.flash(`[data-world="${w.id}"]`)};
+    $("#wAdd").onclick=()=>{const g=$("#wGenre").value;const w=create({world:{genre:g,line:""},location:$("#wDist").value});commit();render(host);App.flash(`[data-world="${w.id}"]`)};
     host.onchange=e=>{const c=e.target.closest("[data-world]");if(!c)return;const w=byId(c.dataset.world);if(!w)return;const f=e.target.dataset.wf;
       if(f){w[f]=e.target.value;commit();if(f==="status")e.target.className=`w-status s-${w.status}`;return}
       if(e.target.dataset.wlink!=null&&e.target.value){(w.npcs=w.npcs||[]).push(e.target.value);commit();render(host)}};
