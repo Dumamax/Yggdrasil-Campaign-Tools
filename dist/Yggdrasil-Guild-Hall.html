@@ -6207,7 +6207,7 @@ const PCs=(()=>{
   function confirmLeave(b){if(b.dataset.sure)return true;b.dataset.sure=1;b.textContent="Discard?";b.classList.add("danger");return false}
 
   /* ---------- Roster editor ---------- */
-  function editorHTML(m){if(!/PC/.test(m.kind))return "";const p=P(m);
+  function editorHTML(m){if(!/^(Active|Retired) PC$/.test(m.kind))return "";const p=P(m);
     return `<details class="pc-edit"${has(m)?"":" open"}><summary><b>Play stats</b> <span class="muted">for the Table Mode character card</span></summary>
       <div class="pc-edit-top"><div class="pc-portrait">${pic(m,"pc-pic")}<div class="actions"><label class="btn small">Upload portrait<input type="file" accept="image/*" data-pcimg hidden></label>${p.portrait?'<button class="btn small ghost" data-pcnoimg>Remove</button>':""}</div>
         <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!p.portrait.startsWith("data:")?esc(p.portrait):""}"></div>
