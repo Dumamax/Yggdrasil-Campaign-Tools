@@ -453,6 +453,17 @@ body.mobile .pc-grid .pc-sk{grid-column:auto}
 .pc-skills b{margin-left:0}
 .pc-skills span:hover{background:rgba(214,168,74,.08)}
 body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills span{white-space:nowrap}body.mobile .pc-skills .lead{margin:0 3px}
+/* price reference: each price labelled, grouped by row */
+.prices{display:grid;gap:2px}
+.pr-row{padding:5px 0;border-bottom:1px solid var(--line)}
+.pr-row:last-child{border-bottom:0}
+.pr-cat{font-size:12.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+.pr-it{display:flex;align-items:baseline;gap:4px;font-size:14.5px;line-height:1.35}
+.pr-it em{flex:1;border-bottom:1px dotted #6b5d48;transform:translateY(-4px);min-width:8px}
+.pr-it b{white-space:nowrap}
+.pr-row{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+.pr-row .pr-cat{grid-column:1/-1}
+.pr-it{font-size:14px}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -5449,7 +5460,7 @@ const DEFAULT_UPG_TABLES={
 };
 
 /* Price reference (PHB/DMG baseline), editable */
-const DEFAULT_PRICES={rule:"1 gp ≈ one day of modest living. Copper and silver are everyday money; gold is for gear, services, and big purchases.",rows:[["Mug of ale / loaf of bread","4 cp / 2 cp"],["Inn, one night (modest / comfortable)","5 sp / 8 sp"],["Meals, one day (modest / comfortable)","3 sp / 5 sp"],["Lifestyle per day (poor / modest / comfortable / wealthy)","2 sp / 1 gp / 2 gp / 4 gp"],["Unskilled / skilled hireling, per day","2 sp / 2 gp"],["Messenger / coach / ship passage","2 cp/mi / 3 cp/mi / 1 sp/mi"],["Torch / rope / rations (per day)","1 cp / 1 gp / 5 sp"],["Backpack / healer's kit / tool kit","2 gp / 5 gp / 5–50 gp"],["Dagger / longsword / shortbow","2 / 15 / 25 gp"],["Chain mail / plate armor","75 / 1,500 gp"],["Riding horse / cart","75 / 15 gp"],["Potion of Healing","50 gp"],["Spellcasting service (cantrip / 1st / 2nd / 3rd)","30 / 50 / 200 / 300 gp"],["Spellcasting service (4th–5th / 6th–8th / 9th)","2,000 / 20,000 / 100,000 gp"],["Magic items (common / uncommon / rare / very rare / legendary)","100 / 400 / 4,000 / 40,000 / 200,000 gp"]]};
+const DEFAULT_PRICES={rule:"1 gp ≈ one day of modest living. Copper and silver are everyday money; gold is for gear, services, and big purchases.",rows:[["Mug of ale / loaf of bread","4 cp / 2 cp"],["Inn, one night (modest / comfortable)","5 sp / 8 sp"],["Meals, one day (modest / comfortable)","3 sp / 5 sp"],["Lifestyle per day (poor / modest / comfortable / wealthy)","2 sp / 1 gp / 2 gp / 4 gp"],["Hireling, per day (unskilled / skilled)","2 sp / 2 gp"],["Travel, per mile (messenger / coach / ship)","2 cp / 3 cp / 1 sp"],["Torch / rope / rations (per day)","1 cp / 1 gp / 5 sp"],["Backpack / healer's kit / tool kit","2 gp / 5 gp / 5–50 gp"],["Dagger / longsword / shortbow","2 / 15 / 25 gp"],["Chain mail / plate armor","75 / 1,500 gp"],["Riding horse / cart","75 / 15 gp"],["Potion of Healing","50 gp"],["Spellcasting service (cantrip / 1st / 2nd / 3rd / 4th–5th / 6th–8th / 9th)","30 / 50 / 200 / 300 / 2,000 / 20,000 / 100,000 gp"],["Magic items (common / uncommon / rare / very rare / legendary)","100 / 400 / 4,000 / 40,000 / 200,000 gp"]]};
 
 /* ================= JOB BOARD ================= */
 const NOTICE_CSS=".notice{position:relative;background:\n  radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),\n  radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),\n  linear-gradient(135deg,#ead9b0,#d9c08a 55%,#cfb178);\n  color:#3a2a16;padding:30px 26px 26px;border-radius:3px;font-family:\"IM Fell English\",serif;\n  box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 0 40px rgba(110,70,20,.35);transform:rotate(var(--rot,0deg))}\n.notice::before{content:\"\";position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e6e6e6,#6b6b6b 60%,#333);box-shadow:0 2px 3px rgba(0,0,0,.6)}\n.notice .nhead{text-align:center;font-family:\"IM Fell English SC\",serif;font-size:15px;letter-spacing:.25em;color:#6b4a22}\n.notice .ntitle{text-align:center;font-family:\"IM Fell English SC\",serif;font-size:28px;line-height:1.1;margin:4px 0 10px;color:#2a1c0c}\n.notice .nbody{font-size:17.5px;line-height:1.4}\n.notice .nrule{border:0;border-top:1px solid rgba(80,50,20,.45);margin:12px 0}\n.notice .nfoot{display:flex;justify-content:space-between;gap:10px;font-size:15.5px}\n.notice .nreward{font-family:\"IM Fell English SC\",serif;font-size:18px;color:#5a1e10}\n.notice .stamp{position:absolute;right:16px;bottom:52px;width:74px;height:74px;border-radius:50%;border:3px double rgba(150,30,20,.7);color:rgba(150,30,20,.8);display:flex;align-items:center;justify-content:center;text-align:center;font:700 12px \"Cinzel\",serif;transform:rotate(-14deg);line-height:1.05;padding:6px}\n.notice .sig{font-style:italic;text-align:right;margin-top:6px}\n.notice-wrap{display:flex;flex-direction:column;gap:6px}\n";
@@ -6946,9 +6957,18 @@ const App=(()=>{
     col("NPCs in play",NPCs.tableEl());
     col("Also in the hall",`<table class="ref">${Roster.sorted().filter(m=>m.kind!=="Active PC").map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
     col("Shops in play",Shops.tableHTML());
-    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p><table class="ref">${prices().rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`);
+    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p>${priceHTML()}`);
   }
 
+  /* price rows like ["Inn, one night (modest / comfortable)","5 sp / 8 sp"] → label each price instead of matching slashes by eye */
+  function priceItems([name,val]){const V=String(val).split(/\s+\/\s+/),unit=(V[V.length-1].match(/\s(cp|sp|gp|pp)(\/\w+)?$/)||[""])[0];
+    const vals=V.map(v=>/\d$/.test(v.trim())&&unit?v.trim()+unit:v.trim());
+    const pm=String(name).match(/^(.*?)\s*\(([^)]*\/[^)]*)\)\s*$/),cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+    if(pm){const L=pm[2].split(/\s*\/\s*/);if(L.length===vals.length)return {cat:pm[1],items:L.map((l,i)=>[cap(l),vals[i]])}}
+    const N=String(name).split(/\s+\/\s+/);if(N.length===vals.length)return {cat:"",items:N.map((l,i)=>[cap(l),vals[i]])};
+    return {cat:"",items:[[name,val]]}}
+  function priceHTML(){return `<div class="prices">${prices().rows.map(r=>{const {cat,items}=priceItems(r);
+    return `<div class="pr-row">${cat?`<div class="pr-cat">${esc(cat)}</div>`:""}${items.map(([l,v])=>`<div class="pr-it"><span>${esc(l)}</span><em></em><b>${esc(v)}</b></div>`).join("")}</div>`}).join("")}</div>`}
   /* ---------- print center ---------- */
   /* print: every handout is its own section starting on a new page; players' handouts first, DM-only last.
      Two-sided: a blank back is added after any section with an odd page count, so each section starts on a fresh sheet. */
