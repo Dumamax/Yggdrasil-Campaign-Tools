@@ -60,11 +60,13 @@ const Roster=(()=>{
       <div class="actions"><button class="btn primary" id="saveMem">Save member</button><button class="btn" id="cancelMem">Cancel</button></div></div>`;
     const rows=()=>{$("#skillRows").innerHTML=(m.skills||[]).map((s,i)=>`<div class="skillrow"><input list="skillList" data-si="${i}" value="${esc(s.s)}" placeholder="Skill or tool"><select data-sg="${i}">${gopts.map(([v,l])=>`<option value="${v}"${v===s.g?" selected":""}>${l}</option>`).join("")}</select><button class="btn small" data-sx="${i}">✕</button></div>`).join("")};
     rows();PCs.bindEditor($("#pcEd"),m,renderEditor);
-    h.oninput=h.onchange=e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
+    h.oninput=h.onchange=async e=>{const t=e.target;if(e.type==="change"&&t.dataset.k==="kind"){m.kind=t.value;renderEditor();return}
+      if(t.dataset.npcimg!=null){if(e.type==="change"&&t.files[0]){try{m.img=await PCs.shrink(t.files[0],1000,0.8,true);renderEditor()}catch(err){toast("Couldn't read that image")}}return}
       if(t.dataset.k)m[t.dataset.k]=t.dataset.k==="level"?(t.value?+t.value:null):t.type==="checkbox"?t.checked:t.dataset.k==="forms"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;
       if(t.dataset.si!=null)m.skills[+t.dataset.si].s=t.value;
       if(t.dataset.sg!=null)m.skills[+t.dataset.sg].g=t.value};
     h.onclick=e=>{const t=e.target;
+      if(t.dataset.npcimgx!=null){delete m.img;renderEditor();return}
       if(t.id==="addSkill"){(m.skills=m.skills||[]).push({s:"",g:m.kind==="Active PC"?"Prof":"Skilled"});rows()}
       else if(t.dataset.sx!=null){m.skills.splice(+t.dataset.sx,1);rows()}
       else if(t.id==="cancelMem"){editing=null;renderEditor();park()}
@@ -134,6 +136,7 @@ ${t}`:""}`;
       ${inp("label","Fighting flavor","e.g. ex-sky-pirate with a hook blade")}${inp("guild","Guild")}
       ${inp("look","Look")}${inp("voice","Voice")}${inp("manner","Manner")}${inp("want","Wants")}
       ${inp("secret","Secret (DM)")}${inp("public","Public face (players)")}
+      ${/^(Active|Retired) PC$/.test(m.kind)?"":`<div class="npc-imgrow" style="grid-column:1/-1">${m.img?`<img class="npc-thumb" src="${esc(m.img)}" alt="">`:""}<label class="btn small">${m.img?"Replace image":"＋ Image"}<input type="file" accept="image/*" data-npcimg hidden></label>${m.img?'<button class="btn small ghost" data-npcimgx>Remove image</button>':""}<label class="inline"><input type="checkbox" data-k="shown"${m.shown?" checked":""}> Player viewable</label></div>`}
       <label>Council seat ${sel("seat",TIERS,1)}</label>
       <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
