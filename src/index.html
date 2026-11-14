@@ -39,7 +39,7 @@
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
   <button data-tab="market" data-ico="store"><span class="lbl">Shop Generator</span><span class="slbl">Shops</span></button>
   <button data-tab="table" data-ico="dice"><span class="lbl">At the Table</span><span class="slbl">Table</span></button>
-  <button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
+  <button data-tab="maps" data-ico="map"><span class="lbl">Maps</span><span class="slbl">Maps</span></button><button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
   <button data-tab="settings" data-ico="gear"><span class="lbl">Settings &amp; Tables</span><span class="slbl">Settings</span></button>
 </nav>
 </div>
@@ -119,6 +119,7 @@
     <div class="preview" id="preview"></div>
   </section>
 
+  <section id="tab-maps" hidden><div id="mapGallery"></div></section>
   <section id="tab-settings" hidden>
     <div class="settings">
       <div class="panel">
@@ -134,11 +135,6 @@
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
-      </div>
-      <div class="panel">
-        <h2>Maps</h2>
-        <p class="hint">Players see the maps marked <b>Players can see</b> under <b>Map</b> in Player View, and can zoom in. New maps start hidden. Images are resized to 2400 px and stored in the campaign, so they reach GitHub on Save. From a Claude Design map, use its download/export to get an image first.</p>
-        <div id="mapSettings"></div>
       </div>
       <div class="panel">
         <h2>GitHub saves</h2>

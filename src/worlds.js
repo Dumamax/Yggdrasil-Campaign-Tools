@@ -28,6 +28,8 @@ const Worlds=(()=>{
       <div class="row"><b>Jobs here:</b> ${J.length?J.map(h=>`<span class="w-job">${esc(Jobs.hookTitle(h))}${h.done?` <i class="muted">(${h.done==="success"?"done":"failed"})</i>`:""}</span>`).join(" · "):'<span class="muted">none yet</span>'}</div>
       <div class="row"><b>People:</b> ${N.length?N.map(m=>`<a href="#" data-npcgo="${m.id}">${esc(m.name)}</a>${m.attitude?` <i class="muted">(${esc(m.attitude)})</i>`:""}${(w.npcs||[]).includes(m.id)?` <span class="w-unlink" data-unlink="${m.id}" title="Unlink">✕</span>`:""}`).join(" · "):'<span class="muted">none linked</span>'}
         <select data-wlink><option value="">＋ Link an NPC…</option>${C.roster.filter(m=>!N.includes(m)).map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select></div>
+      <div class="row"><b>Maps:</b> ${(C.maps||[]).filter(m=>m.worldId===w.id).map(m=>`<img class="w-map" src="${m.img}" alt="${esc(m.name||"Map")}" title="${esc(m.name||"Map")}" data-wmap="${m.id}">`).join("")||'<span class="muted">none linked</span>'}
+        ${(C.maps||[]).some(m=>m.worldId!==w.id)?`<select data-wmaplink><option value="">＋ Link a map…</option>${C.maps.filter(m=>m.worldId!==w.id).map(m=>`<option value="${m.id}">${esc(m.name||"Map")}</option>`).join("")}</select>`:""}</div>
       <label class="w-notes">Notes <textarea data-wf="notes" rows="2" placeholder="What happened there, who owes whom, the state of its Tree…">${esc(w.notes||"")}</textarea></label>
       <div class="actions"><button class="btn small ghost danger" data-wa="del">Delete world</button></div></div>`}
   function render(host){const L=list();
@@ -37,13 +39,15 @@ const Worlds=(()=>{
     $("#wAdd").onclick=()=>{const g=$("#wGenre").value;const w=create({world:{genre:g,line:""},location:$("#wDist").value});commit();render(host);App.flash(`[data-world="${w.id}"]`)};
     host.onchange=e=>{const c=e.target.closest("[data-world]");if(!c)return;const w=byId(c.dataset.world);if(!w)return;const f=e.target.dataset.wf;
       if(f){w[f]=e.target.value;commit();if(f==="status")e.target.className=`w-status s-${w.status}`;return}
+      if(e.target.dataset.wmaplink!=null&&e.target.value){const m=C.maps.find(x=>x.id===e.target.value);if(m){m.worldId=w.id;commit();render(host)}return}
       if(e.target.dataset.wlink!=null&&e.target.value){(w.npcs=w.npcs||[]).push(e.target.value);commit();render(host)}};
     host.onclick=e=>{const c=e.target.closest("[data-world]");if(!c)return;const w=byId(c.dataset.world);if(!w)return;
       const a=e.target.dataset.wa;
       if(e.target.dataset.npcgo){e.preventDefault();const m=C.roster.find(x=>x.id===e.target.dataset.npcgo);if(!m)return;UI.rosterSub=NPCs.isMember(m)?"members":m.seat?"council":"npcs";NPCs.reset();saveUI();App.render();App.flash(NPCs.isMember(m)?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`);return}
+      if(e.target.dataset.wmap){const m=C.maps.find(x=>x.id===e.target.dataset.wmap);if(m)App.openMap(m.img,m.name||"Map");return}
       if(e.target.dataset.unlink){w.npcs=(w.npcs||[]).filter(x=>x!==e.target.dataset.unlink);commit();render(host);return}
       if(a==="rename"){w.name=Places.worldName(w.genre);commit();render(host)}
       else if(a==="del"){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Delete? Click again";return}
-        C.jobs.forEach(h=>{if(h.worldId===w.id)delete h.worldId});C.roster.forEach(m=>{if(m.worldId===w.id)delete m.worldId});C.worlds=list().filter(x=>x!==w);commit();render(host);toast("World deleted · Ctrl+Z to undo")}}}
+        C.jobs.forEach(h=>{if(h.worldId===w.id)delete h.worldId});(C.maps||[]).forEach(m=>{if(m.worldId===w.id)delete m.worldId});C.roster.forEach(m=>{if(m.worldId===w.id)delete m.worldId});C.worlds=list().filter(x=>x!==w);commit();render(host);toast("World deleted · Ctrl+Z to undo")}}}
   return {list,byId,forJob,jobRow,setJobWorld,label,render,npcsOf};
 })();
