@@ -525,3 +525,21 @@ body.mobile .map-grid{grid-template-columns:minmax(0,1fr)}
 .map-card .map-world{flex-direction:row;align-items:center}
 .map-card .map-vis{justify-content:flex-start;align-self:flex-start}
 .map-card .actions{margin-top:auto}
+
+/* save in progress */
+body.saving #saveCamp>svg.ico,body.saving #saveCamp .lbl,body.saving #saveCamp .slbl{display:none}
+body.saving #saveCamp::before{content:"";width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:sp .8s linear infinite;flex:none}
+body.saving #saveCamp::after{content:"Saving…"}
+body.saving #saveCamp,body.saving #bannerSave{opacity:.85;cursor:progress}
+/* full-body image on the big character card */
+.pc-big.has-body{display:grid;grid-template-columns:minmax(180px,30%) minmax(0,1fr);gap:18px;align-items:start}
+.pc-bodyimg{width:100%;max-height:calc(94dvh - 44px);object-fit:contain;position:sticky;top:0;border-radius:12px;border:1px solid var(--line);background:#16130f}
+.pc-big.has-body .pc-big-head .pc-bigpic{display:none}
+.pc-big.has-body .pc-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.pc-body-pick{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pc-body-pick img{height:90px;border-radius:6px;border:1px solid var(--line);background:#16130f}
+body.mobile .pc-big.has-body{display:block}
+body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 auto 12px;width:auto;max-width:100%}
+
+/* Player View: party cards */
+.pv .pc-section{width:min(1100px,100%);justify-self:stretch}

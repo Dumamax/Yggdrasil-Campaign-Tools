@@ -536,6 +536,24 @@ body.mobile .map-grid{grid-template-columns:minmax(0,1fr)}
 .map-card .map-vis{justify-content:flex-start;align-self:flex-start}
 .map-card .actions{margin-top:auto}
 
+/* save in progress */
+body.saving #saveCamp>svg.ico,body.saving #saveCamp .lbl,body.saving #saveCamp .slbl{display:none}
+body.saving #saveCamp::before{content:"";width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:sp .8s linear infinite;flex:none}
+body.saving #saveCamp::after{content:"Saving…"}
+body.saving #saveCamp,body.saving #bannerSave{opacity:.85;cursor:progress}
+/* full-body image on the big character card */
+.pc-big.has-body{display:grid;grid-template-columns:minmax(180px,30%) minmax(0,1fr);gap:18px;align-items:start}
+.pc-bodyimg{width:100%;max-height:calc(94dvh - 44px);object-fit:contain;position:sticky;top:0;border-radius:12px;border:1px solid var(--line);background:#16130f}
+.pc-big.has-body .pc-big-head .pc-bigpic{display:none}
+.pc-big.has-body .pc-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.pc-body-pick{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pc-body-pick img{height:90px;border-radius:6px;border:1px solid var(--line);background:#16130f}
+body.mobile .pc-big.has-body{display:block}
+body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 auto 12px;width:auto;max-width:100%}
+
+/* Player View: party cards */
+.pv .pc-section{width:min(1100px,100%);justify-self:stretch}
+
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
   radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),
@@ -577,7 +595,7 @@ body.mobile .map-grid{grid-template-columns:minmax(0,1fr)}
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
-  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
   <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
   <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
@@ -843,10 +861,14 @@ async function unlinkFile(){fileHandle=null;try{await IDB.del("fileHandle")}catc
 async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"}))!=="granted"&&(await h.requestPermission({mode:"readwrite"}))!=="granted")throw new Error("permission");
   const w=await h.createWritable();await w.write(text);await w.close()}
 function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);lsSet("ygh.campaign",C);banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
+/* show that a save is in progress (GitHub saves can take a while) and ignore repeat presses meanwhile */
+let saving=false;
+function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…")}
 async function saveCampaign(asNew){
   if(!isDM())return;
+  if(saving){toast("Still saving…");return}
   C.savedAt=new Date().toISOString();
-  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){try{const ok=await Sync.push();if(ok)markSaved("Saved to GitHub");return}catch(e){Sync.setStatus("GitHub save failed");if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
   const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
@@ -6229,7 +6251,7 @@ const PCs=(()=>{
       ${p.senses||p.resist||moves(m)?`<div class="pc-note">${esc([moves(m)&&moves(m)[0].toUpperCase()+moves(m).slice(1),p.senses,p.resist&&("Resist: "+p.resist)].filter(Boolean).join(" · "))}</div>`:""}`
       :`<div class="pc-note">No play stats yet: Roster → Edit → Play stats.</div>`}</div></button>`}
   function bigHTML(m){const p=P(m),sp=spell(m),at=attacks(m),ft=lines(p.features),tl=tools(m);
-    return `<div class="pc-big"><div class="pc-tools"><button class="btn small" data-edit>✎ Edit stats</button><button class="btn ghost" data-close aria-label="Close">✕</button></div>
+    return `<div class="pc-big${p.body?" has-body":""}">${p.body?`<img class="pc-bodyimg" src="${esc(p.body)}" alt="">`:""}<div><div class="pc-tools">${isDM()?'<button class="btn small" data-edit>✎ Edit stats</button>':""}<button class="btn ghost" data-close aria-label="Close">✕</button></div>
       <div class="pc-big-head">${pic(m,"pc-bigpic")}<div><h2>${esc(m.name)}</h2><div class="pc-sub">Level ${m.level||"?"} ${esc(m.ancestry||"")}${m.player?` · played by ${esc(m.player)}`:""}</div>
         <div class="pc-chips big"><span><b>${p.ac||"—"}</b>AC</span><span><b>${p.hp||"—"}</b>Max HP</span><span><b>${sg(init(m))}</b>Initiative</span><span><b>${esc(walk(m))} ft</b>Speed</span><span><b>${sg(pb(m))}</b>Prof.</span>${sp?`<span><b>${sp.dc}</b>Spell DC</span><span><b>${sg(sp.atk)}</b>Spell atk</span>`:""}</div></div></div>
       <div class="pc-grid">
@@ -6239,9 +6261,9 @@ const PCs=(()=>{
         ${at.length?`<section><h3>Attacks</h3><table class="pc-tab">${at.map(x=>`<tr><td><b>${esc(x.n)}</b></td><td>${esc(x.h)}</td><td>${esc(x.d)}</td></tr>`).join("")}</table></section>`:""}
         ${ft.length?`<section><h3>Features &amp; abilities</h3><ul class="pc-feat">${ft.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></section>`:""}
         <section><h3>Other</h3>${[["Movement",moves(m)&&p.speed],["Senses",p.senses],["Resistances",p.resist],["Languages",p.langs],["Tools",tl.join(", ")],["In the guild",[m.status,m.assign&&("operating "+Roster.assignName(m))].filter(Boolean).join(" · ")]].filter(x=>x[1]).map(([k,v])=>`<div class="row"><b>${k}:</b> ${esc(v)}</div>`).join("")||'<p class="muted">Nothing else recorded.</p>'}</section>
-      </div></div>`}
+      </div></div></div>`}
   function tableSection(){const d=document.createElement("section");d.className="pc-section";const L=list();
-    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
+    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:!isDM()?'<p class="muted">The party hasn\'t been entered yet.</p>':'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
     d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(m)openBig(m)};
     return d}
   /* full card, with in-place editing of play stats (and level) during play */
@@ -6257,7 +6279,7 @@ const PCs=(()=>{
       box.querySelector("[data-lvl]").oninput=e=>{d.level=e.target.value?+e.target.value:null};box.scrollTop=0};
     box.addEventListener("click",e=>{
       if(e.target.closest("[data-close]")){if(d&&JSON.stringify(d.pc)!==JSON.stringify(m.pc||{})&&!confirmLeave(e.target.closest("[data-close]")))return;md.close()}
-      else if(e.target.closest("[data-edit]"))edit();
+      else if(e.target.closest("[data-edit]")&&isDM())edit();
       else if(e.target.closest("[data-cancel]"))view();
       else if(e.target.closest("[data-save]")){m.pc=d.pc;m.level=d.level;commit();App.render();view();toast(`${m.name} updated`)}})}
   function confirmLeave(b){if(b.dataset.sure)return true;b.dataset.sure=1;b.textContent="Discard?";b.classList.add("danger");return false}
@@ -6270,6 +6292,7 @@ const PCs=(()=>{
         <div class="grid">${AB.map(a=>`<label>${ABN[a]} <input type="number" min="1" max="30" data-pcs="${a}" value="${esc(p.stats?.[a]??"")}"></label>`).join("")}
           <label>AC <input type="number" data-pc="ac" value="${esc(p.ac??"")}"></label><label>Max HP <input type="number" data-pc="hp" value="${esc(p.hp??"")}"></label>
           <label class="wide">Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>
+      <div class="pc-body-pick">${p.body?`<img src="${esc(p.body)}" alt="">`:""}<label class="btn small">${p.body?"Replace":"Upload"} full-body image<input type="file" accept="image/*" data-pcbody hidden></label>${p.body?'<button class="btn small ghost" data-pcnobody>Remove</button>':""}<span class="muted">Shown on the full character card (the portrait stays on the small card).</span></div>
       <div class="actions"><span class="muted">Saving throws</span>${AB.map(a=>`<label class="inline"><input type="checkbox" data-pcsave="${a}"${(p.saves||[]).includes(a)?" checked":""}> ${ABN[a]}</label>`).join("")}</div>
       <div class="grid"><label>Spellcasting ability <select data-pcsp="ab"><option value="">— none —</option>${AB.slice(3).map(a=>`<option value="${a}"${p.spell?.ab===a?" selected":""}>${ABN[a]}</option>`).join("")}</select></label>
         <label>Senses <input data-pc="senses" value="${esc(p.senses||"")}" placeholder="Darkvision 60 ft"></label><label>Resistances <input data-pc="resist" value="${esc(p.resist||"")}"></label><label>Languages <input data-pc="langs" value="${esc(p.langs||"")}"></label></div>
@@ -6285,12 +6308,17 @@ const PCs=(()=>{
     host.addEventListener("change",async e=>{const t=e.target;if(!t.closest(".pc-edit"))return;const p=m.pc=m.pc||{};
       if(t.dataset.pcsave){const s=new Set(p.saves||[]);t.checked?s.add(t.dataset.pcsave):s.delete(t.dataset.pcsave);p.saves=AB.filter(a=>s.has(a))}
       else if(t.dataset.pcsp){(p.spell=p.spell||{})[t.dataset.pcsp]=t.value}
-      else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}});
-    host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}})}
+      else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}
+      else if(t.dataset.pcbody!=null&&t.files[0]){try{p.body=await shrink(t.files[0],1000,0.8,true);rerender()}catch(err){toast("Couldn't read that image")}}});
+    host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}
+      else if(e.target.dataset.pcnobody!=null){e.preventDefault();m.pc.body=null;rerender()}})}
   /* downscale to keep the campaign file small (portraits travel inside it, so they reach GitHub with each save) */
-  function shrink(file,max=320,q=0.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
+  /* alpha=true keeps transparent backgrounds (WebP) so cut-out art sits on the dark card; falls back to JPEG on the card colour */
+  function shrink(file,max=320,q=0.82,alpha=false){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
     const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.src=r.result};r.readAsDataURL(file)})}
+    const x=c.getContext("2d");
+    if(alpha){x.drawImage(img,0,0,c.width,c.height);const w=c.toDataURL("image/webp",q);if(w.startsWith("data:image/webp")){res(w);return}x.globalCompositeOperation="destination-over";x.fillStyle="#16130f";x.fillRect(0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q));return}
+    x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.src=r.result};r.readAsDataURL(file)})}
 
   /* ---------- import (Guild Hall Import Format) ---------- */
   function fromImport(x){const st=x.stats||x.abilities||null,o={};
@@ -6301,7 +6329,7 @@ const PCs=(()=>{
     const sp=x.spellcasting||x.spell;if(sp)o.spell={ab:String(sp.ability||sp.ab||"").toLowerCase().slice(0,3),dc:sp.dc?+sp.dc:null,atk:sp.attack!=null?+String(sp.attack).replace("+",""):null};
     if(x.attacks)o.attacks=x.attacks.map(a=>typeof a==="string"?a:[a.name,a.hit??a.toHit??a.bonus,a.damage??a.dmg].filter(v=>v!=null&&v!=="").join(" | ")).join("\n");
     if(x.features)o.features=x.features.map(f=>typeof f==="string"?f:[f.name,f.text||f.desc].filter(Boolean).join(": ")).join("\n");
-    if(x.portrait)o.portrait=String(x.portrait);
+    if(x.portrait)o.portrait=String(x.portrait);if(x.bodyImage||x.body)o.body=String(x.bodyImage||x.body);
     return Object.keys(o).length?o:null}
 
   return {shrink,tableSection,editorHTML,bindEditor,fromImport,list};
@@ -7247,7 +7275,7 @@ const TableEditor=(()=>{
 
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","maps","print","settings"],TABLE_TABS=["table","maps","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
+  const PREP_TABS=["jobs","shop","roster","market","maps","print","settings"],TABLE_TABS=["table","maps","print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-ledger","p-map"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -7259,7 +7287,7 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,maps:renderMaps,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,maps:renderMaps,"p-board":renderPlayer,"p-party":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -7268,12 +7296,14 @@ const App=(()=>{
     return `<div class="pr pr-sheet"><h1>Members</h1><div class="prsub">${rankName(S.tierRank)}</div><table>${L.map(m=>`<tr><td class="nm">${esc(m.name)}</td><td>${esc(m.kind==="Active PC"?"Adventurer":m.kind==="Retired PC"?"Retired adventurer":m.kind==="Hired NPC"?(m.role||"Staff"):m.kind)}${m.level?` · level ${m.level}`:""}</td><td>${esc(m.ancestry||"")}</td></tr>`).join("")}</table></div>`}
   function renderPlayer(){const el=$("#tab-p");
     const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
+      "p-party":()=>"",
       "p-guild":()=>Standing.printHTML()+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
       "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
       "p-ledger":()=>Upgrades.ledgerHTML(false,true),
       "p-map":()=>C.maps.some(m=>!m.hidden)?C.maps.filter(m=>!m.hidden).map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
+    if(UI.tab==="p-party")el.querySelector(".pv").append(PCs.tableSection());
     el.onclick=e=>{const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
   /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
   function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");
@@ -7487,6 +7517,7 @@ const App=(()=>{
     dice:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/>',
     jobs:'<path d="M8 21h11a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4M15 8h-5M15 12h-5"/>',
     hall:'<path d="M3 21h18M5 21V10l7-6 7 6v11"/><path d="M10 21v-5h4v5"/>',
+    party:'<circle cx="12" cy="7" r="4"/><path d="M5 21v-2a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v2"/>',
     people:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1M16 3.5a4 4 0 0 1 0 8M22 21v-1a5 5 0 0 0-3.5-4.8"/>',
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',

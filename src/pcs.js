@@ -39,7 +39,7 @@ const PCs=(()=>{
       ${p.senses||p.resist||moves(m)?`<div class="pc-note">${esc([moves(m)&&moves(m)[0].toUpperCase()+moves(m).slice(1),p.senses,p.resist&&("Resist: "+p.resist)].filter(Boolean).join(" · "))}</div>`:""}`
       :`<div class="pc-note">No play stats yet: Roster → Edit → Play stats.</div>`}</div></button>`}
   function bigHTML(m){const p=P(m),sp=spell(m),at=attacks(m),ft=lines(p.features),tl=tools(m);
-    return `<div class="pc-big"><div class="pc-tools"><button class="btn small" data-edit>✎ Edit stats</button><button class="btn ghost" data-close aria-label="Close">✕</button></div>
+    return `<div class="pc-big${p.body?" has-body":""}">${p.body?`<img class="pc-bodyimg" src="${esc(p.body)}" alt="">`:""}<div><div class="pc-tools">${isDM()?'<button class="btn small" data-edit>✎ Edit stats</button>':""}<button class="btn ghost" data-close aria-label="Close">✕</button></div>
       <div class="pc-big-head">${pic(m,"pc-bigpic")}<div><h2>${esc(m.name)}</h2><div class="pc-sub">Level ${m.level||"?"} ${esc(m.ancestry||"")}${m.player?` · played by ${esc(m.player)}`:""}</div>
         <div class="pc-chips big"><span><b>${p.ac||"—"}</b>AC</span><span><b>${p.hp||"—"}</b>Max HP</span><span><b>${sg(init(m))}</b>Initiative</span><span><b>${esc(walk(m))} ft</b>Speed</span><span><b>${sg(pb(m))}</b>Prof.</span>${sp?`<span><b>${sp.dc}</b>Spell DC</span><span><b>${sg(sp.atk)}</b>Spell atk</span>`:""}</div></div></div>
       <div class="pc-grid">
@@ -49,9 +49,9 @@ const PCs=(()=>{
         ${at.length?`<section><h3>Attacks</h3><table class="pc-tab">${at.map(x=>`<tr><td><b>${esc(x.n)}</b></td><td>${esc(x.h)}</td><td>${esc(x.d)}</td></tr>`).join("")}</table></section>`:""}
         ${ft.length?`<section><h3>Features &amp; abilities</h3><ul class="pc-feat">${ft.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></section>`:""}
         <section><h3>Other</h3>${[["Movement",moves(m)&&p.speed],["Senses",p.senses],["Resistances",p.resist],["Languages",p.langs],["Tools",tl.join(", ")],["In the guild",[m.status,m.assign&&("operating "+Roster.assignName(m))].filter(Boolean).join(" · ")]].filter(x=>x[1]).map(([k,v])=>`<div class="row"><b>${k}:</b> ${esc(v)}</div>`).join("")||'<p class="muted">Nothing else recorded.</p>'}</section>
-      </div></div>`}
+      </div></div></div>`}
   function tableSection(){const d=document.createElement("section");d.className="pc-section";const L=list();
-    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
+    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:!isDM()?'<p class="muted">The party hasn\'t been entered yet.</p>':'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
     d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(m)openBig(m)};
     return d}
   /* full card, with in-place editing of play stats (and level) during play */
@@ -67,7 +67,7 @@ const PCs=(()=>{
       box.querySelector("[data-lvl]").oninput=e=>{d.level=e.target.value?+e.target.value:null};box.scrollTop=0};
     box.addEventListener("click",e=>{
       if(e.target.closest("[data-close]")){if(d&&JSON.stringify(d.pc)!==JSON.stringify(m.pc||{})&&!confirmLeave(e.target.closest("[data-close]")))return;md.close()}
-      else if(e.target.closest("[data-edit]"))edit();
+      else if(e.target.closest("[data-edit]")&&isDM())edit();
       else if(e.target.closest("[data-cancel]"))view();
       else if(e.target.closest("[data-save]")){m.pc=d.pc;m.level=d.level;commit();App.render();view();toast(`${m.name} updated`)}})}
   function confirmLeave(b){if(b.dataset.sure)return true;b.dataset.sure=1;b.textContent="Discard?";b.classList.add("danger");return false}
@@ -80,6 +80,7 @@ const PCs=(()=>{
         <div class="grid">${AB.map(a=>`<label>${ABN[a]} <input type="number" min="1" max="30" data-pcs="${a}" value="${esc(p.stats?.[a]??"")}"></label>`).join("")}
           <label>AC <input type="number" data-pc="ac" value="${esc(p.ac??"")}"></label><label>Max HP <input type="number" data-pc="hp" value="${esc(p.hp??"")}"></label>
           <label class="wide">Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>
+      <div class="pc-body-pick">${p.body?`<img src="${esc(p.body)}" alt="">`:""}<label class="btn small">${p.body?"Replace":"Upload"} full-body image<input type="file" accept="image/*" data-pcbody hidden></label>${p.body?'<button class="btn small ghost" data-pcnobody>Remove</button>':""}<span class="muted">Shown on the full character card (the portrait stays on the small card).</span></div>
       <div class="actions"><span class="muted">Saving throws</span>${AB.map(a=>`<label class="inline"><input type="checkbox" data-pcsave="${a}"${(p.saves||[]).includes(a)?" checked":""}> ${ABN[a]}</label>`).join("")}</div>
       <div class="grid"><label>Spellcasting ability <select data-pcsp="ab"><option value="">— none —</option>${AB.slice(3).map(a=>`<option value="${a}"${p.spell?.ab===a?" selected":""}>${ABN[a]}</option>`).join("")}</select></label>
         <label>Senses <input data-pc="senses" value="${esc(p.senses||"")}" placeholder="Darkvision 60 ft"></label><label>Resistances <input data-pc="resist" value="${esc(p.resist||"")}"></label><label>Languages <input data-pc="langs" value="${esc(p.langs||"")}"></label></div>
@@ -95,12 +96,17 @@ const PCs=(()=>{
     host.addEventListener("change",async e=>{const t=e.target;if(!t.closest(".pc-edit"))return;const p=m.pc=m.pc||{};
       if(t.dataset.pcsave){const s=new Set(p.saves||[]);t.checked?s.add(t.dataset.pcsave):s.delete(t.dataset.pcsave);p.saves=AB.filter(a=>s.has(a))}
       else if(t.dataset.pcsp){(p.spell=p.spell||{})[t.dataset.pcsp]=t.value}
-      else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}});
-    host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}})}
+      else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}
+      else if(t.dataset.pcbody!=null&&t.files[0]){try{p.body=await shrink(t.files[0],1000,0.8,true);rerender()}catch(err){toast("Couldn't read that image")}}});
+    host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}
+      else if(e.target.dataset.pcnobody!=null){e.preventDefault();m.pc.body=null;rerender()}})}
   /* downscale to keep the campaign file small (portraits travel inside it, so they reach GitHub with each save) */
-  function shrink(file,max=320,q=0.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
+  /* alpha=true keeps transparent backgrounds (WebP) so cut-out art sits on the dark card; falls back to JPEG on the card colour */
+  function shrink(file,max=320,q=0.82,alpha=false){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
     const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.src=r.result};r.readAsDataURL(file)})}
+    const x=c.getContext("2d");
+    if(alpha){x.drawImage(img,0,0,c.width,c.height);const w=c.toDataURL("image/webp",q);if(w.startsWith("data:image/webp")){res(w);return}x.globalCompositeOperation="destination-over";x.fillStyle="#16130f";x.fillRect(0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q));return}
+    x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.src=r.result};r.readAsDataURL(file)})}
 
   /* ---------- import (Guild Hall Import Format) ---------- */
   function fromImport(x){const st=x.stats||x.abilities||null,o={};
@@ -111,7 +117,7 @@ const PCs=(()=>{
     const sp=x.spellcasting||x.spell;if(sp)o.spell={ab:String(sp.ability||sp.ab||"").toLowerCase().slice(0,3),dc:sp.dc?+sp.dc:null,atk:sp.attack!=null?+String(sp.attack).replace("+",""):null};
     if(x.attacks)o.attacks=x.attacks.map(a=>typeof a==="string"?a:[a.name,a.hit??a.toHit??a.bonus,a.damage??a.dmg].filter(v=>v!=null&&v!=="").join(" | ")).join("\n");
     if(x.features)o.features=x.features.map(f=>typeof f==="string"?f:[f.name,f.text||f.desc].filter(Boolean).join(": ")).join("\n");
-    if(x.portrait)o.portrait=String(x.portrait);
+    if(x.portrait)o.portrait=String(x.portrait);if(x.bodyImage||x.body)o.body=String(x.bodyImage||x.body);
     return Object.keys(o).length?o:null}
 
   return {shrink,tableSection,editorHTML,bindEditor,fromImport,list};
