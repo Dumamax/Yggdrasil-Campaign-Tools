@@ -29,9 +29,9 @@ const App=(()=>{
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";
-    col("Guild standing",Standing.tablePanel());
     const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
     const col=(title,inner)=>{const p=document.createElement("div");p.className="panel";p.innerHTML=`<h2>${title}</h2>`;if(typeof inner==="string")p.insertAdjacentHTML("beforeend",inner);else p.appendChild(inner);el.appendChild(p);return p};
+    col("Guild standing",Standing.tablePanel());
     const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
     if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
     live.forEach(h=>jobs.appendChild(Jobs.dmCard(h,true)));
@@ -191,7 +191,7 @@ const App=(()=>{
     shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
-  const MQ=window.matchMedia("(max-width: 760px)");
+  const MQ=window.matchMedia("(max-width: 760px), (pointer: coarse) and (max-height: 500px)");
   function layout(){const l=UI.layout||"auto",phone=l==="phone"||(l==="auto"&&MQ.matches);document.body.classList.toggle("mobile",phone);
     $$("#layoutSeg button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));const n=$("#layoutNow");if(n)n.textContent=`Showing: ${phone?"Phone":"Desktop"}`}
   /* ---------- go to + quick search ---------- */
@@ -229,7 +229,9 @@ const App=(()=>{
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
-    $("#dmBtn").onclick=()=>isDM()?lockDM():dmGate();$("#syncBtn").onclick=()=>Sync.pull(true);
+    $("#dmBtn").onclick=()=>isDM()?lockDM():dmGate();
+    $("#hdrMore").onclick=e=>{const p=e.target.dataset.proxy;if(!p)return;$("#hdrMore").open=false;$("#"+p).click()};
+    $("#hdrMore summary").addEventListener("click",()=>{$("#hdrSync").textContent=Sync.status()||"";const t=$("#hdrMore [data-proxy=tmToggle]");t.textContent=UI.tableMode?"Leave Table Mode":"Table Mode"});$("#syncBtn").onclick=()=>Sync.pull(true);
     $("#pwForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(f.get("pw")!==f.get("pw2")){toast("Passwords don't match");return}S.dmHash=await hashPw(f.get("pw"));lsSet("ygh.dm",S.dmHash);commit();e.target.reset();toast("Password changed. Save so it travels with the campaign")};
     $("#lockNow").onclick=lockDM;
     Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();Sync.start();

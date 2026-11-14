@@ -24,6 +24,9 @@
     <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
     <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
     <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM View</span></button>
+    <details class="more" id="hdrMore"><summary class="btn ghost hb" title="More" aria-label="More">⋯</summary><div class="menu">
+      <button class="btn small ghost" data-proxy="tmToggle">Table Mode</button><button class="btn small ghost" data-proxy="loadCamp">Load Campaign</button>
+      <button class="btn small ghost" data-proxy="syncBtn">Check for a newer save</button><button class="btn small ghost" data-proxy="dmBtn">Lock (Player View)</button><div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
     <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
