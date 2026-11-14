@@ -1,6 +1,8 @@
 /* NPC & Council default tables. Looks, voices and mannerisms come from the Shop Generator's "Shopkeeper parts". */
 const DEFAULT_NPC_TABLES={
- version:1,
+ version:2,
+ guildNames:{first:["Lantern","Tin","Gilded","Mossbound","Copper","Quiet","Ninth","Hollow","Bramble","Ember","Salt","Rootbound","Starling","Ashen","Brass","Thornwick","Lamplit","Second Dawn","Kettle","Wayfinder","Iron Thimble","Gloam","Sapling","Wandering","Bellwether","Hearthstone","Cinder","Briar","Gale","Owlglass"],
+  second:["Company","Wardens","Lodge","Society","Brigade","Circle","Compact","Lanterns","Order","Fellowship","Archive","Hounds","Spiral","Crew","Sworn","League","Watch","Guard","Kin","Expedition"]},
  levelCurve:{"1-2":40,"3-4":30,"5-6":15,"7-8":9,"9-10":5,"11-15":1},
  adventurerShift:0.75,
  cityShare:0.55,

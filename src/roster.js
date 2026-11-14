@@ -8,7 +8,13 @@ const Roster=(()=>{
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
   const sorted=()=>C.roster.filter(m=>KINDS.includes(m.kind)).sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
-  function render(){
+  function render(){park();render0();place()}
+  /* the editor opens in place, right after the card being edited; parked at the top while lists re-render */
+  function park(){const h=$("#editorHost"),home=$("#editorHome");if(h&&home&&h.parentElement!==home){home.appendChild(h);h.classList.remove("inline-ed")}}
+  function place(scroll){const h=$("#editorHost");if(!h||!editing||!editing.id)return;
+    const c=document.querySelector(`.card[data-member="${editing.id}"]:not([hidden]),.card[data-npc="${editing.id}"]`);if(!c||c.offsetParent===null)return;
+    c.after(h);h.classList.add("inline-ed");if(scroll)setTimeout(()=>{const r=h.getBoundingClientRect(),top=($(".topbar")?.offsetHeight||0)+12;if(r.top>innerHeight*0.7||r.top<top)window.scrollBy({top:r.top-Math.max(top,innerHeight*0.3),behavior:"smooth"})},30)}
+  function render0(){
     const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
     $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub==="members";$("#rHint").hidden=sub!=="members";
     renderEditor();if(sub!=="members"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render(sub);return}
@@ -27,7 +33,7 @@ const Roster=(()=>{
       ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
-        if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+        if(a==="edit"){editing=clone(m);renderEditor();place(true)}
         else if(a==="leave"){NPCs.leaveGuild(m);return}
         else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
         else if(a==="del"){if(ev.target.dataset.sure){C.roster=C.roster.filter(x=>x.id!==m.id);commit();render()}else{ev.target.dataset.sure=1;ev.target.textContent="Confirm delete?"}}});
@@ -61,7 +67,7 @@ const Roster=(()=>{
     h.onclick=e=>{const t=e.target;
       if(t.id==="addSkill"){(m.skills=m.skills||[]).push({s:"",g:m.kind==="Active PC"?"Prof":"Skilled"});rows()}
       else if(t.dataset.sx!=null){m.skills.splice(+t.dataset.sx,1);rows()}
-      else if(t.id==="cancelMem"){editing=null;renderEditor()}
+      else if(t.id==="cancelMem"){editing=null;renderEditor();park()}
       else if(t.id==="saveMem"){if(!String(m.name||"").trim()){toast("Give them a name");return}
         m.skills=(m.skills||[]).filter(s=>String(s.s).trim());
         if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
@@ -131,7 +137,7 @@ ${t}`:""}`;
       <label>Council seat ${sel("seat",TIERS,1)}</label>
       <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
-  function edit(m){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+  function edit(m){editing=clone(m);renderEditor();if(!document.querySelector(`.card[data-npc="${m.id}"],.card[data-member="${m.id}"]`)){$("#editorHost").scrollIntoView({behavior:"smooth"});return}place(true)}
   function bind(){
     $("#rSub").onclick=e=>{const s=e.target.dataset.sub;if(!s)return;UI.rosterSub=s;saveUI();editing=null;render()};
     $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
@@ -139,5 +145,5 @@ ${t}`:""}`;
     $("#copyRoster").onclick=()=>copyText(text());
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+  return {park,place,render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();

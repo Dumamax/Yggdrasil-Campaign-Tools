@@ -98,9 +98,9 @@ const PCs=(()=>{
       else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}});
     host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}})}
   /* downscale to keep the campaign file small (portraits travel inside it, so they reach GitHub with each save) */
-  function shrink(file,max=320){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
+  function shrink(file,max=320,q=0.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
     const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-    c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",0.82))};img.src=r.result};r.readAsDataURL(file)})}
+    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.src=r.result};r.readAsDataURL(file)})}
 
   /* ---------- import (Guild Hall Import Format) ---------- */
   function fromImport(x){const st=x.stats||x.abilities||null,o={};
@@ -114,5 +114,5 @@ const PCs=(()=>{
     if(x.portrait)o.portrait=String(x.portrait);
     return Object.keys(o).length?o:null}
 
-  return {tableSection,editorHTML,bindEditor,fromImport,list};
+  return {shrink,tableSection,editorHTML,bindEditor,fromImport,list};
 })();

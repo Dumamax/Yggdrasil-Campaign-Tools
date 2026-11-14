@@ -83,10 +83,13 @@ ${summary(m)}
 Return ONLY JSON:
 {"base": official stat block used and its CR, "ac": string, "hp": string, "speed": string, "abilities": "STR x DEX x CON x INT x WIS x CHA x", "attacks": [short attack lines with to-hit and damage], "traits": [2-4 short traits or spells], "tactics": one sentence on how they fight}`;
     aiRun({prompt,btn,fallback:b,apply:r=>{m.sb=r;commit();App.render()}})}
+  const GN={first:["Lantern","Tin","Gilded","Mossbound","Copper","Quiet","Ninth","Hollow","Bramble","Ember"],second:["Company","Wardens","Lodge","Society","Circle","Compact","Order","Fellowship"]};
+  function guildName(){const g=T.guildNames||GN,taken=new Set(C.roster.map(m=>m.guild).filter(Boolean));
+    for(let i=0;i<30;i++){const n=`the ${pick(g.first)} ${pick(g.second)}`;if(!taken.has(n)&&!taken.has(n.replace(/^the /,"")))return n.replace(/^the /,"")}return `${pick(g.first)} ${pick(g.second)}`}
   function rerollSeat(t,btn){
     const ST=T.council.seats[t]||{},old=seatHolder(t),others=TIERS.filter(x=>x!==t).map(seatHolder).filter(Boolean).map(summary).join("\n");
     const lv=String(ST.level||"").split("-").map(Number),level=lv[0]?lv[0]+rnd((lv[1]||lv[0])-lv[0]+1):tierMidLevel(TIERS.indexOf(t));
-    const fb=generate({occ:"Adventurer",con:"Bystander",level});Object.assign(fb,{title:`guild master of a top ${t} guild`,want:ST.stance||fb.want,public:`Newly elected to ${ST.title||"the "+t+" Seat"}.`});
+    const fb=generate({occ:"Adventurer",con:"Bystander",level});const gname=guildName(),gstep=1+rnd(2);Object.assign(fb,{guild:gname,title:`guild master of the ${gname} (${t} ${gstep})`,want:ST.stance||fb.want,public:`Newly elected to ${ST.title||"the "+t+" Seat"}.`});
     const prompt=`${WORLD()}
 Write a new member of the Council (5 seats, one per guild tier, each elected by that tier's guilds; usually a top guild's master). They now hold ${ST.title||t}.
 Seat duties: ${ST.duties||""}
@@ -96,7 +99,7 @@ Other current Council members (make this one distinct from them):
 ${others||"none"}
 Return ONLY JSON:
 {"name": string, "ancestry": string, "title": e.g. "guild master of the X (${t} 1)", "guild": guild name, "archetype": one of ${Object.keys(T.archetypes).join(", ")}, "level": number, "label": short flavor tag for how they fight, "look": one line, "voice": how they talk, "manner": short phrase, "public": one line players would hear about them, "want": their agenda, "secret": DM-only secret with a hook, "bio": 2-3 DM-facing sentences, "hooks": [2 one-sentence hooks tying them to the players' Iron guild]}`;
-    aiRun({prompt,btn,fallback:{},apply:r=>{const m=fb;merge(m,r);m.occupation="Adventurer";m.connection="Bystander";m.seat=t;
+    aiRun({prompt,btn,fallback:{},apply:r=>{const m=fb;merge(m,r);if(!String(m.guild||"").trim()){m.guild=gname;if(!/guild/i.test(m.title||""))m.title=`guild master of the ${gname} (${t} ${gstep})`}m.occupation="Adventurer";m.connection="Bystander";m.seat=t;
       if(old){old.seat="";old.notes=`${old.notes?old.notes+" ":""}Former ${t} Council seat.`}C.roster.push(m);commit();toast(`${m.name} takes the ${t} seat`);App.render()}})}
   function seatNPC(t,id){const cur=seatHolder(t);if(cur)cur.seat="";const m=byId(id);if(m)m.seat=t;commit();App.render()}
 
@@ -160,7 +163,8 @@ Return ONLY JSON:
     p.onchange=e=>{const t=e.target.dataset.seat;if(t&&e.target.value)seatNPC(t,e.target.value)};
     return p}
   let mode="npcs";
-  function render(m){if(m)mode=m;
+  function render(m){Roster.park();render0(m);Roster.place()}
+  function render0(m){if(m)mode=m;
     const h=$("#npcHost");if(!h)return;h.innerHTML="";
     if(mode==="council"){h.appendChild(councilEl());const b=document.createElement("div");b.className="board";b.id="councilCards";bindAtt(b);
       TIERS.map(seatHolder).filter(Boolean).forEach(m=>b.appendChild(card(m)));h.appendChild(b);return}
