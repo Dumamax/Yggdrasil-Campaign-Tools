@@ -190,8 +190,8 @@ details.more .menu .btn{text-align:left;padding:6px 10px;font-size:15px}
 /* quick search */
 .qs{position:fixed;inset:0;z-index:50;background:rgba(10,8,6,.6);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
 .qs-box{width:min(640px,92vw);background:var(--panel);border:1px solid var(--gold);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.6);overflow:hidden}
-.qs-box input{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px 16px;font-size:19px;background:transparent}
-.qs-box input:focus{box-shadow:none}
+#qsIn{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px 16px;font-size:19px;background:transparent}
+#qsIn:focus{box-shadow:none}
 .qs-res{max-height:55vh;overflow:auto;padding:4px}
 .qs-item{padding:7px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qs-item.on,.qs-item:hover{background:var(--panel2)}
@@ -325,7 +325,7 @@ body.player #dmBtn{color:var(--mute)}
 .pv-h{font:700 20px "Cinzel",serif;color:var(--gold);text-align:center;margin:10px 0 0}
 .pv-empty{text-align:center;color:var(--mute);font-style:italic;padding:40px 10px}
 .pv-foot{text-align:center;font-size:13px}
-.modal{padding:18px 20px}.modal h2{margin:0 0 8px}.modal form{display:grid;gap:10px}.modal input{width:100%}
+.modal{padding:18px 20px}.modal h2{margin:0 0 8px}.modal form{display:grid;gap:10px}.modal form input{width:100%}
 body.mobile .pv .pr-cards{grid-template-columns:1fr}
 body.mobile .pv .pr-sheet{padding:16px 14px}
 body.mobile #syncBtn .lbl{display:none}
@@ -422,6 +422,21 @@ body.mobile .pc-x{position:fixed;top:calc(8px + env(safe-area-inset-top));right:
 .tm-side .st-btns{margin-left:0;width:100%}
 .pc-card .pc-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
 .pc-card .pc-chips span{min-width:0;padding:3px 2px}
+.pc-tools{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;z-index:2}
+.pc-tools [data-close]{font-size:18px}
+.pc-edit-bar{position:sticky;bottom:-20px;background:var(--panel);padding:10px 0;margin-top:10px;border-top:1px solid var(--line)}
+body.mobile .pc-tools{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px}
+body.mobile .pc-tools .btn{background:var(--panel2);border-color:var(--line)}
+body.mobile .pc-edit-bar{bottom:-16px}
+body.mobile .pc-big{padding-top:60px}
+.pc-big .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pc-big .pc-edit-top .grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+.pc-big .grid input,.pc-big .grid select{width:100%}
+.pc-big textarea{width:100%}
+body.mobile .pc-big .grid{grid-template-columns:1fr 1fr}
+body.mobile .pc-big .pc-edit-top .grid{grid-template-columns:repeat(3,1fr);min-width:0}
+body.mobile .pc-portrait{width:100%}
+.pc-edit-top .grid label.wide{grid-column:span 2}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -6097,7 +6112,7 @@ const PCs=(()=>{
       ${p.senses||p.resist||moves(m)?`<div class="pc-note">${esc([moves(m)&&moves(m)[0].toUpperCase()+moves(m).slice(1),p.senses,p.resist&&("Resist: "+p.resist)].filter(Boolean).join(" · "))}</div>`:""}`
       :`<div class="pc-note">No play stats yet: Roster → Edit → Play stats.</div>`}</div></button>`}
   function bigHTML(m){const p=P(m),sp=spell(m),at=attacks(m),ft=lines(p.features),tl=tools(m);
-    return `<div class="pc-big"><button class="btn ghost pc-x" data-close aria-label="Close">✕</button>
+    return `<div class="pc-big"><div class="pc-tools"><button class="btn small" data-edit>✎ Edit stats</button><button class="btn ghost" data-close aria-label="Close">✕</button></div>
       <div class="pc-big-head">${pic(m,"pc-bigpic")}<div><h2>${esc(m.name)}</h2><div class="pc-sub">Level ${m.level||"?"} ${esc(m.ancestry||"")}${m.player?` · played by ${esc(m.player)}`:""}</div>
         <div class="pc-chips big"><span><b>${p.ac||"—"}</b>AC</span><span><b>${p.hp||"—"}</b>Max HP</span><span><b>${sg(init(m))}</b>Initiative</span><span><b>${esc(walk(m))} ft</b>Speed</span><span><b>${sg(pb(m))}</b>Prof.</span>${sp?`<span><b>${sp.dc}</b>Spell DC</span><span><b>${sg(sp.atk)}</b>Spell atk</span>`:""}</div></div></div>
       <div class="pc-grid">
@@ -6110,9 +6125,25 @@ const PCs=(()=>{
       </div></div>`}
   function tableSection(){const d=document.createElement("section");d.className="pc-section";const L=list();
     d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
-    d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(!m)return;
-      const md=modal(bigHTML(m),"pc-modal");md.el.querySelector("[data-close]").onclick=md.close};
+    d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(m)openBig(m)};
     return d}
+  /* full card, with in-place editing of play stats (and level) during play */
+  function openBig(m){const md=modal(bigHTML(m),"pc-modal"),box=md.el.querySelector(".qs-box");let d=null;
+    const form=()=>editorHTML(d).replace('<details class="pc-edit"','<details class="pc-edit" open');
+    const view=()=>{d=null;box.innerHTML=bigHTML(m);box.scrollTop=0};
+    const edit=()=>{d=clone(m);d.pc=d.pc||{};
+      box.innerHTML=`<div class="pc-big"><div class="pc-tools"><button class="btn ghost" data-close aria-label="Close">✕</button></div><h2>Edit ${esc(m.name)}</h2>
+        <div class="grid" style="margin:10px 0;max-width:420px"><label>Level <input type="number" min="1" max="20" data-lvl value="${esc(m.level??"")}"></label></div>
+        <div id="pcEdM">${form()}</div>
+        <div class="actions pc-edit-bar"><button class="btn primary" data-save>Save changes</button><button class="btn" data-cancel>Cancel</button><span class="muted">Skills, tools and notes: Roster → Edit.</span></div></div>`;
+      const host=box.querySelector("#pcEdM");bindEditor(host,d,()=>{host.innerHTML=form()});
+      box.querySelector("[data-lvl]").oninput=e=>{d.level=e.target.value?+e.target.value:null};box.scrollTop=0};
+    box.addEventListener("click",e=>{
+      if(e.target.closest("[data-close]")){if(d&&JSON.stringify(d.pc)!==JSON.stringify(m.pc||{})&&!confirmLeave(e.target.closest("[data-close]")))return;md.close()}
+      else if(e.target.closest("[data-edit]"))edit();
+      else if(e.target.closest("[data-cancel]"))view();
+      else if(e.target.closest("[data-save]")){m.pc=d.pc;m.level=d.level;commit();App.render();view();toast(`${m.name} updated`)}})}
+  function confirmLeave(b){if(b.dataset.sure)return true;b.dataset.sure=1;b.textContent="Discard?";b.classList.add("danger");return false}
 
   /* ---------- Roster editor ---------- */
   function editorHTML(m){if(!/PC/.test(m.kind))return "";const p=P(m);
@@ -6121,7 +6152,7 @@ const PCs=(()=>{
         <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!p.portrait.startsWith("data:")?esc(p.portrait):""}"></div>
         <div class="grid">${AB.map(a=>`<label>${ABN[a]} <input type="number" min="1" max="30" data-pcs="${a}" value="${esc(p.stats?.[a]??"")}"></label>`).join("")}
           <label>AC <input type="number" data-pc="ac" value="${esc(p.ac??"")}"></label><label>Max HP <input type="number" data-pc="hp" value="${esc(p.hp??"")}"></label>
-          <label>Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>
+          <label class="wide">Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>
       <div class="actions"><span class="muted">Saving throws</span>${AB.map(a=>`<label class="inline"><input type="checkbox" data-pcsave="${a}"${(p.saves||[]).includes(a)?" checked":""}> ${ABN[a]}</label>`).join("")}</div>
       <div class="grid"><label>Spellcasting ability <select data-pcsp="ab"><option value="">— none —</option>${AB.slice(3).map(a=>`<option value="${a}"${p.spell?.ab===a?" selected":""}>${ABN[a]}</option>`).join("")}</select></label>
         <label>Senses <input data-pc="senses" value="${esc(p.senses||"")}" placeholder="Darkvision 60 ft"></label><label>Resistances <input data-pc="resist" value="${esc(p.resist||"")}"></label><label>Languages <input data-pc="langs" value="${esc(p.langs||"")}"></label></div>
