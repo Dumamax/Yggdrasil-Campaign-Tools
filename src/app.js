@@ -1,6 +1,6 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
+  const PREP_TABS=["jobs","shop","roster","market","maps","print","settings"],TABLE_TABS=["table","maps","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -12,7 +12,7 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,maps:renderMaps,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -43,16 +43,28 @@ const App=(()=>{
     let drag=null;v.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;drag={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};v.classList.add("dragging")});
     window.addEventListener("pointermove",e=>{if(drag){v.scrollLeft=drag.l-(e.clientX-drag.x);v.scrollTop=drag.t-(e.clientY-drag.y)}});
     window.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
-  /* Settings → Maps (DM) */
-  function renderMaps(){const h=$("#mapSettings");if(!h)return;
-    h.innerHTML=`${C.maps.map((m,i)=>`<div class="map-row" data-i="${i}"><img src="${m.img}" alt=""><input data-mapname value="${esc(m.name||"")}" placeholder="Map name"><label class="inline map-vis${m.hidden?" off":""}" title="Show this map in Player View"><input type="checkbox" data-mapvis${m.hidden?"":" checked"}> ${m.hidden?"Hidden from players":"Players can see"}</label><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move up">↑</button><button class="btn small ghost danger" data-mapdel>Remove</button></div>`).join("")}
-      <label class="btn">＋ Add a map image<input type="file" accept="image/*" id="mapAdd" hidden></label>`;
-    h.onchange=async e=>{if(e.target.id==="mapAdd"&&e.target.files[0]){const f=e.target.files[0];toast("Preparing map…");
-        try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});commit();renderMaps();toast("Map added, hidden from players until you tick \"Players can see\"")}catch(err){toast("Couldn't read that image")}}};
-    h.addEventListener("change",e=>{if(e.target.dataset.mapvis==null)return;const m=C.maps[+e.target.closest(".map-row").dataset.i];m.hidden=!e.target.checked;commit();renderMaps();toast(m.hidden?`${m.name||"Map"} hidden from players`:`${m.name||"Map"} visible to players after you save`)});
-    h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-row").dataset.i].name=e.target.value;commit()}};
-    h.onclick=e=>{const r=e.target.closest(".map-row");if(!r)return;const i=+r.dataset.i;
-      if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
+  /* Maps tab (DM): gallery, upload, players-can-see toggle, link to a world */
+  function renderMaps(){const h=$("#mapGallery");if(!h)return;const W=C.worlds||[];
+    h.innerHTML=`<div class="controls"><label class="btn primary">＋ Upload a map<input type="file" accept="image/*" id="mapAdd" hidden multiple></label>
+      <span class="muted" style="flex:1;min-width:220px">Click a map to open it full screen. New maps start hidden from players; tick <b>Players can see</b> and Save to reveal one.</span></div>
+      ${C.maps.length?`<div class="map-grid">${C.maps.map((m,i)=>{const w=m.worldId&&W.find(x=>x.id===m.worldId);return `<div class="card map-card" data-i="${i}">
+        <img src="${m.img}" alt="${esc(m.name||"Map")}" data-open title="Open full screen">
+        <input class="map-name" data-mapname value="${esc(m.name||"")}" placeholder="Map name">
+        <label class="inline map-vis${m.hidden?" off":""}"><input type="checkbox" data-mapvis${m.hidden?"":" checked"}> ${m.hidden?"Hidden from players":"Players can see"}</label>
+        <label class="map-world">World <select data-mapworld><option value="">— none (the Tree) —</option>${W.map(x=>`<option value="${x.id}"${m.worldId===x.id?" selected":""}>${esc(x.name)} · ${esc(x.gate)}</option>`).join("")}</select></label>
+        ${w?`<a href="#" class="muted" data-goworld="${w.id}">→ ${esc(w.name)} in Worlds</a>`:""}
+        <div class="actions"><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move earlier">↑</button><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost danger" data-mapdel>Remove</button></div></div>`}).join("")}</div>`:'<p class="muted">No maps yet. Upload a map image to get started.</p>'}`;
+    h.onchange=async e=>{const t=e.target;
+      if(t.id==="mapAdd"&&t.files.length){toast("Preparing map…");let n=0;for(const f of t.files){try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});n++}catch(err){toast(`Couldn't read ${f.name}`)}}
+        if(n){commit();renderMaps();toast(`${n} map${n>1?"s":""} added, hidden from players until you tick "Players can see"`)}return}
+      const r=t.closest(".map-card");if(!r)return;const m=C.maps[+r.dataset.i];
+      if(t.dataset.mapvis!=null){m.hidden=!t.checked;commit();renderMaps();toast(m.hidden?`${m.name||"Map"} hidden from players`:`${m.name||"Map"} visible to players after you save`)}
+      else if(t.dataset.mapworld!=null){if(t.value)m.worldId=t.value;else delete m.worldId;commit();renderMaps()}};
+    h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-card").dataset.i].name=e.target.value;commit()}};
+    h.onclick=e=>{const r=e.target.closest(".map-card");if(!r)return;const i=+r.dataset.i,m=C.maps[i];
+      if(e.target.dataset.open!=null)openMap(m.img,m.name||"Map");
+      else if(e.target.dataset.goworld){e.preventDefault();UI.tab="roster";UI.rosterSub="worlds";saveUI();render();flash(`[data-world="${e.target.dataset.goworld}"]`)}
+      else if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
       else if(e.target.dataset.mapdel!=null){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Remove? Click again";return}C.maps.splice(i,1);commit();renderMaps();toast("Map removed · Ctrl+Z to undo")}}}
   /* ---------- table mode ---------- */
   function renderTable(){
@@ -167,7 +179,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
-    renderMaps();const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
+    const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
     const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
@@ -249,6 +261,7 @@ const App=(()=>{
     C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
     Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
     (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("roster",`[data-world="${w.id}"]`,()=>{UI.rosterSub="worlds"})}));
+    C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
     [["jobs","Job Board"],["shop","Guild Upgrades"],["roster","Roster"],["market","Shop Generator"],["print","Print"],["settings","Settings & Tables"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
@@ -285,6 +298,6 @@ const App=(()=>{
       render();
     }
   }
-  return {render,reloadAll,boot,flash};
+  return {render,reloadAll,boot,flash,openMap};
 })();
 App.boot();

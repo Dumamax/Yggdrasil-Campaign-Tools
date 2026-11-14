@@ -521,6 +521,20 @@ body.mobile .editor input,body.mobile .editor select,body.mobile .editor textare
 .world-card a{color:var(--gold)}
 .older-backups>summary{cursor:pointer;color:var(--mute);margin:6px 0;font-size:15px}.older-backups[open]>summary{color:var(--ink)}
 .map-vis{font-size:14px;white-space:nowrap}.map-vis.off{color:var(--mute)}
+/* Maps tab */
+.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.map-card{gap:8px}
+.map-card img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+.map-card .map-name{font:700 17px "Cinzel",serif;color:var(--gold);background:transparent;border:1px solid transparent;padding:2px 4px}
+.map-card .map-name:hover,.map-card .map-name:focus{border-color:var(--line)}
+.map-world{display:flex;gap:6px;align-items:center;font-size:14px}.map-world select{flex:1;min-width:0}
+.map-card .actions{justify-content:space-between;align-items:center}
+.w-map{height:54px;width:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in;margin-right:6px;vertical-align:middle}
+body.mobile .map-grid{grid-template-columns:minmax(0,1fr)}
+.map-card{display:flex;flex-direction:column;align-items:stretch;text-align:left}
+.map-card .map-world{flex-direction:row;align-items:center}
+.map-card .map-vis{justify-content:flex-start;align-self:flex-start}
+.map-card .actions{margin-top:auto}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -569,7 +583,7 @@ body.mobile .editor input,body.mobile .editor select,body.mobile .editor textare
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
   <button data-tab="market" data-ico="store"><span class="lbl">Shop Generator</span><span class="slbl">Shops</span></button>
   <button data-tab="table" data-ico="dice"><span class="lbl">At the Table</span><span class="slbl">Table</span></button>
-  <button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
+  <button data-tab="maps" data-ico="map"><span class="lbl">Maps</span><span class="slbl">Maps</span></button><button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
   <button data-tab="settings" data-ico="gear"><span class="lbl">Settings &amp; Tables</span><span class="slbl">Settings</span></button>
 </nav>
 </div>
@@ -649,6 +663,7 @@ body.mobile .editor input,body.mobile .editor select,body.mobile .editor textare
     <div class="preview" id="preview"></div>
   </section>
 
+  <section id="tab-maps" hidden><div id="mapGallery"></div></section>
   <section id="tab-settings" hidden>
     <div class="settings">
       <div class="panel">
@@ -664,11 +679,6 @@ body.mobile .editor input,body.mobile .editor select,body.mobile .editor textare
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
-      </div>
-      <div class="panel">
-        <h2>Maps</h2>
-        <p class="hint">Players see the maps marked <b>Players can see</b> under <b>Map</b> in Player View, and can zoom in. New maps start hidden. Images are resized to 2400 px and stored in the campaign, so they reach GitHub on Save. From a Claude Design map, use its download/export to get an image first.</p>
-        <div id="mapSettings"></div>
       </div>
       <div class="panel">
         <h2>GitHub saves</h2>
@@ -7107,6 +7117,8 @@ const Worlds=(()=>{
       <div class="row"><b>Jobs here:</b> ${J.length?J.map(h=>`<span class="w-job">${esc(Jobs.hookTitle(h))}${h.done?` <i class="muted">(${h.done==="success"?"done":"failed"})</i>`:""}</span>`).join(" · "):'<span class="muted">none yet</span>'}</div>
       <div class="row"><b>People:</b> ${N.length?N.map(m=>`<a href="#" data-npcgo="${m.id}">${esc(m.name)}</a>${m.attitude?` <i class="muted">(${esc(m.attitude)})</i>`:""}${(w.npcs||[]).includes(m.id)?` <span class="w-unlink" data-unlink="${m.id}" title="Unlink">✕</span>`:""}`).join(" · "):'<span class="muted">none linked</span>'}
         <select data-wlink><option value="">＋ Link an NPC…</option>${C.roster.filter(m=>!N.includes(m)).map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select></div>
+      <div class="row"><b>Maps:</b> ${(C.maps||[]).filter(m=>m.worldId===w.id).map(m=>`<img class="w-map" src="${m.img}" alt="${esc(m.name||"Map")}" title="${esc(m.name||"Map")}" data-wmap="${m.id}">`).join("")||'<span class="muted">none linked</span>'}
+        ${(C.maps||[]).some(m=>m.worldId!==w.id)?`<select data-wmaplink><option value="">＋ Link a map…</option>${C.maps.filter(m=>m.worldId!==w.id).map(m=>`<option value="${m.id}">${esc(m.name||"Map")}</option>`).join("")}</select>`:""}</div>
       <label class="w-notes">Notes <textarea data-wf="notes" rows="2" placeholder="What happened there, who owes whom, the state of its Tree…">${esc(w.notes||"")}</textarea></label>
       <div class="actions"><button class="btn small ghost danger" data-wa="del">Delete world</button></div></div>`}
   function render(host){const L=list();
@@ -7116,14 +7128,16 @@ const Worlds=(()=>{
     $("#wAdd").onclick=()=>{const g=$("#wGenre").value;const w=create({world:{genre:g,line:""},location:$("#wDist").value});commit();render(host);App.flash(`[data-world="${w.id}"]`)};
     host.onchange=e=>{const c=e.target.closest("[data-world]");if(!c)return;const w=byId(c.dataset.world);if(!w)return;const f=e.target.dataset.wf;
       if(f){w[f]=e.target.value;commit();if(f==="status")e.target.className=`w-status s-${w.status}`;return}
+      if(e.target.dataset.wmaplink!=null&&e.target.value){const m=C.maps.find(x=>x.id===e.target.value);if(m){m.worldId=w.id;commit();render(host)}return}
       if(e.target.dataset.wlink!=null&&e.target.value){(w.npcs=w.npcs||[]).push(e.target.value);commit();render(host)}};
     host.onclick=e=>{const c=e.target.closest("[data-world]");if(!c)return;const w=byId(c.dataset.world);if(!w)return;
       const a=e.target.dataset.wa;
       if(e.target.dataset.npcgo){e.preventDefault();const m=C.roster.find(x=>x.id===e.target.dataset.npcgo);if(!m)return;UI.rosterSub=NPCs.isMember(m)?"members":m.seat?"council":"npcs";NPCs.reset();saveUI();App.render();App.flash(NPCs.isMember(m)?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`);return}
+      if(e.target.dataset.wmap){const m=C.maps.find(x=>x.id===e.target.dataset.wmap);if(m)App.openMap(m.img,m.name||"Map");return}
       if(e.target.dataset.unlink){w.npcs=(w.npcs||[]).filter(x=>x!==e.target.dataset.unlink);commit();render(host);return}
       if(a==="rename"){w.name=Places.worldName(w.genre);commit();render(host)}
       else if(a==="del"){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Delete? Click again";return}
-        C.jobs.forEach(h=>{if(h.worldId===w.id)delete h.worldId});C.roster.forEach(m=>{if(m.worldId===w.id)delete m.worldId});C.worlds=list().filter(x=>x!==w);commit();render(host);toast("World deleted · Ctrl+Z to undo")}}}
+        C.jobs.forEach(h=>{if(h.worldId===w.id)delete h.worldId});(C.maps||[]).forEach(m=>{if(m.worldId===w.id)delete m.worldId});C.roster.forEach(m=>{if(m.worldId===w.id)delete m.worldId});C.worlds=list().filter(x=>x!==w);commit();render(host);toast("World deleted · Ctrl+Z to undo")}}}
   return {list,byId,forJob,jobRow,setJobWorld,label,render,npcsOf};
 })();
 
@@ -7233,7 +7247,7 @@ const TableEditor=(()=>{
 
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
+  const PREP_TABS=["jobs","shop","roster","market","maps","print","settings"],TABLE_TABS=["table","maps","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -7245,7 +7259,7 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,maps:renderMaps,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -7276,16 +7290,28 @@ const App=(()=>{
     let drag=null;v.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;drag={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};v.classList.add("dragging")});
     window.addEventListener("pointermove",e=>{if(drag){v.scrollLeft=drag.l-(e.clientX-drag.x);v.scrollTop=drag.t-(e.clientY-drag.y)}});
     window.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
-  /* Settings → Maps (DM) */
-  function renderMaps(){const h=$("#mapSettings");if(!h)return;
-    h.innerHTML=`${C.maps.map((m,i)=>`<div class="map-row" data-i="${i}"><img src="${m.img}" alt=""><input data-mapname value="${esc(m.name||"")}" placeholder="Map name"><label class="inline map-vis${m.hidden?" off":""}" title="Show this map in Player View"><input type="checkbox" data-mapvis${m.hidden?"":" checked"}> ${m.hidden?"Hidden from players":"Players can see"}</label><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move up">↑</button><button class="btn small ghost danger" data-mapdel>Remove</button></div>`).join("")}
-      <label class="btn">＋ Add a map image<input type="file" accept="image/*" id="mapAdd" hidden></label>`;
-    h.onchange=async e=>{if(e.target.id==="mapAdd"&&e.target.files[0]){const f=e.target.files[0];toast("Preparing map…");
-        try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});commit();renderMaps();toast("Map added, hidden from players until you tick \"Players can see\"")}catch(err){toast("Couldn't read that image")}}};
-    h.addEventListener("change",e=>{if(e.target.dataset.mapvis==null)return;const m=C.maps[+e.target.closest(".map-row").dataset.i];m.hidden=!e.target.checked;commit();renderMaps();toast(m.hidden?`${m.name||"Map"} hidden from players`:`${m.name||"Map"} visible to players after you save`)});
-    h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-row").dataset.i].name=e.target.value;commit()}};
-    h.onclick=e=>{const r=e.target.closest(".map-row");if(!r)return;const i=+r.dataset.i;
-      if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
+  /* Maps tab (DM): gallery, upload, players-can-see toggle, link to a world */
+  function renderMaps(){const h=$("#mapGallery");if(!h)return;const W=C.worlds||[];
+    h.innerHTML=`<div class="controls"><label class="btn primary">＋ Upload a map<input type="file" accept="image/*" id="mapAdd" hidden multiple></label>
+      <span class="muted" style="flex:1;min-width:220px">Click a map to open it full screen. New maps start hidden from players; tick <b>Players can see</b> and Save to reveal one.</span></div>
+      ${C.maps.length?`<div class="map-grid">${C.maps.map((m,i)=>{const w=m.worldId&&W.find(x=>x.id===m.worldId);return `<div class="card map-card" data-i="${i}">
+        <img src="${m.img}" alt="${esc(m.name||"Map")}" data-open title="Open full screen">
+        <input class="map-name" data-mapname value="${esc(m.name||"")}" placeholder="Map name">
+        <label class="inline map-vis${m.hidden?" off":""}"><input type="checkbox" data-mapvis${m.hidden?"":" checked"}> ${m.hidden?"Hidden from players":"Players can see"}</label>
+        <label class="map-world">World <select data-mapworld><option value="">— none (the Tree) —</option>${W.map(x=>`<option value="${x.id}"${m.worldId===x.id?" selected":""}>${esc(x.name)} · ${esc(x.gate)}</option>`).join("")}</select></label>
+        ${w?`<a href="#" class="muted" data-goworld="${w.id}">→ ${esc(w.name)} in Worlds</a>`:""}
+        <div class="actions"><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move earlier">↑</button><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost danger" data-mapdel>Remove</button></div></div>`}).join("")}</div>`:'<p class="muted">No maps yet. Upload a map image to get started.</p>'}`;
+    h.onchange=async e=>{const t=e.target;
+      if(t.id==="mapAdd"&&t.files.length){toast("Preparing map…");let n=0;for(const f of t.files){try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});n++}catch(err){toast(`Couldn't read ${f.name}`)}}
+        if(n){commit();renderMaps();toast(`${n} map${n>1?"s":""} added, hidden from players until you tick "Players can see"`)}return}
+      const r=t.closest(".map-card");if(!r)return;const m=C.maps[+r.dataset.i];
+      if(t.dataset.mapvis!=null){m.hidden=!t.checked;commit();renderMaps();toast(m.hidden?`${m.name||"Map"} hidden from players`:`${m.name||"Map"} visible to players after you save`)}
+      else if(t.dataset.mapworld!=null){if(t.value)m.worldId=t.value;else delete m.worldId;commit();renderMaps()}};
+    h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-card").dataset.i].name=e.target.value;commit()}};
+    h.onclick=e=>{const r=e.target.closest(".map-card");if(!r)return;const i=+r.dataset.i,m=C.maps[i];
+      if(e.target.dataset.open!=null)openMap(m.img,m.name||"Map");
+      else if(e.target.dataset.goworld){e.preventDefault();UI.tab="roster";UI.rosterSub="worlds";saveUI();render();flash(`[data-world="${e.target.dataset.goworld}"]`)}
+      else if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
       else if(e.target.dataset.mapdel!=null){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Remove? Click again";return}C.maps.splice(i,1);commit();renderMaps();toast("Map removed · Ctrl+Z to undo")}}}
   /* ---------- table mode ---------- */
   function renderTable(){
@@ -7400,7 +7426,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
-    renderMaps();const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
+    const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
     const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
@@ -7482,6 +7508,7 @@ const App=(()=>{
     C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
     Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
     (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("roster",`[data-world="${w.id}"]`,()=>{UI.rosterSub="worlds"})}));
+    C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
     [["jobs","Job Board"],["shop","Guild Upgrades"],["roster","Roster"],["market","Shop Generator"],["print","Print"],["settings","Settings & Tables"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
@@ -7518,7 +7545,7 @@ const App=(()=>{
       render();
     }
   }
-  return {render,reloadAll,boot,flash};
+  return {render,reloadAll,boot,flash,openMap};
 })();
 App.boot();
 

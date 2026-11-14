@@ -511,3 +511,17 @@ body.mobile .editor input,body.mobile .editor select,body.mobile .editor textare
 .world-card a{color:var(--gold)}
 .older-backups>summary{cursor:pointer;color:var(--mute);margin:6px 0;font-size:15px}.older-backups[open]>summary{color:var(--ink)}
 .map-vis{font-size:14px;white-space:nowrap}.map-vis.off{color:var(--mute)}
+/* Maps tab */
+.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.map-card{gap:8px}
+.map-card img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+.map-card .map-name{font:700 17px "Cinzel",serif;color:var(--gold);background:transparent;border:1px solid transparent;padding:2px 4px}
+.map-card .map-name:hover,.map-card .map-name:focus{border-color:var(--line)}
+.map-world{display:flex;gap:6px;align-items:center;font-size:14px}.map-world select{flex:1;min-width:0}
+.map-card .actions{justify-content:space-between;align-items:center}
+.w-map{height:54px;width:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in;margin-right:6px;vertical-align:middle}
+body.mobile .map-grid{grid-template-columns:minmax(0,1fr)}
+.map-card{display:flex;flex-direction:column;align-items:stretch;text-align:left}
+.map-card .map-world{flex-direction:row;align-items:center}
+.map-card .map-vis{justify-content:flex-start;align-self:flex-start}
+.map-card .actions{margin-top:auto}
