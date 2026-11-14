@@ -3,6 +3,8 @@
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
+const BUILD="/*BUILD*/";
+const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 const SYNC_DEF={repo:"Dumamax/Yggdrasil-Campaign-Tools",branch:"main",path:"data/campaign.json"};
 async function hashPw(pw){const s="ygh-dm:"+pw;
   try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
@@ -36,13 +38,13 @@ function dmGate(){
 const Sync=(()=>{
   const cfg=()=>Object.assign({},SYNC_DEF,lsGet("ygh.sync",{}));
   const token=()=>lsGet("ygh.ghtoken","")||"";
-  let sha=lsGet("ygh.sha",null),last=null,status="",busy=false;
+  let sha=lsGet("ygh.sha",null),remoteAt=null,last=null,status="",busy=false;
   const api=(withRef)=>{const c=cfg();return `https://api.github.com/repos/${c.repo}/contents/${c.path.split("/").map(encodeURIComponent).join("/")}${withRef?`?ref=${encodeURIComponent(c.branch)}`:""}`};
   const hdr=raw=>{const h={Accept:raw?"application/vnd.github.raw+json":"application/vnd.github+json"};if(token())h.Authorization="Bearer "+token();return h};
   const enc=s=>{const b=new TextEncoder().encode(s);let o="";for(let i=0;i<b.length;i+=0x8000)o+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(o)};
   const dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
   const canPush=()=>isDM()&&!!token();
-  function setStatus(s){status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
+  function setStatus(s){if(s==="Up to date"&&C.savedAt)s+=` · save from ${whenStr(C.savedAt)}`;status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
   async function fetchRemote(skipIfSha){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
     if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403||r.status===429?"GitHub is busy (too many checks from this network); retrying shortly":"GitHub error "+r.status);
     const j=await r.json();if(skipIfSha&&j.sha===skipIfSha)return {sha:j.sha,same:true};let text;if(j.content&&j.encoding==="base64")text=dec(j.content);else text=await (await fetch(api(true),{headers:hdr(true),cache:"no-cache"})).text();
@@ -51,7 +53,7 @@ const Sync=(()=>{
     if(wasDM&&!isDM())lsSet("ygh.dm",S.dmHash); // a password change elsewhere shouldn't lock out a DM mid-session
     if(msg)toast(msg)}
   async function pull(manual){if(busy)return;busy=true;try{
-      const fresh=sha&&C.savedAt&&C.savedAt===lsGet("ygh.shaAt",null);const r=await fetchRemote(fresh?sha:null);last=Date.now();
+      const fresh=sha&&C.savedAt&&C.savedAt===lsGet("ygh.shaAt",null);const r=await fetchRemote(fresh?sha:null);last=Date.now();if(!r.missing&&!r.same)remoteAt=r.data.savedAt;else if(r.same)remoteAt=C.savedAt;
       if(r.missing){setStatus(isDM()?(canPush()?"Not on GitHub yet: press Save":"Not on GitHub yet"):"Nothing published yet");return}
       if(r.same||r.sha===sha&&C.savedAt===r.data.savedAt){if(!r.same)lsSet("ygh.shaAt",C.savedAt);setStatus("Up to date");if(manual)toast("Already up to date");return}
       if(!isDM()){adopt(r,sha?"Updated with the DM's latest save":"");setStatus("Up to date");return}
@@ -61,6 +63,9 @@ const Sync=(()=>{
       const i=await ask("Newer save on GitHub",`Someone saved the campaign to GitHub (${esc(when)}) and this browser has ${dirty?"unsaved changes":"a different copy"}. Your current copy goes to Settings → Backups either way.`,["Load the GitHub save","Keep mine (overwrite on next save)"]);
       if(i===0){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date")}else{sha=r.sha;lsSet("ygh.sha",sha);dirty=true;lsSet("ygh.dirty",true);banner();setStatus("Your copy differs")}
     }catch(e){setStatus(navigator.onLine===false?"Offline":"Can't reach GitHub");if(manual)toast(e.message)}finally{busy=false}}
+  async function force(){if(dirty&&await ask("Replace this device's copy?","This device has unsaved changes. They go to Settings → Backups, then the GitHub save loads.",["Load the GitHub save","Cancel"])!==0)return;
+    busy=true;try{const r=await fetchRemote(null);if(r.missing){toast("Nothing saved on GitHub yet");return}remoteAt=r.data.savedAt;adopt(r,"Loaded the GitHub save ("+whenStr(r.data.savedAt)+")");setStatus("Up to date");App.render()}
+    catch(e){toast(e.message)}finally{busy=false}}
   async function check(){const c=cfg();if(!token()){toast("No token saved in this browser");return}
     try{const r=await fetch(`https://api.github.com/repos/${c.repo}`,{headers:hdr(),cache:"no-store"});
       if(r.status===401){await ask("Token problem","GitHub refused this token. It may be mistyped, expired, or revoked. Make a new one and paste it in.",["OK"]);return}
@@ -88,7 +93,8 @@ const Sync=(()=>{
       <label>Repo <input id="ghRepo" value="${esc(c.repo)}" style="width:260px"></label>
       <label>Branch <input id="ghBranch" value="${esc(c.branch)}" style="width:90px"></label>
       <label>File <input id="ghPath" value="${esc(c.path)}" style="width:180px"></label></div>
-    <div class="actions"><button class="btn" id="ghSave">Save settings</button><button class="btn" id="ghCheck">Check my token</button><button class="btn" id="ghPull">Check for a newer save</button>${token()?'<button class="btn ghost danger" id="ghForget">Forget token</button>':""}<span class="muted">${esc(status||"")}</span></div>
+    <div class="actions"><button class="btn" id="ghSave">Save settings</button><button class="btn" id="ghCheck">Check my token</button><button class="btn" id="ghPull">Check for a newer save</button><button class="btn" id="ghForce">Load the GitHub save now</button>${token()?'<button class="btn ghost danger" id="ghForget">Forget token</button>':""}<span class="muted">${esc(status||"")}</span></div>
+    <p class="muted" style="margin:6px 0 0">GitHub save: <b>${esc(whenStr(remoteAt))}</b>${remoteAt?"":" (not checked yet)"} · This device: <b>${esc(whenStr(C.savedAt))}</b>${dirty?" + unsaved changes":""} · App version ${esc(BUILD)}</p>
     <details class="hint" style="margin-top:8px"><summary>How to make a token (2 minutes)</summary>
       <ol><li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.</li>
       <li>Expiration: up to 1 year (set a reminder to renew). Repository access: <b>Only select repositories</b> → ${esc(c.repo.split("/")[1]||c.repo)}.</li>
@@ -99,6 +105,7 @@ const Sync=(()=>{
       sha=null;lsSet("ygh.sha",null);toast("GitHub settings saved");await pull(true);App.render()}
     else if(id==="ghPull")pull(true);
     else if(id==="ghCheck")check();
+    else if(id==="ghForce")force();
     else if(id==="ghForget"){lsSet("ygh.ghtoken","");toast("Token removed from this browser");App.render()}}}
-  return {check,pull,push,start,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
+  return {force,check,pull,push,start,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
 })();
