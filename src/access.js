@@ -5,6 +5,15 @@
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
 const BUILD="/*BUILD*/";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
+/* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
+const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
+  async function check(){if(!live||Date.now()-lastCheck<10*60e3)return;lastCheck=Date.now();
+    try{const t=await (await fetch(location.pathname+"?u="+Date.now(),{cache:"no-store"})).text();const m=t.match(/const BUILD="([^"]+)"/);
+      if(!m||m[1]===BUILD||m[1].startsWith("/*"))return;
+      if(dirty&&isDM()){toast("A newer version of the app is ready: save, then reload");return}
+      persistNow();location.replace(location.pathname+"?v="+encodeURIComponent(m[1])+location.hash)}catch(e){}}
+  function start(){check();document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()});setInterval(()=>{if(!document.hidden)check()},30*60e3)}
+  return {start,check}})();
 const SYNC_DEF={repo:"Dumamax/Yggdrasil-Campaign-Tools",branch:"main",path:"data/campaign.json"};
 async function hashPw(pw){const s="ygh-dm:"+pw;
   try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
