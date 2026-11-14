@@ -61,7 +61,9 @@ const Sync=(()=>{
     try{const r=await fetch(`https://api.github.com/repos/${c.repo}`,{headers:hdr(),cache:"no-store"});
       if(r.status===401){await ask("Token problem","GitHub refused this token. It may be mistyped, expired, or revoked. Make a new one and paste it in.",["OK"]);return}
       if(!r.ok){await ask("Token problem",`The token can't see <b>${esc(c.repo)}</b> (error ${r.status}). Check the repo name, and that the token's Repository access includes it.`,["OK"]);return}
-      const j=await r.json(),push=j.permissions?.push;
+      /* real write test: an unreferenced blob needs the same Contents: write permission as a save, and changes nothing visible */
+      const w=await fetch(`https://api.github.com/repos/${c.repo}/git/blobs`,{method:"POST",headers:Object.assign(hdr(),{"Content-Type":"application/json"}),body:JSON.stringify({content:"guild hall write test",encoding:"utf-8"})});
+      const push=w.ok;
       await ask(push?"Token works":"Token can't save",push?`This browser can save to <b>${esc(c.repo)}</b>. Press Save to publish the campaign.`:`The token can read <b>${esc(c.repo)}</b> but not write. Edit the token on GitHub: Repository access must list this repo, and Repository permissions → <b>Contents</b> must be <b>Read and write</b>. Then paste it in again.`,["OK"])}
     catch(e){await ask("Can't reach GitHub",esc(e.message),["OK"])}}
   async function push(){const c=cfg();const body={message:`Save campaign · ${new Date().toLocaleString()}`,content:enc(JSON.stringify(C,null,1)),branch:c.branch};if(sha)body.sha=sha;
