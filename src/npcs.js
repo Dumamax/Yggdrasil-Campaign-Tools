@@ -137,7 +137,7 @@ Return ONLY JSON:
   /* Player View: NPCs the DM marked "Player viewable" */
   function playerSection(){const L=C.roster.filter(m=>m.shown&&m.kind!=="Active PC"&&m.kind!=="Retired PC");const d=document.createElement("section");d.className="pc-section";
     if(!L.length)return d;
-    d.innerHTML=`<h2 class="pc-title">Notable Figures</h2><div class="np-cards">${L.map(m=>`<button class="np-card" data-np="${m.id}">${m.img?`<img src="${esc(m.img)}" alt="">`:`<div class="np-noimg">${esc((m.name||"?").trim()[0]||"?")}</div>`}<div class="np-name">${esc(m.name)}</div>${sub(m)?`<div class="np-sub">${sub(m)}</div>`:""}${m.public?`<div class="np-pub">${esc(m.public)}</div>`:""}</button>`).join("")}</div>`;
+    d.innerHTML=`<div class="np-cards">${L.map(m=>`<button class="np-card" data-np="${m.id}">${m.img?`<img src="${esc(m.img)}" alt="">`:`<div class="np-noimg">${esc((m.name||"?").trim()[0]||"?")}</div>`}<div class="np-name">${esc(m.name)}</div>${sub(m)?`<div class="np-sub">${sub(m)}</div>`:""}${m.public?`<div class="np-pub">${esc(m.public)}</div>`:""}</button>`).join("")}</div>`;
     d.onclick=e=>{const b=e.target.closest("[data-np]");if(!b)return;const m=byId(b.dataset.np);if(m)openBig(m)};return d}
   function card(m,candidate){
     const d=document.createElement("div");d.className="card"+(m.seat?" owned":"");d.dataset.npc=m.id;

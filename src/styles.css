@@ -555,3 +555,4 @@ body.mobile .pc-bodyimg{position:static;max-height:55dvh;display:block;margin:0 
 .np-noimg{display:flex;align-items:center;justify-content:center;font:700 54px "Cinzel",serif;color:var(--gold)}
 .np-name{font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 12px 0}.np-sub{color:var(--mute);font-size:14px;padding:2px 12px 0}.np-pub{font-size:15px;padding:6px 12px 0}
 body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.mobile .np-name{font-size:16px}
+.pv-sub{display:flex;justify-content:center;margin:0 auto 14px;width:max-content;max-width:100%}body.mobile .pv-sub{width:100%}body.mobile .pv-sub .btn{flex:1}
