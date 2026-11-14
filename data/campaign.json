@@ -1,17 +1,17 @@
 {
  "app": "yggdrasil-guild-hall",
  "schema": 5,
- "savedAt": "2026-11-14T05:48:55.918Z",
+ "savedAt": "2026-11-14T06:10:33.005Z",
  "settings": {
   "cp": {
    "name": "Contribution Points",
    "short": "pts",
    "stepJobs": {
-    "Iron": 4,
-    "Bronze": 5,
-    "Silver": 6,
-    "Gold": 7,
-    "Platinum": 8
+    "Iron": 1.5,
+    "Bronze": 2.5,
+    "Silver": 4,
+    "Gold": 5,
+    "Platinum": 7
    },
    "deeds": {
     "Minor": 0.5,
@@ -324,16 +324,31 @@
     "perk": "Speak a member's name and they hear you, anywhere in the city."
    },
    {
-    "id": "hoxeiong",
-    "type": "unique",
-    "genre": "Swashbuckling / nautical",
-    "vendor": "a retired shipwright",
+    "id": "uz0h3pwv",
+    "type": "deal",
+    "genre": "Low fantasy / medieval",
+    "vendor": "a wandering builder-monk",
     "tier": 0,
-    "name": "Crow's Nest Spyglass",
-    "cat": "Services",
-    "cost": 40,
-    "days": 1,
-    "perk": "+1 hook from coastal and seafaring worlds on each Job Board roll."
+    "name": "Scholar I: Skilled Scholar",
+    "cat": "Staff",
+    "cost": 45,
+    "days": 0,
+    "perk": "Operates the Library.",
+    "ref": {
+     "id": "scholar",
+     "lvl": 0
+    },
+    "orig": 75,
+    "discount": 40,
+    "reason": "a bankrupt builder clearing stock",
+    "x": null,
+    "sold": false,
+    "role": "Alchemist",
+    "skills": [
+     "Alchemist's Supplies"
+    ],
+    "grade": "Master",
+    "quirk": "answers questions with riddles"
    },
    {
     "id": "nemf55al",
@@ -679,6 +694,25 @@
   }
  ],
  "expanded": {},
- "recent": {},
+ "recent": {
+  "vendor": [
+   "a rival guild selling off old fixtures",
+   "a Council-licensed handyman",
+   "a wandering builder-monk"
+  ],
+  "dealr": [
+   "off-season rates in the carpenters' quarter",
+   "a bankrupt builder clearing stock"
+  ],
+  "hire": [
+   "exiled fey alchemist"
+  ],
+  "first": [
+   "Nadia"
+  ],
+  "last": [
+   "Mendoza"
+  ]
+ },
  "councilSeeded": true
 }
