@@ -510,3 +510,4 @@ body.mobile .editor .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 body.mobile .editor input,body.mobile .editor select,body.mobile .editor textarea{width:100%}
 .world-card a{color:var(--gold)}
 .older-backups>summary{cursor:pointer;color:var(--mute);margin:6px 0;font-size:15px}.older-backups[open]>summary{color:var(--ink)}
+.map-vis{font-size:14px;white-space:nowrap}.map-vis.off{color:var(--mute)}
