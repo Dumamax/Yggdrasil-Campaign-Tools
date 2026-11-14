@@ -464,6 +464,29 @@ body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills spa
 .pr-row{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
 .pr-row .pr-cat{grid-column:1/-1}
 .pr-it{font-size:14px}
+/* editor opened in place */
+.board>#editorHost.inline-ed{grid-column:1/-1}
+#editorHost.inline-ed .editor{border-color:var(--gold);box-shadow:0 0 0 2px rgba(214,168,74,.25)}
+/* maps */
+.pv-map{margin:0;display:grid;gap:6px;justify-items:center}
+.pv-map figcaption{font:700 20px "Cinzel",serif;color:var(--gold)}
+.pv-map img{width:100%;max-width:1100px;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.pv-maphint{font-size:13px}
+.pv:has(.pv-map)>*{max-width:1100px}
+.qs:has(.map-modal){padding-top:2vh;padding-top:2dvh}
+.qs-box.map-modal{width:96vw;height:94vh;height:94dvh;max-height:none;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.mapv{display:flex;flex-direction:column;height:100%}
+.mapv-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.mapv-bar b{font:700 17px "Cinzel",serif;color:var(--gold)}.mapv-bar span{display:flex;gap:6px}
+.mapv-bar .btn.small{min-width:38px;font-size:17px}
+.mapv-view{flex:1;overflow:auto;background:#0f0d0a;cursor:grab;touch-action:pan-x pan-y;overscroll-behavior:contain}
+.mapv-view.dragging{cursor:grabbing}
+.mapv-view img{display:block;width:100%;height:auto;margin:auto;user-select:none;-webkit-user-drag:none}
+.map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.map-row img{height:70px;width:110px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.map-row input{flex:1;min-width:160px}
+body.mobile .qs:has(.map-modal){padding-top:0}
+body.mobile .qs-box.map-modal{width:100vw;height:100dvh;border-radius:0}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -506,7 +529,7 @@ body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills spa
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
-  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button>
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
   <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
   <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
@@ -554,7 +577,7 @@ body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills spa
       <button class="btn" id="copyRoster">Copy roster</button></span>
     </div>
     <div id="importHost"></div>
-    <div id="editorHost"></div>
+    <div id="editorHome"><div id="editorHost"></div></div>
     <div id="roster" class="board"></div>
     <div id="npcHost" class="npc-host"></div>
     <p class="hint" id="rHint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
@@ -607,6 +630,11 @@ body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills spa
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Maps</h2>
+        <p class="hint">Players see these under <b>Map</b> in Player View and can zoom in. Images are resized to 2400 px and stored in the campaign, so they reach GitHub on Save. From a Claude Design map, use its download/export to get an image first.</p>
+        <div id="mapSettings"></div>
       </div>
       <div class="panel">
         <h2>GitHub saves</h2>
@@ -666,7 +694,7 @@ body.mobile .pc-skills{font-size:13px;column-gap:14px}body.mobile .pc-skills spa
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=5;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=6;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -712,7 +740,7 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
 /* v3: "The Trunk" was renamed "The Roots" */
 function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
-  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null},o.tables||{});o.shops=o.shops||[];o.schema=SCHEMA;
+  o.settings=Object.assign(clone(DEFAULT_SETTINGS),o.settings||{});o.tables=Object.assign({jobs:null,upgrades:null,prices:null,shops:null,npcs:null},o.tables||{});o.shops=o.shops||[];o.maps=o.maps||[]; /* v6: maps shown in Player View */o.schema=SCHEMA;
   o.guild=Object.assign({treasury:null,owned:{},addons:{},offers:[],uniques:[]},o.guild||{});
   /* v5: guild standing (points toward the next rank) */
   o.guild.cp=Object.assign({pts:0,log:[]},o.guild.cp||{});const sc=o.settings.cp||{};o.settings.cp=Object.assign(clone(DEFAULT_CP),sc,{stepJobs:Object.assign(clone(DEFAULT_CP.stepJobs),sc.stepJobs||{}),deeds:Object.assign(clone(DEFAULT_CP.deeds),sc.deeds||{})});
@@ -5964,7 +5992,13 @@ const Roster=(()=>{
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
   const sorted=()=>C.roster.filter(m=>KINDS.includes(m.kind)).sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
   function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
-  function render(){
+  function render(){park();render0();place()}
+  /* the editor opens in place, right after the card being edited; parked at the top while lists re-render */
+  function park(){const h=$("#editorHost"),home=$("#editorHome");if(h&&home&&h.parentElement!==home){home.appendChild(h);h.classList.remove("inline-ed")}}
+  function place(scroll){const h=$("#editorHost");if(!h||!editing||!editing.id)return;
+    const c=document.querySelector(`.card[data-member="${editing.id}"]:not([hidden]),.card[data-npc="${editing.id}"]`);if(!c||c.offsetParent===null)return;
+    c.after(h);h.classList.add("inline-ed");if(scroll)setTimeout(()=>{const r=h.getBoundingClientRect(),top=($(".topbar")?.offsetHeight||0)+12;if(r.top>innerHeight*0.7||r.top<top)window.scrollBy({top:r.top-Math.max(top,innerHeight*0.3),behavior:"smooth"})},30)}
+  function render0(){
     const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
     $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub==="members";$("#rHint").hidden=sub!=="members";
     renderEditor();if(sub!=="members"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render(sub);return}
@@ -5983,7 +6017,7 @@ const Roster=(()=>{
       ${m.look||(m.forms||[]).length||m.want?NPCs.profileHTML(m,true,true):""}${m.assign?`<div class="row"><b>Operating:</b> ${esc(assignName(m))}</div>`:""}${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions"><button class="btn small" data-a="edit">Edit</button>${m.kind==="Active PC"?'<button class="btn small primary" data-a="retire">Retire → NPC</button>':""}${m.kind==="Hired NPC"||m.kind==="Retired PC"?'<button class="btn small" data-a="leave">Leave guild</button>':""}<button class="btn small danger" data-a="del">Delete</button></div>`;
       d.addEventListener("click",ev=>{const a=ev.target.dataset.a;if(!a)return;
-        if(a==="edit"){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+        if(a==="edit"){editing=clone(m);renderEditor();place(true)}
         else if(a==="leave"){NPCs.leaveGuild(m);return}
         else if(a==="retire"){m.kind="Retired PC";m.status="In the hall";commit();toast(`${m.name} retires to the hall`);render()}
         else if(a==="del"){if(ev.target.dataset.sure){C.roster=C.roster.filter(x=>x.id!==m.id);commit();render()}else{ev.target.dataset.sure=1;ev.target.textContent="Confirm delete?"}}});
@@ -6017,7 +6051,7 @@ const Roster=(()=>{
     h.onclick=e=>{const t=e.target;
       if(t.id==="addSkill"){(m.skills=m.skills||[]).push({s:"",g:m.kind==="Active PC"?"Prof":"Skilled"});rows()}
       else if(t.dataset.sx!=null){m.skills.splice(+t.dataset.sx,1);rows()}
-      else if(t.id==="cancelMem"){editing=null;renderEditor()}
+      else if(t.id==="cancelMem"){editing=null;renderEditor();park()}
       else if(t.id==="saveMem"){if(!String(m.name||"").trim()){toast("Give them a name");return}
         m.skills=(m.skills||[]).filter(s=>String(s.s).trim());
         if(m.assign)C.roster.forEach(x=>{if(x.assign===m.assign&&x.id!==m.id)x.assign=""});
@@ -6087,7 +6121,7 @@ ${t}`:""}`;
       <label>Council seat ${sel("seat",TIERS,1)}</label>
       <label class="inline"><input type="checkbox" data-k="rival"${m.rival?" checked":""}> Rival</label><label class="inline"><input type="checkbox" data-k="pinned"${m.pinned?" checked":""}> Pinned</label></div>
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
-  function edit(m){editing=clone(m);renderEditor();$("#editorHost").scrollIntoView({behavior:"smooth"})}
+  function edit(m){editing=clone(m);renderEditor();if(!document.querySelector(`.card[data-npc="${m.id}"],.card[data-member="${m.id}"]`)){$("#editorHost").scrollIntoView({behavior:"smooth"});return}place(true)}
   function bind(){
     $("#rSub").onclick=e=>{const s=e.target.dataset.sub;if(!s)return;UI.rosterSub=s;saveUI();editing=null;render()};
     $("#rFilter").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;render()};
@@ -6095,7 +6129,7 @@ ${t}`:""}`;
     $("#copyRoster").onclick=()=>copyText(text());
     $("#importPC").onclick=()=>{importing=true;renderImport();$("#impText").focus()};
   }
-  return {render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
+  return {park,place,render,bind,edit,gradeOf,bestSkill,sorted,assignName,printHTML,sheetPrompt};
 })();
 
 /* ===== PCs: play stats + portraits for Table Mode character cards =====
@@ -6198,9 +6232,9 @@ const PCs=(()=>{
       else if(t.dataset.pcimg!=null&&t.files[0]){try{p.portrait=await shrink(t.files[0]);rerender()}catch(err){toast("Couldn't read that image")}}});
     host.addEventListener("click",e=>{if(e.target.dataset.pcnoimg!=null){e.preventDefault();m.pc.portrait=null;rerender()}})}
   /* downscale to keep the campaign file small (portraits travel inside it, so they reach GitHub with each save) */
-  function shrink(file,max=320){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
+  function shrink(file,max=320,q=0.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
     const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-    c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",0.82))};img.src=r.result};r.readAsDataURL(file)})}
+    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};img.src=r.result};r.readAsDataURL(file)})}
 
   /* ---------- import (Guild Hall Import Format) ---------- */
   function fromImport(x){const st=x.stats||x.abilities||null,o={};
@@ -6214,7 +6248,7 @@ const PCs=(()=>{
     if(x.portrait)o.portrait=String(x.portrait);
     return Object.keys(o).length?o:null}
 
-  return {tableSection,editorHTML,bindEditor,fromImport,list};
+  return {shrink,tableSection,editorHTML,bindEditor,fromImport,list};
 })();
 
 /* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
@@ -6479,7 +6513,9 @@ Quirk: ${s.quirk}\nRumor: ${s.rumor}\nHaggling: ${s.haggle}`}
 
 /* NPC & Council default tables. Looks, voices and mannerisms come from the Shop Generator's "Shopkeeper parts". */
 const DEFAULT_NPC_TABLES={
- version:1,
+ version:2,
+ guildNames:{first:["Lantern","Tin","Gilded","Mossbound","Copper","Quiet","Ninth","Hollow","Bramble","Ember","Salt","Rootbound","Starling","Ashen","Brass","Thornwick","Lamplit","Second Dawn","Kettle","Wayfinder","Iron Thimble","Gloam","Sapling","Wandering","Bellwether","Hearthstone","Cinder","Briar","Gale","Owlglass"],
+  second:["Company","Wardens","Lodge","Society","Brigade","Circle","Compact","Lanterns","Order","Fellowship","Archive","Hounds","Spiral","Crew","Sworn","League","Watch","Guard","Kin","Expedition"]},
  levelCurve:{"1-2":40,"3-4":30,"5-6":15,"7-8":9,"9-10":5,"11-15":1},
  adventurerShift:0.75,
  cityShare:0.55,
@@ -6675,10 +6711,13 @@ ${summary(m)}
 Return ONLY JSON:
 {"base": official stat block used and its CR, "ac": string, "hp": string, "speed": string, "abilities": "STR x DEX x CON x INT x WIS x CHA x", "attacks": [short attack lines with to-hit and damage], "traits": [2-4 short traits or spells], "tactics": one sentence on how they fight}`;
     aiRun({prompt,btn,fallback:b,apply:r=>{m.sb=r;commit();App.render()}})}
+  const GN={first:["Lantern","Tin","Gilded","Mossbound","Copper","Quiet","Ninth","Hollow","Bramble","Ember"],second:["Company","Wardens","Lodge","Society","Circle","Compact","Order","Fellowship"]};
+  function guildName(){const g=T.guildNames||GN,taken=new Set(C.roster.map(m=>m.guild).filter(Boolean));
+    for(let i=0;i<30;i++){const n=`the ${pick(g.first)} ${pick(g.second)}`;if(!taken.has(n)&&!taken.has(n.replace(/^the /,"")))return n.replace(/^the /,"")}return `${pick(g.first)} ${pick(g.second)}`}
   function rerollSeat(t,btn){
     const ST=T.council.seats[t]||{},old=seatHolder(t),others=TIERS.filter(x=>x!==t).map(seatHolder).filter(Boolean).map(summary).join("\n");
     const lv=String(ST.level||"").split("-").map(Number),level=lv[0]?lv[0]+rnd((lv[1]||lv[0])-lv[0]+1):tierMidLevel(TIERS.indexOf(t));
-    const fb=generate({occ:"Adventurer",con:"Bystander",level});Object.assign(fb,{title:`guild master of a top ${t} guild`,want:ST.stance||fb.want,public:`Newly elected to ${ST.title||"the "+t+" Seat"}.`});
+    const fb=generate({occ:"Adventurer",con:"Bystander",level});const gname=guildName(),gstep=1+rnd(2);Object.assign(fb,{guild:gname,title:`guild master of the ${gname} (${t} ${gstep})`,want:ST.stance||fb.want,public:`Newly elected to ${ST.title||"the "+t+" Seat"}.`});
     const prompt=`${WORLD()}
 Write a new member of the Council (5 seats, one per guild tier, each elected by that tier's guilds; usually a top guild's master). They now hold ${ST.title||t}.
 Seat duties: ${ST.duties||""}
@@ -6688,7 +6727,7 @@ Other current Council members (make this one distinct from them):
 ${others||"none"}
 Return ONLY JSON:
 {"name": string, "ancestry": string, "title": e.g. "guild master of the X (${t} 1)", "guild": guild name, "archetype": one of ${Object.keys(T.archetypes).join(", ")}, "level": number, "label": short flavor tag for how they fight, "look": one line, "voice": how they talk, "manner": short phrase, "public": one line players would hear about them, "want": their agenda, "secret": DM-only secret with a hook, "bio": 2-3 DM-facing sentences, "hooks": [2 one-sentence hooks tying them to the players' Iron guild]}`;
-    aiRun({prompt,btn,fallback:{},apply:r=>{const m=fb;merge(m,r);m.occupation="Adventurer";m.connection="Bystander";m.seat=t;
+    aiRun({prompt,btn,fallback:{},apply:r=>{const m=fb;merge(m,r);if(!String(m.guild||"").trim()){m.guild=gname;if(!/guild/i.test(m.title||""))m.title=`guild master of the ${gname} (${t} ${gstep})`}m.occupation="Adventurer";m.connection="Bystander";m.seat=t;
       if(old){old.seat="";old.notes=`${old.notes?old.notes+" ":""}Former ${t} Council seat.`}C.roster.push(m);commit();toast(`${m.name} takes the ${t} seat`);App.render()}})}
   function seatNPC(t,id){const cur=seatHolder(t);if(cur)cur.seat="";const m=byId(id);if(m)m.seat=t;commit();App.render()}
 
@@ -6752,7 +6791,8 @@ Return ONLY JSON:
     p.onchange=e=>{const t=e.target.dataset.seat;if(t&&e.target.value)seatNPC(t,e.target.value)};
     return p}
   let mode="npcs";
-  function render(m){if(m)mode=m;
+  function render(m){Roster.park();render0(m);Roster.place()}
+  function render0(m){if(m)mode=m;
     const h=$("#npcHost");if(!h)return;h.innerHTML="";
     if(mode==="council"){h.appendChild(councilEl());const b=document.createElement("div");b.className="board";b.id="councilCards";bindAtt(b);
       TIERS.map(seatHolder).filter(Boolean).forEach(m=>b.appendChild(card(m)));h.appendChild(b);return}
@@ -6906,7 +6946,7 @@ const TableEditor=(()=>{
 
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger"];
+  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -6918,7 +6958,7 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -6930,8 +6970,35 @@ const App=(()=>{
       "p-guild":()=>Standing.printHTML()+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
       "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
-      "p-ledger":()=>Upgrades.ledgerHTML(false,true)};
-    el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`}
+      "p-ledger":()=>Upgrades.ledgerHTML(false,true),
+      "p-map":()=>C.maps.length?C.maps.map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
+    el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
+    el.onclick=e=>{const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
+  /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
+  function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");
+    const v=md.el.querySelector(".mapv-view"),img=v.querySelector("img");let z=1;
+    const set=(nz,cx,cy)=>{nz=Math.max(1,Math.min(8,nz));const r=v.getBoundingClientRect();cx??=r.width/2;cy??=r.height/2;
+      const px=(v.scrollLeft+cx)/img.offsetWidth,py=(v.scrollTop+cy)/img.offsetHeight;z=nz;img.style.width=`${z*100}%`;v.scrollLeft=px*img.offsetWidth-cx;v.scrollTop=py*img.offsetHeight-cy};
+    md.el.querySelector(".mapv-bar").onclick=e=>{const k=e.target.closest("[data-z]")?.dataset.z;if(k==="+")set(z*1.5);else if(k==="-")set(z/1.5);else if(k==="fit")set(1);else if(e.target.closest("[data-close]"))md.close()};
+    v.addEventListener("wheel",e=>{e.preventDefault();const r=v.getBoundingClientRect();set(z*(e.deltaY<0?1.15:1/1.15),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+    img.addEventListener("dblclick",e=>{const r=v.getBoundingClientRect();set(z>1.4?1:2.5,e.clientX-r.left,e.clientY-r.top)});
+    let d0=0,z0=1;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+    v.addEventListener("touchstart",e=>{if(e.touches.length===2){d0=dist(e.touches);z0=z}},{passive:true});
+    v.addEventListener("touchmove",e=>{if(e.touches.length===2&&d0){e.preventDefault();const r=v.getBoundingClientRect();set(z0*dist(e.touches)/d0,(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,(e.touches[0].clientY+e.touches[1].clientY)/2-r.top)}},{passive:false});
+    v.addEventListener("touchend",e=>{if(e.touches.length<2)d0=0});
+    let drag=null;v.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;drag={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};v.classList.add("dragging")});
+    window.addEventListener("pointermove",e=>{if(drag){v.scrollLeft=drag.l-(e.clientX-drag.x);v.scrollTop=drag.t-(e.clientY-drag.y)}});
+    window.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
+  /* Settings → Maps (DM) */
+  function renderMaps(){const h=$("#mapSettings");if(!h)return;
+    h.innerHTML=`${C.maps.map((m,i)=>`<div class="map-row" data-i="${i}"><img src="${m.img}" alt=""><input data-mapname value="${esc(m.name||"")}" placeholder="Map name"><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move up">↑</button><button class="btn small ghost danger" data-mapdel>Remove</button></div>`).join("")}
+      <label class="btn">＋ Add a map image<input type="file" accept="image/*" id="mapAdd" hidden></label>`;
+    h.onchange=async e=>{if(e.target.id==="mapAdd"&&e.target.files[0]){const f=e.target.files[0];toast("Preparing map…");
+        try{C.maps.push({id:uid(),name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});commit();renderMaps();toast("Map added. Save to share it with players")}catch(err){toast("Couldn't read that image")}}};
+    h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-row").dataset.i].name=e.target.value;commit()}};
+    h.onclick=e=>{const r=e.target.closest(".map-row");if(!r)return;const i=+r.dataset.i;
+      if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
+      else if(e.target.dataset.mapdel!=null){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Remove? Click again";return}C.maps.splice(i,1);commit();renderMaps();toast("Map removed · Ctrl+Z to undo")}}}
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";el.className="tm-layout";
@@ -7045,7 +7112,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
-    const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
+    renderMaps();const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
     const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
@@ -7108,7 +7175,7 @@ const App=(()=>{
     people:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1M16 3.5a4 4 0 0 1 0 8M22 21v-1a5 5 0 0 0-3.5-4.8"/>',
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
-    shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+    map:'<path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
   const MQ=window.matchMedia("(max-width: 760px), (pointer: coarse) and (max-height: 500px)");

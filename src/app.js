@@ -1,6 +1,6 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger"];
+  const PREP_TABS=["jobs","shop","roster","market","print","settings"],TABLE_TABS=["table","print","settings"],PLAYER_TABS=["p-board","p-guild","p-council","p-market","p-ledger","p-map"];
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
@@ -12,7 +12,7 @@ const App=(()=>{
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,"p-board":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -24,8 +24,35 @@ const App=(()=>{
       "p-guild":()=>Standing.printHTML()+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
       "p-council":()=>NPCs.councilHTML()||none("The Council hasn't published its roll yet."),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
-      "p-ledger":()=>Upgrades.ledgerHTML(false,true)};
-    el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`}
+      "p-ledger":()=>Upgrades.ledgerHTML(false,true),
+      "p-map":()=>C.maps.length?C.maps.map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
+    el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
+    el.onclick=e=>{const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
+  /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
+  function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");
+    const v=md.el.querySelector(".mapv-view"),img=v.querySelector("img");let z=1;
+    const set=(nz,cx,cy)=>{nz=Math.max(1,Math.min(8,nz));const r=v.getBoundingClientRect();cx??=r.width/2;cy??=r.height/2;
+      const px=(v.scrollLeft+cx)/img.offsetWidth,py=(v.scrollTop+cy)/img.offsetHeight;z=nz;img.style.width=`${z*100}%`;v.scrollLeft=px*img.offsetWidth-cx;v.scrollTop=py*img.offsetHeight-cy};
+    md.el.querySelector(".mapv-bar").onclick=e=>{const k=e.target.closest("[data-z]")?.dataset.z;if(k==="+")set(z*1.5);else if(k==="-")set(z/1.5);else if(k==="fit")set(1);else if(e.target.closest("[data-close]"))md.close()};
+    v.addEventListener("wheel",e=>{e.preventDefault();const r=v.getBoundingClientRect();set(z*(e.deltaY<0?1.15:1/1.15),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+    img.addEventListener("dblclick",e=>{const r=v.getBoundingClientRect();set(z>1.4?1:2.5,e.clientX-r.left,e.clientY-r.top)});
+    let d0=0,z0=1;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+    v.addEventListener("touchstart",e=>{if(e.touches.length===2){d0=dist(e.touches);z0=z}},{passive:true});
+    v.addEventListener("touchmove",e=>{if(e.touches.length===2&&d0){e.preventDefault();const r=v.getBoundingClientRect();set(z0*dist(e.touches)/d0,(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,(e.touches[0].clientY+e.touches[1].clientY)/2-r.top)}},{passive:false});
+    v.addEventListener("touchend",e=>{if(e.touches.length<2)d0=0});
+    let drag=null;v.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;drag={x:e.clientX,y:e.clientY,l:v.scrollLeft,t:v.scrollTop};v.classList.add("dragging")});
+    window.addEventListener("pointermove",e=>{if(drag){v.scrollLeft=drag.l-(e.clientX-drag.x);v.scrollTop=drag.t-(e.clientY-drag.y)}});
+    window.addEventListener("pointerup",()=>{drag=null;v.classList.remove("dragging")})}
+  /* Settings → Maps (DM) */
+  function renderMaps(){const h=$("#mapSettings");if(!h)return;
+    h.innerHTML=`${C.maps.map((m,i)=>`<div class="map-row" data-i="${i}"><img src="${m.img}" alt=""><input data-mapname value="${esc(m.name||"")}" placeholder="Map name"><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move up">↑</button><button class="btn small ghost danger" data-mapdel>Remove</button></div>`).join("")}
+      <label class="btn">＋ Add a map image<input type="file" accept="image/*" id="mapAdd" hidden></label>`;
+    h.onchange=async e=>{if(e.target.id==="mapAdd"&&e.target.files[0]){const f=e.target.files[0];toast("Preparing map…");
+        try{C.maps.push({id:uid(),name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});commit();renderMaps();toast("Map added. Save to share it with players")}catch(err){toast("Couldn't read that image")}}};
+    h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-row").dataset.i].name=e.target.value;commit()}};
+    h.onclick=e=>{const r=e.target.closest(".map-row");if(!r)return;const i=+r.dataset.i;
+      if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
+      else if(e.target.dataset.mapdel!=null){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Remove? Click again";return}C.maps.splice(i,1);commit();renderMaps();toast("Map removed · Ctrl+Z to undo")}}}
   /* ---------- table mode ---------- */
   function renderTable(){
     const el=$("#tableView");el.innerHTML="";el.className="tm-layout";
@@ -139,7 +166,7 @@ const App=(()=>{
     $("#aiStatus").textContent={claude:"Running inside Claude: Expand uses Claude directly. The API key isn't needed here.",api:"Using your API key from this browser.",none:"No connection: Expand fills in from the tables and gives you a prompt to copy into Claude."}[AI.mode()];
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
-    const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
+    renderMaps();const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
     const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
@@ -202,7 +229,7 @@ const App=(()=>{
     people:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1M16 3.5a4 4 0 0 1 0 8M22 21v-1a5 5 0 0 0-3.5-4.8"/>',
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
-    shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+    map:'<path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
   const MQ=window.matchMedia("(max-width: 760px), (pointer: coarse) and (max-height: 500px)");

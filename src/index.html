@@ -33,7 +33,7 @@
 </header>
 <div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
 <nav id="mainNav">
-  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button>
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">The Council</span><span class="slbl">Council</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
   <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
   <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
   <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
@@ -81,7 +81,7 @@
       <button class="btn" id="copyRoster">Copy roster</button></span>
     </div>
     <div id="importHost"></div>
-    <div id="editorHost"></div>
+    <div id="editorHome"><div id="editorHost"></div></div>
     <div id="roster" class="board"></div>
     <div id="npcHost" class="npc-host"></div>
     <p class="hint" id="rHint">Skill grades: Proficient = Skilled; Expertise = Expert; Expertise at level 11+ = Master. "Proficient (auto)" / "Expertise (auto)" follow a PC's level. Retiring a PC keeps them in the hall as an NPC who can operate a facility.</p>
@@ -134,6 +134,11 @@
         <p class="hint">Paste an export from the old Job Board or Upgrade Chart (or a campaign file's contents).</p>
         <textarea class="json" id="importJson" style="min-height:90px"></textarea>
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
+      </div>
+      <div class="panel">
+        <h2>Maps</h2>
+        <p class="hint">Players see these under <b>Map</b> in Player View and can zoom in. Images are resized to 2400 px and stored in the campaign, so they reach GitHub on Save. From a Claude Design map, use its download/export to get an image first.</p>
+        <div id="mapSettings"></div>
       </div>
       <div class="panel">
         <h2>GitHub saves</h2>
