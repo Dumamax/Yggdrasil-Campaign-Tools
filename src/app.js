@@ -172,7 +172,8 @@ const App=(()=>{
     loadTblEditor();
   }
   async function renderBackups(){const el=$("#backupList");if(!el)return;let L=[];try{L=(await IDB.list()).sort((a,b)=>b.t-a.t)}catch(e){el.innerHTML='<p class="muted">Backups aren\'t available in this browser.</p>';return}
-    el.innerHTML=L.length?`<table class="ref backups">${L.map(b=>`<tr><td><b>${new Date(b.t).toLocaleString()}</b> <span class="muted">${esc(b.reason)}</span><br><span class="muted" style="font-size:14px">${esc(b.summary||"")}</span></td><td><button class="btn small" data-restore="${b.t}">Restore</button> <button class="btn small ghost" data-dl="${b.t}">Download</button></td></tr>`).join("")}</table>`:'<p class="muted">No backups yet.</p>';
+    const row=b=>`<tr><td><b>${new Date(b.t).toLocaleString()}</b> <span class="muted">${esc(b.reason)}</span><br><span class="muted" style="font-size:14px">${esc(b.summary||"")}</span></td><td><button class="btn small" data-restore="${b.t}">Restore</button> <button class="btn small ghost" data-dl="${b.t}">Download</button></td></tr>`;
+    el.innerHTML=L.length?`<table class="ref backups">${row(L[0])}</table>${L.length>1?`<details class="older-backups"><summary>Older backups (${L.length-1})</summary><table class="ref backups">${L.slice(1).map(row).join("")}</table></details>`:""}`:'<p class="muted">No backups yet.</p>';
     el.onclick=async e=>{const t=+(e.target.dataset.restore||e.target.dataset.dl);if(!t)return;const b=L.find(x=>x.t===t);if(!b)return;
       if(e.target.dataset.dl){saveFile(`yggdrasil-backup-${stamp()}.json`,b.data);return}
       if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Replace current? Click again";return}
