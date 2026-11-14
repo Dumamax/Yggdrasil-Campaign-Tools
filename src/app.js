@@ -8,7 +8,7 @@ const App=(()=>{
     $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
     const pl=!isDM();document.body.classList.toggle("player",pl);
     $$("main>section").forEach(s=>s.hidden=pl?s.id!=="tab-p":s.id!=="tab-"+UI.tab);
-    $("#dmBtn .lbl").textContent=pl?"DM View":"Player View";$("#dmBtn").title=pl?"Unlock DM View":"Lock and switch to Player View";
+    $("#dmBtn .lbl").textContent=pl?"DM View":"Player View";$("#dmBtn").title=pl?(unlocked()?"Back to DM View":"Unlock DM View"):"Preview what players see (stays unlocked)";
     $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
   }
@@ -178,7 +178,7 @@ const App=(()=>{
       if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Replace current? Click again";return}
       replaceCampaign(JSON.parse(b.data),"Before restoring a backup");commit();toast("Backup restored. The state before it was backed up too")}}
   let tblKey="jobs",draft=null;
-  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES,npcs:DEFAULT_NPC_TABLES}[tblKey]);
+  const tblDefaults=()=>({jobs:DEFAULT_JOB_TABLES,upgrades:DEFAULT_UPG_TABLES,prices:DEFAULT_PRICES,shops:DEFAULT_SHOP_TABLES,npcs:DEFAULT_NPC_TABLES,places:DEFAULT_PLACES}[tblKey]);
   function loadTblEditor(){
     $("#tblSel").value=tblKey;draft=clone(C.tables[tblKey]||tblDefaults());
     const cur=C.tables[tblKey],def=tblDefaults(),stale=cur&&def.version&&(cur.version||0)<def.version;
@@ -246,6 +246,7 @@ const App=(()=>{
         go:()=>go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=sub;NPCs.reset()})})});
     C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
     Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
+    (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("roster",`[data-world="${w.id}"]`,()=>{UI.rosterSub="worlds"})}));
     [["jobs","Job Board"],["shop","Guild Upgrades"],["roster","Roster"],["market","Shop Generator"],["print","Print"],["settings","Settings & Tables"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
@@ -270,7 +271,7 @@ const App=(()=>{
   async function boot(){
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
-    $("#dmBtn").onclick=()=>isDM()?lockDM():dmGate();
+    $("#dmBtn").onclick=()=>isDM()?previewPlayer():unlocked()?backToDM():dmGate();
     $("#hdrMore").onclick=e=>{const p=e.target.dataset.proxy;if(!p)return;$("#hdrMore").open=false;$("#"+p).click()};
     $("#hdrMore summary").addEventListener("click",()=>{$("#hdrSync").textContent=Sync.status()||"";const t=$("#hdrMore [data-proxy=tmToggle]");t.textContent=UI.tableMode?"Leave Table Mode":"Table Mode"});$("#syncBtn").onclick=()=>Sync.pull(true);
     $("#pwForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(f.get("pw")!==f.get("pw2")){toast("Passwords don't match");return}S.dmHash=await hashPw(f.get("pw"));lsSet("ygh.dm",S.dmHash);commit();e.target.reset();toast("Password changed. Save so it travels with the campaign")};

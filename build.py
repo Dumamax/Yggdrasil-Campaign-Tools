@@ -6,7 +6,7 @@ dist = pathlib.Path(__file__).parent / "dist"; dist.mkdir(exist_ok=True)
 read = lambda f: (src / f).read_text(encoding="utf-8")
 notice = read("notice.css")
 styles = read("styles.css") + "\n" + notice
-scripts = "\n".join(read(f) for f in ["core.js", "access.js", "jobtables.js", "upgtables.js", "jobboard.js", "standing.js", "upgrades.js", "roster.js", "pcs.js", "shoptables.js", "shops.js", "npctables.js", "npcs.js", "tableeditor.js", "app.js"])
+scripts = "\n".join(read(f) for f in ["core.js", "access.js", "jobtables.js", "upgtables.js", "jobboard.js", "standing.js", "upgrades.js", "roster.js", "pcs.js", "shoptables.js", "shops.js", "npctables.js", "npcs.js", "places.js", "worlds.js", "tableeditor.js", "app.js"])
 scripts = scripts.replace('/*NOTICE_CSS*/""', json.dumps(notice))
 html = read("index.html").replace("/*STYLES*/", styles).replace("/*SCRIPTS*/", scripts.replace("</script>", "<\\/script>"))
 out = dist / "Yggdrasil-Guild-Hall.html"

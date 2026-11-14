@@ -38,14 +38,16 @@ const Jobs=(()=>{
     const p=rollPatron(),world=rollWorld(r,loc);
     let gold=rollGold(r,size,p);const bounty=(type==="Hunt"||type==="Extermination")&&C.guild.uniques.some(u=>u.name==="Wanted Board");
     if(bounty)gold=Math.round(gold*1.2/5)*5;
-    return {id:uid(),bounty,rank:r,type,size,location:loc,world,patron:p,
+    const job={id:uid(),bounty,rank:r,type,size,location:loc,world,patron:p,
       objective:fillTpl(pickFresh(T.objectives[type],"obj:"+type),world.genre?genreData(world.genre):T.locales[loc]),incentive:rollIncentive(r,size,p),gold,
       complication:Math.random()*100<S.jobComp?pickFresh(T.complications,"jcomp"):null,
-      contribution:Math.round((r+1)*(T.sizes.contribution[size]||1)),kept:false,final:false,worldBlock:null,expanded:null};
+      contribution:Math.round((r+1)*(T.sizes.contribution[size]||1)),kept:false,final:false,worldBlock:null,expanded:null,giverAt:null,site:null};job.giverAt=Places.giver(job);job.site=Places.site(job);return job;
   }
   function rerollField(h,f){
-    if(f==="world"){h.world=rollWorld(h.rank,h.location);h.worldBlock=null;h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h))}
-    if(f==="patron"){h.patron=rollPatron();h.incentive=rollIncentive(h.rank,h.size,h.patron);h.gold=rollGold(h.rank,h.size,h.patron);if(h.bounty)h.gold=Math.round(h.gold*1.2/5)*5}
+    if(f==="world"){h.world=rollWorld(h.rank,h.location);h.worldBlock=null;h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h));h.site=Places.site(h)}
+    if(f==="site")h.site=Places.site(h);
+    if(f==="giver")h.giverAt=Places.giver(h);
+    if(f==="patron"){h.patron=rollPatron();h.giverAt=Places.giver(h);h.incentive=rollIncentive(h.rank,h.size,h.patron);h.gold=rollGold(h.rank,h.size,h.patron);if(h.bounty)h.gold=Math.round(h.gold*1.2/5)*5}
     if(f==="objective")h.objective=fillTpl(pickFresh(T.objectives[h.type],"obj:"+h.type),ctxOf(h));
     if(f==="incentive")h.incentive=rollIncentive(h.rank,h.size,h.patron);
     if(f==="complication")h.complication=pickFresh(T.complications,"jcomp");
@@ -60,7 +62,7 @@ const Jobs=(()=>{
 
   /* expand */
   const hookTitle=h=>h.expanded?.title||`${h.type}: ${h.patron.arch}`;
-  const hookSummary=h=>`${hookTitle(h)} [${rankName(h.rank)}, ${h.size}]. Patron: ${h.patron.name}, ${h.patron.arch} (${h.patron.cat}), who ${h.patron.quirk}. Wants the party to ${h.objective}. Location: ${h.location}${h.world.genre?` (${h.world.genre})`:""}: ${h.world.line}.`;
+  const hookSummary=h=>`${hookTitle(h)} [${rankName(h.rank)}, ${h.size}]. Patron: ${h.patron.name}, ${h.patron.arch} (${h.patron.cat}), who ${h.patron.quirk}. Wants the party to ${h.objective}. Location: ${h.location}${h.world.genre?` (${h.world.genre})`:""}: ${h.world.line}.${h.giverAt?` The patron can be found at ${Places.label(h.giverAt)} (${Places.blurb(h.giverAt)}).`:""}${h.site?` The job takes place at ${Places.label(h.site)} (${Places.blurb(h.site)}).`:""}${Worlds.label(h)?` The world is called ${Worlds.label(h)}.`:""}`;
   function prompt(h,b){return `You are helping a DM prep a D&D 5e (2024 rules preferred, 2014 monsters allowed) job for a guild campaign.
 Setting: one universal World Tree (Yggdrasil) grows through the planes; branches rise into many worlds of many genres; a city sits at its base and inside it. Guilds rank Iron→Bronze→Silver→Gold→Platinum. The party belongs to a young Adventurer's Guild founded by Mordecai (gruff, sarcastic changeling). Tone: whimsical and strange with a hopeful heart. The DM runs about 1 fight per short rest, 2 per long rest.
 
@@ -92,6 +94,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     $("#jobAI").textContent=AI.mode()==="none"?"No Claude connection: Expand fills in from the tables and gives you a prompt to copy into Claude.":`Expand asks Claude (${AI.mode()==="claude"?"built in":"your API key"}) for the prep card and Quest Notice.`;
     if(!C.jobs.length){el.innerHTML='<p class="muted">Pick the guild tier and roll the board.</p>';return}
     $("#jobsAll").hidden=UI.jobView!=="dm";$("#jobsAll").textContent=UI.jobsAllOpen?"Collapse all":"Open all";
+    let fixed=false;C.jobs.forEach(h=>{if(h.giverAt===undefined){h.giverAt=Places.giver(h);fixed=true}if(h.site===undefined){h.site=Places.site(h);fixed=true}});if(fixed)commit();
     C.jobs.forEach((h,i)=>el.appendChild(UI.jobView==="dm"?dmCard(h):noticeCard(h,i)));
   }
   const openMap=()=>(UI.jobsOpen=UI.jobsOpen||{});
@@ -116,7 +119,9 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
     <div class="row"><b>Where:</b> ${esc(h.location)}${h.world.genre?` · <i>${esc(h.world.genre)}</i>`:""}${compact?"":'<span class="reroll" data-f="world" title="Reroll world">↻</span>'}<br>${esc(h.world.line)}
       ${h.world.genre&&!compact?`<span class="reroll" data-act="wb">${wb?"hide details":"＋ world details"}</span>`:""}</div>
     ${wb?`<div class="worldblock">${esc(wb.magic)}. Local power: ${esc(wb.faction)}. Threat: ${esc(wb.threat)}.</div>`:""}
-    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}${compact?"":patronLinks(h)}</div>
+    ${h.site?`<div class="row"><b>Site:</b> ${esc(Places.label(h.site))}${compact?"":'<span class="reroll" data-f="site" title="Reroll site">↻</span>'}<br><span class="muted">${esc(cap(Places.blurb(h.site)))}</span></div>`:""}
+    ${Worlds.jobRow(h,compact)}
+    <div class="row"><b>Patron:</b> ${esc(h.patron.name)}, ${esc(h.patron.arch)} <span class="muted">(${esc(h.patron.cat)})</span>, ${esc(h.patron.quirk)}${compact?"":'<span class="reroll" data-f="patron" title="Reroll patron">↻</span>'}${compact?"":patronLinks(h)}${h.giverAt?`<br><span class="muted">Find them at ${esc(Places.label(h.giverAt))}: ${esc(Places.blurb(h.giverAt))}.</span>${compact?"":'<span class="reroll" data-f="giver" title="Reroll where to find them">↻</span>'}`:""}</div>
     <div class="row"><b>Job:</b> ${esc(cap(h.objective))}${compact?"":'<span class="reroll" data-f="objective" title="Reroll job">↻</span>'}</div>
     <div class="row"><b>Reward:</b> ${fmt(h.gold)} gp + ${esc(h.incentive.item)} <span class="muted">(${h.incentive.rarity})</span>${compact?"":'<span class="reroll" data-f="incentive" title="Reroll incentive">↻</span>'}<br><span class="muted">Guild fee: ${fmt(guildFee(h))} gp to the treasury</span></div>
     ${h.complication?`<div class="dm"><b>DM:</b> ${esc(h.complication)}${compact?"":'<span class="reroll" data-f="complication">↻</span>'}</div>`:""}
@@ -127,9 +132,10 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       <button class="btn small" data-act="final">${h.final?"✓ Final":"Mark final"}</button>
       <span class="act-end">${moreMenu(`${h.done?`<button class="btn small ghost" data-act="reopen">↺ Reopen job (removes its points)</button>`:`<button class="btn small ghost" data-act="complete">✓ Completed (+${Standing.jobPts(h)} ${esc(Standing.short())})</button><button class="btn small ghost" data-act="failed">✗ Failed</button>`}<button class="btn small ghost" data-act="paid">Paid → treasury (+${fmt(guildFee(h))} gp)</button><button class="btn small ghost" data-act="reroll">↻ Reroll job</button><button class="btn small ghost" data-act="copy">Copy as text</button><button class="btn small ghost danger" data-act="del">✕ Delete</button>`)}</span></div>`}`;
     if(!compact&&x&&x.prompt)d.querySelector(".actions").appendChild(aiButtons(x,r=>{h.expanded=r;commit();render()}));
-    d.addEventListener("click",ev=>onCardClick(h,ev));
+    d.addEventListener("click",ev=>onCardClick(h,ev));d.addEventListener("change",ev=>onCardChange(h,ev));
     return d;
   }
+  function onCardChange(h,ev){if(ev.target.dataset.wsel!=null){Worlds.setJobWorld(h,ev.target.value);App.render()}}
   function onCardClick(h,ev){const f=ev.target.dataset.f,a=ev.target.dataset.act;if(!f&&!a)return;
       ev.target.closest("details.more")?.removeAttribute("open");
       if(a==="toggle"){setOpen(h,!isOpen(h));render();return}
@@ -137,7 +143,7 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
       else if(a==="wb")h.worldBlock=h.worldBlock?null:rollWorldBlock();
       else if(a==="expand"){if(!isOpen(h)){setOpen(h,true);render();expand(h,$(`[data-job="${h.id}"] [data-act="expand"]`));return}expand(h,ev.target);return}
       else if(a==="keep"){h.kept=!h.kept;if(h.kept)NPCs.fromPatron(h,true)}
-      else if(a==="final"){h.final=!h.final;if(h.final){h.kept=true;NPCs.fromPatron(h,true)}}
+      else if(a==="final"){h.final=!h.final;if(h.final){h.kept=true;const w=Worlds.forJob(h);NPCs.fromPatron(h,true);if(w)setTimeout(()=>toast(`World: ${w.name}, through ${w.gate}`),0)}}
       else if(a==="savenpc")NPCs.fromPatron(h);
       else if(a==="pguild"){const m=NPCs.fromPatron(h,true);if(NPCs.isMember(m)){toast(`${m.name} is already in the guild`);return}NPCs.addToGuild(m);return}
       else if(a==="usenpc"){const row=ev.target.parentElement;if(row.querySelector("select"))return;const L=NPCs.all();if(!L.length){toast("No saved NPCs yet");return}
@@ -164,9 +170,11 @@ Make the world feel coherent: treat its quirk as a grounded, everyday fact of li
      <h4>Reward</h4><p>${fmt(h.gold)} gp + ${esc(h.incentive.item)} (${h.incentive.rarity}). ${esc(x.rewardNote||"")}</p></div>`;
   }
   const noticeData=h=>h.expanded?.notice||basicNotice(h);
+  function noticeWhere(h){const where=h.site?Places.label(h.site):Worlds.label(h)||(h.world?.genre?"Another world (gate assigned by the Guild)":h.location);
+    return `<div class="nwhere">${h.giverAt?`<div>Ask for ${esc(h.patron.name)} at ${esc(Places.label(h.giverAt))}.</div>`:""}<div>Where: ${esc(where)}</div></div>`}
   function noticeHTML(h,rot){const n=noticeData(h);
     return `<div class="notice" style="--rot:${rot||0}deg"><div class="nhead">${esc(n.heading)}</div><div class="ntitle">${esc(n.title)}</div><div class="nbody">${esc(n.body)}</div><hr class="nrule">
-      <div class="nreward">Reward: ${esc(n.reward)}</div><div class="nfoot"><span>${esc(n.deadline)}</span><span>Rank: ${rankName(h.rank)} or above</span></div>
+      ${noticeWhere(h)}<div class="nreward">Reward: ${esc(n.reward)}</div><div class="nfoot"><span>${esc(n.deadline)}</span><span>Rank: ${rankName(h.rank)} or above</span></div>
       <div class="sig">~ ${esc(n.signature)}</div><div class="stamp">${TIERS[tierOf(h.rank)].toUpperCase()}<br>TIER</div></div>`}
   function noticeCard(h,i){const n=noticeData(h),w=document.createElement("div");w.className="notice-wrap";
     w.innerHTML=noticeHTML(h,((i*37)%7-3)*0.6)+`<div class="actions">${h.expanded?"":'<span class="muted" style="font-size:14px">Basic notice. Expand in DM view for a written one.</span>'}<button class="btn small" data-act="copyn">Copy notice text</button></div>`;

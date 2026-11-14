@@ -43,7 +43,7 @@ const NPCs=(()=>{
     m=C.roster.find(x=>x.name===p.name);if(m){p.npcId=m.id;commit();return m}
     m=generate({con:"Patron",genre:h.world.genre||"Tree-born",occ:(T.patronOccupations||{})[p.cat]});
     Object.assign(m,{name:p.name,title:p.arch,manner:p.quirk,want:`wants the party to ${h.objective}`,notes:`Patron: ${h.expanded?.title||h.type}.`});
-    p.npcId=m.id;return add(m,quiet)}
+    if(h.worldId)m.worldId=h.worldId;p.npcId=m.id;return add(m,quiet)}
   function usePatron(h,id){const m=byId(id);if(!m)return;Object.assign(h.patron,{name:m.name,npcId:m.id,quirk:m.manner||m.voice||h.patron.quirk});commit()}
   function fromOffer(o){let m=o.npcId&&byId(o.npcId);if(m){toast(`${m.name} is already saved`);return m}
     if(o.type==="hire"){m=generate({con:"Hireable",occ:"Crafter",genre:o.genre&&o.genre!=="Any"?o.genre:undefined});
@@ -166,6 +166,7 @@ Return ONLY JSON:
   function render(m){Roster.park();render0(m);Roster.place()}
   function render0(m){if(m)mode=m;
     const h=$("#npcHost");if(!h)return;h.innerHTML="";
+    if(mode==="worlds"){Worlds.render(h);return}
     if(mode==="council"){h.appendChild(councilEl());const b=document.createElement("div");b.className="board";b.id="councilCards";bindAtt(b);
       TIERS.map(seatHolder).filter(Boolean).forEach(m=>b.appendChild(card(m)));h.appendChild(b);return}
     const g=document.createElement("div");g.className="panel";
