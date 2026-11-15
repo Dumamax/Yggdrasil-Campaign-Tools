@@ -1009,7 +1009,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 14 16:58";
+const BUILD="Nov 14 17:13";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -1079,10 +1079,14 @@ const Sync=(()=>{
       if(!isDM()){adopt(r,sha?"Updated with the DM's latest save":"");setStatus("Up to date");return}
       const localEmpty=!C.savedAt&&!C.jobs.length&&!C.guild.cp.log.length;
       if(sha&&!dirty||localEmpty){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date");return}
-      const when=r.data.savedAt?new Date(r.data.savedAt).toLocaleString():"recently";
-      const i=await ask("Newer save on GitHub",`Someone saved the campaign to GitHub (${esc(when)}) and this browser has ${dirty?"unsaved changes":"a different copy"}. Your current copy goes to Settings → Backups either way.`,["Load the GitHub save","Keep mine (overwrite on next save)"]);
-      if(i===0){adopt(r,"Loaded the latest save from GitHub");setStatus("Up to date")}else{sha=r.sha;lsSet("ygh.sha",sha);dirty=true;lsSet("ygh.dirty",true);banner();setStatus("Your copy differs")}
+      const i=await choose(r,"Newer save on GitHub");
+      if(i===0){adopt(r,"Loaded the GitHub version");setStatus("Up to date")}
+      else{sha=r.sha;lsSet("ygh.sha",sha);dirty=true;lsSet("ygh.dirty",true);banner();setStatus("Your copy differs");if(i===1&&canPush()){busy=false;await saveCampaign()}}
     }catch(e){setStatus(navigator.onLine===false?"Offline":"Can't reach GitHub");if(manual)toast(e.message)}finally{busy=false}}
+  /* both copies side by side; 0 = use GitHub's, 1 = save mine to GitHub now, 2 = decide later */
+  function choose(r,title){const gh=r?.data?.savedAt?whenStr(r.data.savedAt):"unknown time",mine=whenStr(C.savedAt);
+    return ask(title,`<b>On GitHub:</b> saved ${esc(gh)}<br><b>On this device:</b> ${C.savedAt?`from the ${esc(mine)} save`:"never saved"}${dirty?" + unsaved changes":""}<br><span class="muted">Nothing is lost either way: this device's copy goes to Settings → Backups, and GitHub keeps every earlier save in its history.</span>`,
+      canPush()?["Use the GitHub version","Save mine to GitHub now","Decide later"]:["Use the GitHub version","Keep mine for now"])}
   async function force(){if(dirty&&await ask("Replace this device's copy?","This device has unsaved changes. They go to Settings → Backups, then the GitHub save loads.",["Load the GitHub save","Cancel"])!==0)return;
     busy=true;try{const r=await fetchRemote(null);if(r.missing){toast("Nothing saved on GitHub yet");return}remoteAt=r.data.savedAt;adopt(r,"Loaded the GitHub save ("+whenStr(r.data.savedAt)+")");setStatus("Up to date");App.render()}
     catch(e){toast(e.message)}finally{busy=false}}
@@ -1098,9 +1102,11 @@ const Sync=(()=>{
   async function push(){const c=cfg();const body={message:`Save campaign · ${new Date().toLocaleString()}`,content:enc(JSON.stringify(C,null,1)),branch:c.branch};if(sha)body.sha=sha;
     const r=await fetch(api(false),{method:"PUT",headers:Object.assign(hdr(),{"Content-Type":"application/json"}),body:JSON.stringify(body)});
     if(r.status===409||r.status===422){const remote=await fetchRemote().catch(()=>null);
-      const i=await ask("Someone else saved first",`The GitHub copy changed since you loaded it${remote?.data?.savedAt?` (saved ${esc(new Date(remote.data.savedAt).toLocaleString())})`:""}.`,["Overwrite with mine","Load theirs instead","Cancel"]);
-      if(i===0&&remote&&!remote.missing){sha=remote.sha;return push()}if(i===0&&remote?.missing){sha=null;return push()}
-      if(i===1&&remote&&!remote.missing){adopt(remote,"Loaded their save (yours is in Backups)");setStatus("Up to date")}return false}
+      if(remote?.missing){sha=null;return push()}
+      const i=await choose(remote,"GitHub has a different save");
+      if(i===1){if(remote)sha=remote.sha;else{const m=await fetch(api(true),{headers:hdr(),cache:"no-store"}).then(x=>x.ok?x.json():null).catch(()=>null);if(!m){throw new Error("Couldn't read the GitHub copy to replace it")}sha=m.sha}return push()}
+      if(i===0&&remote){adopt(remote,"Loaded the GitHub version (yours is in Backups)");setStatus("Up to date")}else if(i===0)toast("Couldn't download the GitHub copy; try again");
+      return false}
     if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}throw new Error((r.status===401?"GitHub refused the token (mistyped or expired)":r.status===403||r.status===404?`The token can't write to ${c.repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""))}
     const j=await r.json();sha=j.content.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");return true}
   let timer=null;
