@@ -120,11 +120,12 @@ const Sync=(()=>{
     const json=JSON.stringify(obj,(k,v)=>isData(v)?ref(v):typeof v==="string"&&v.startsWith(base)?REF+v.slice(base.length).split("?")[0]:v,1);
     return {json,imgs}}
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  async function gh(path,opt={},tries=4){let r,m="";
+  const visible=()=>document.hidden?new Promise(r=>{const f=()=>{if(!document.hidden){document.removeEventListener("visibilitychange",f);setTimeout(r,1500)}};document.addEventListener("visibilitychange",f)}):Promise.resolve();
+  async function gh(path,opt={},tries=6){let r,m="";
     for(let a=0;;a++){
       const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60e3);
       try{r=await fetch(`https://api.github.com/repos/${cfg().repo}/${path}`,Object.assign({cache:"no-store",signal:ac.signal},opt,{headers:Object.assign(hdr(),opt.body?{"Content-Type":"application/json"}:{})}))}
-      catch(e){clearTimeout(to);if(e.name==="AbortError")e=new Error("GitHub didn't answer within a minute");if(a<tries-1){await sleep([2e3,6e3,15e3][a]||15e3);continue}const err=new Error(`Lost the connection to GitHub (${e.message})`);err.net=true;throw err}
+      catch(e){clearTimeout(to);if(e.name==="AbortError")e=new Error("GitHub didn't answer within a minute");if(a<tries-1){await visible();await sleep([3e3,10e3,20e3,40e3,60e3][a]||60e3);continue}const err=new Error(`Lost the connection to GitHub (${e.message})`);err.net=true;throw err}
       clearTimeout(to);if(r.ok)return r.json();
       m="";try{m=(await r.json()).message||""}catch(e){}
       const busy=r.status>=500||r.status===429||(r.status===403&&(r.headers.get("retry-after")||/secondary|abuse|rate limit/i.test(m)));
@@ -147,7 +148,7 @@ const Sync=(()=>{
       else{const k=Math.ceil(b.length/CH);for(let i=0;i<k;i++)if(!have.has(n+".p"+i))files.push([n+".p"+i,b.slice(i*CH,(i+1)*CH),"utf-8"])}}
     const todo=files,tree=[],sent=lsGet("ygh.blobs",{});let k=0;
     for(const [n,content,encoding] of todo){k++;let bs=sent[n];
-      if(!bs){setStatus(`Saving to GitHub… piece ${k} of ${todo.length}`);
+      if(!bs){setStatus(`Saving to GitHub… piece ${k} of ${todo.length} (keep this screen open)`);if(k>1)await sleep(600);await visible();
         try{bs=(await gh("git/blobs",{method:"POST",body:JSON.stringify({content,encoding})})).sha}
         catch(e){e.message=`Piece ${k} of ${todo.length} didn't upload: ${e.message}. Pieces already sent are remembered, so Save again to continue`;throw e}
         sent[n]=bs;lsSet("ygh.blobs",sent)}
