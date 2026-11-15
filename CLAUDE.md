@@ -6,7 +6,7 @@ The canonical lore and design decisions live in the claude.ai Project **"D&D - Y
 A single-file HTML app ("Guild Hall"), hosted on GitHub Pages from this public repo (root `index.html` redirects to `dist/`) and also usable offline as a downloaded file. Opens in a read-only **Player View**; the DM unlocks **DM View** with a password for prep and the table. The DM does not have Claude; Max does. Data must never depend on Claude-hosted storage.
 
 ## Build
-`python3 build.py` concatenates `src/` into `dist/Yggdrasil-Guild-Hall.html` (commit `dist/`, since the DM downloads it from GitHub). It also gets published as a claude.ai artifact for Max (declare capabilities `sample` + `downloads`).
+`python3 build.py` concatenates `src/` into `dist/Yggdrasil-Guild-Hall.html` (commit `dist/`, since the DM downloads it from GitHub). The GitHub Pages site is the only version in use; the old claude.ai artifact copy is retired, so don't republish it.
 
 ## Architecture (src/)
 - `core.js`: helpers, campaign state `C` (+ `S = C.settings`), `commit()` (debounced autosave via `persist()`: localStorage, or IndexedDB kv `campaign` when the campaign is too big, flagged by `ygh.store`; + dirty flag), campaign file save/load/import, `AI` (artifact `sample` → API key via direct browser fetch → copy/paste fallback via `aiRun`/`aiButtons`), `printHTML` (window.print standalone; downloads a printable page when framed).
