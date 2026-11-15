@@ -1,7 +1,7 @@
 {
  "app": "yggdrasil-guild-hall",
  "schema": 9,
- "savedAt": "2026-11-15T08:35:25.002Z",
+ "savedAt": "2026-11-15T08:37:54.990Z",
  "settings": {
   "cp": {
    "name": "Contribution Points",
@@ -1299,7 +1299,7 @@
  "usage": {
   "74k49c": {
    "label": "Computer",
-   "at": 1794731725002,
+   "at": 1794731874990,
    "since": 1794728609411,
    "tabs": {
     "home": 4,
@@ -1384,7 +1384,7 @@
   },
   {
    "id": "if81aa01",
-   "hidden": true,
+   "hidden": false,
    "name": "Player map — Tree & Bazaar",
    "img": "ghimg:acc450bb21beac7c5a2f77df.webp#3"
   },
