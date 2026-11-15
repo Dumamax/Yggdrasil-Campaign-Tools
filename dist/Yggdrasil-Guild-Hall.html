@@ -1009,7 +1009,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 14 17:13";
+const BUILD="Nov 14 17:32";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -1020,6 +1020,8 @@ const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(
       persistNow();location.replace(location.pathname+"?v="+encodeURIComponent(m[1])+location.hash)}catch(e){}}
   function start(){check();document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()});setInterval(()=>{if(!document.hidden)check()},30*60e3)}
   return {start,check}})();
+document.addEventListener("error",e=>{const i=e.target;if(i.tagName!=="IMG"||!/raw\.githubusercontent\.com/.test(i.src))return;const n=+(i.dataset.retry||0);if(n>=4)return;
+  i.dataset.retry=n+1;setTimeout(()=>{i.src=i.src.split("?")[0]+"?r="+Date.now()},[3e3,15e3,60e3,180e3][n])},true);
 const SYNC_DEF={repo:"Dumamax/Yggdrasil-Campaign-Tools",branch:"main",path:"data/campaign.json"};
 async function hashPw(pw){const s="ygh-dm:"+pw;
   try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
@@ -1068,7 +1070,7 @@ const Sync=(()=>{
     else{const b=await fetch(`https://api.github.com/repos/${cfg().repo}/git/blobs/${j.sha}`,{headers:hdr(true)});if(!b.ok)throw new Error("GitHub error "+b.status+" downloading the save");text=await b.text()}
     let data;try{data=JSON.parse(text)}catch(e){throw new Error("The GitHub save didn't download completely")}
     if(!data||data.app!==APP_ID)throw new Error("Downloaded something that isn't the campaign");
-    return {sha:j.sha,data}}
+    return {sha:j.sha,data:resolveImgs(data)}}
   function adopt(r,msg){const wasDM=isDM();replaceCampaign(r.data,"Before loading the GitHub save");sha=r.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);dirty=false;lsSet("ygh.dirty",false);banner();
     if(wasDM&&!isDM())lsSet("ygh.dm",S.dmHash); // a password change elsewhere shouldn't lock out a DM mid-session
     if(msg)toast(msg)}
@@ -1099,16 +1101,44 @@ const Sync=(()=>{
       const push=w.ok;
       await ask(push?"Token works":"Token can't save",push?`This browser can save to <b>${esc(c.repo)}</b>. Press Save to publish the campaign.`:`The token can read <b>${esc(c.repo)}</b> but not write. Edit the token on GitHub: Repository access must list this repo, and Repository permissions → <b>Contents</b> must be <b>Read and write</b>. Then paste it in again.`,["OK"])}
     catch(e){await ask("Can't reach GitHub",esc(e.message),["OK"])}}
-  async function push(){const c=cfg();const body={message:`Save campaign · ${new Date().toLocaleString()}`,content:enc(JSON.stringify(C,null,1)),branch:c.branch};if(sha)body.sha=sha;
-    const r=await fetch(api(false),{method:"PUT",headers:Object.assign(hdr(),{"Content-Type":"application/json"}),body:JSON.stringify(body)});
-    if(r.status===409||r.status===422){const remote=await fetchRemote().catch(()=>null);
-      if(remote?.missing){sha=null;return push()}
-      const i=await choose(remote,"GitHub has a different save");
-      if(i===1){if(remote)sha=remote.sha;else{const m=await fetch(api(true),{headers:hdr(),cache:"no-store"}).then(x=>x.ok?x.json():null).catch(()=>null);if(!m){throw new Error("Couldn't read the GitHub copy to replace it")}sha=m.sha}return push()}
-      if(i===0&&remote){adopt(remote,"Loaded the GitHub version (yours is in Backups)");setStatus("Up to date")}else if(i===0)toast("Couldn't download the GitHub copy; try again");
-      return false}
-    if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}throw new Error((r.status===401?"GitHub refused the token (mistyped or expired)":r.status===403||r.status===404?`The token can't write to ${c.repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""))}
-    const j=await r.json();sha=j.content.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");return true}
+  /* ---- images live as their own files (data/img/<hash>.<ext>); campaign.json holds "ghimg:<file>" refs ----
+     A save uploads only the small JSON plus images GitHub doesn't have yet (Git Data API: blobs → tree → commit → ref).
+     Loading turns refs into raw.githubusercontent URLs (content-addressed, so CDN caching is safe; not API rate-limited). */
+  const IMGDIR="data/img/",REF="ghimg:";
+  const rawBase=()=>{const c=cfg();return `https://raw.githubusercontent.com/${c.repo}/${c.branch}/${IMGDIR}`};
+  const isData=v=>typeof v==="string"&&v.startsWith("data:image/")&&v.length>200;
+  const names=new Map();
+  async function imgName(v){let n=names.get(v);if(n)return n;const ext=(v.slice(11,v.indexOf(";"))||"img").replace("jpeg","jpg").replace(/[^a-z0-9]/g,"");
+    let h;try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));h=[...new Uint8Array(b)].slice(0,12).map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){h=qhash(v).replace(/\W/g,"")}
+    n=h+"."+ext;names.set(v,n);return n}
+  function resolveImgs(d){const base=rawBase();return JSON.parse(JSON.stringify(d),(k,v)=>typeof v==="string"&&v.startsWith(REF)?base+v.slice(REF.length):v)}
+  async function pack(obj){const found=[];JSON.stringify(obj,(k,v)=>{if(isData(v))found.push(v);return v});const imgs=new Map();
+    for(const v of found)imgs.set(await imgName(v),v);const base=rawBase();
+    const json=JSON.stringify(obj,(k,v)=>isData(v)?REF+names.get(v):typeof v==="string"&&v.startsWith(base)?REF+v.slice(base.length).split("?")[0]:v,1);
+    return {json,imgs}}
+  async function gh(path,opt={}){const r=await fetch(`https://api.github.com/repos/${cfg().repo}/${path}`,Object.assign({cache:"no-store"},opt,{headers:Object.assign(hdr(),opt.body?{"Content-Type":"application/json"}:{})}));
+    if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}const err=new Error((r.status===401?"GitHub refused the token (mistyped or expired)":r.status===403||r.status===404?`The token can't write to ${cfg().repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""));err.status=r.status;throw err}
+    return r.json()}
+  async function push(retry=0){const c=cfg();
+    /* someone else saved since we loaded? */
+    const mr=await fetch(api(true),{headers:hdr(),cache:"no-store"});const meta=mr.status===404?null:mr.ok?await mr.json():null;
+    if(!mr.ok&&mr.status!==404)throw new Error(mr.status===401?"GitHub refused the token (mistyped or expired)":"GitHub error "+mr.status);
+    if(meta&&meta.sha!==sha){const remote=await fetchRemote().catch(()=>null);const i=await choose(remote,"GitHub has a different save");
+      if(i===0&&remote){adopt(remote,"Loaded the GitHub version (yours is in Backups)");setStatus("Up to date");return false}
+      if(i===0){toast("Couldn't download the GitHub copy; try again");return false}
+      if(i!==1)return false;sha=meta.sha}
+    const {json,imgs}=await pack(C);
+    let have=new Set();try{const L=await gh(`contents/${IMGDIR.slice(0,-1)}?ref=${encodeURIComponent(c.branch)}`);if(Array.isArray(L))have=new Set(L.map(x=>x.name))}catch(e){if(e.status!==404)throw e}
+    const todo=[...imgs].filter(([n])=>!have.has(n)),tree=[];let k=0;
+    for(const [n,v] of todo){setStatus(`Saving to GitHub… image ${++k} of ${todo.length}`);const b=await gh("git/blobs",{method:"POST",body:JSON.stringify({content:v.slice(v.indexOf(",")+1),encoding:"base64"})});tree.push({path:IMGDIR+n,mode:"100644",type:"blob",sha:b.sha})}
+    setStatus("Saving to GitHub…");
+    const cb=await gh("git/blobs",{method:"POST",body:JSON.stringify({content:json,encoding:"utf-8"})});tree.push({path:c.path,mode:"100644",type:"blob",sha:cb.sha});
+    const head=await gh(`git/ref/heads/${encodeURIComponent(c.branch)}`),base=await gh(`git/commits/${head.object.sha}`);
+    const t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})});
+    const cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message:`Save campaign · ${new Date().toLocaleString()}${todo.length?` (+${todo.length} image${todo.length>1?"s":""})`:""}`,tree:t.sha,parents:[head.object.sha]})});
+    try{await gh(`git/refs/heads/${encodeURIComponent(c.branch)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}
+    catch(e){if(e.status===422&&retry<2)return push(retry+1);throw e} // the branch moved meanwhile: redo on top of it
+    sha=cb.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");return true}
   let timer=null;
   function start(){pull();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:2*60e3);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden&&last&&Date.now()-last>30e3&&(!isDM()||!dirty))pull()})}
@@ -6367,7 +6397,7 @@ const PCs=(()=>{
   function editorHTML(m){if(!/^(Active|Retired) PC$/.test(m.kind))return "";const p=P(m);
     return `<details class="pc-edit"${has(m)?"":" open"}><summary><b>Play stats</b> <span class="muted">for the Table Mode character card</span></summary>
       <div class="pc-edit-top"><div class="pc-portrait">${pic(m,"pc-pic")}<div class="actions"><label class="btn small">Upload portrait<input type="file" accept="image/*" data-pcimg hidden></label>${p.portrait?'<button class="btn small ghost" data-pcnoimg>Remove</button>':""}</div>
-        <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!p.portrait.startsWith("data:")?esc(p.portrait):""}"></div>
+        <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!/^data:|^https:\/\/raw\.githubusercontent\.com\/.*\/data\/img\//.test(p.portrait)?esc(p.portrait):""}"></div>
         <div class="grid">${AB.map(a=>`<label>${ABN[a]} <input type="number" min="1" max="30" data-pcs="${a}" value="${esc(p.stats?.[a]??"")}"></label>`).join("")}
           <label>AC <input type="number" data-pc="ac" value="${esc(p.ac??"")}"></label><label>Max HP <input type="number" data-pc="hp" value="${esc(p.hp??"")}"></label>
           <label class="wide">Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>

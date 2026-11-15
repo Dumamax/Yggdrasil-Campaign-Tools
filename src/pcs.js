@@ -76,7 +76,7 @@ const PCs=(()=>{
   function editorHTML(m){if(!/^(Active|Retired) PC$/.test(m.kind))return "";const p=P(m);
     return `<details class="pc-edit"${has(m)?"":" open"}><summary><b>Play stats</b> <span class="muted">for the Table Mode character card</span></summary>
       <div class="pc-edit-top"><div class="pc-portrait">${pic(m,"pc-pic")}<div class="actions"><label class="btn small">Upload portrait<input type="file" accept="image/*" data-pcimg hidden></label>${p.portrait?'<button class="btn small ghost" data-pcnoimg>Remove</button>':""}</div>
-        <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!p.portrait.startsWith("data:")?esc(p.portrait):""}"></div>
+        <input data-pc="portraitUrl" placeholder="…or paste an image link" value="${p.portrait&&!/^data:|^https:\/\/raw\.githubusercontent\.com\/.*\/data\/img\//.test(p.portrait)?esc(p.portrait):""}"></div>
         <div class="grid">${AB.map(a=>`<label>${ABN[a]} <input type="number" min="1" max="30" data-pcs="${a}" value="${esc(p.stats?.[a]??"")}"></label>`).join("")}
           <label>AC <input type="number" data-pc="ac" value="${esc(p.ac??"")}"></label><label>Max HP <input type="number" data-pc="hp" value="${esc(p.hp??"")}"></label>
           <label class="wide">Speed <input data-pc="speed" value="${esc(p.speed??"")}" placeholder="30 ft"></label><label>Initiative <input type="number" data-pc="init" value="${esc(p.init??"")}" placeholder="Dex mod"></label></div></div>
