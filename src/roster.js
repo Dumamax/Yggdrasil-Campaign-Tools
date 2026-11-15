@@ -7,7 +7,7 @@ const Roster=(()=>{
   function bestSkill(m,skills){let best=null;(m.skills||[]).forEach(sk=>{if(skills.some(s=>s.toLowerCase()===String(sk.s||"").toLowerCase())){const g=gradeOf(m,sk);if(!best||GORDER.indexOf(g)>GORDER.indexOf(best.g))best={s:sk.s,g}}});return best}
   const assignName=m=>m.assign?(Upgrades.catItem(m.assign)?.name||m.assign):"";
   const sorted=()=>C.roster.filter(m=>KINDS.includes(m.kind)).sort((a,b)=>KINDS.indexOf(a.kind)-KINDS.indexOf(b.kind)||String(a.name).localeCompare(b.name));
-  function save(m){const i=C.roster.findIndex(x=>x.id===m.id);if(i<0)C.roster.push(m);else C.roster[i]=m;commit()}
+  function save(m){const i=C.roster.findIndex(x=>x.id===m.id),was=i>=0?!!C.roster[i].shown:false;if(i<0)C.roster.push(m);else C.roster[i]=m;commit();if(!!m.shown!==was)Sync.soon()}
   function render(){park();render0();place()}
   /* the editor opens in place, right after the card being edited; parked at the top while lists re-render */
   function park(){const h=$("#editorHost"),home=$("#editorHome");if(h&&home&&h.parentElement!==home){home.appendChild(h);h.classList.remove("inline-ed")}}

@@ -162,9 +162,30 @@ const Sync=(()=>{
     const cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message:`Save campaign · ${new Date().toLocaleString()}${todo.length?` (+${todo.length} image${todo.length>1?"s":""})`:""}`,tree:t.sha,parents:[head.object.sha]})});
     try{await gh(`git/refs/heads/${encodeURIComponent(c.branch)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}
     catch(e){if(e.status===422&&retry<2)return push(retry+1);throw e} // the branch moved meanwhile: redo on top of it
-    sha=cb.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");return true}
+    sha=cb.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");ping({c:cm.sha,b:cb.sha,at:C.savedAt});return true}
+  /* ---- live updates: after a GitHub save, a tiny "updated" ping goes out through ntfy.sh (no account; carries only commit ids, never campaign content).
+     Open copies load that exact commit from raw.githubusercontent (not API rate-limited). The 2-minute poll stays as the fallback. ---- */
+  const NTFY="https://ntfy.sh/",topic=()=>"ygh-"+qhash(cfg().repo.toLowerCase()+"|"+cfg().path).replace(/\W/g,"");
+  function ping(d){try{fetch(NTFY+topic(),{method:"POST",body:JSON.stringify(d)}).catch(()=>{})}catch(e){}}
+  let es=null;
+  function live(){try{es&&es.close()}catch(e){}es=null;if(!window.EventSource)return;
+    try{es=new EventSource(NTFY+topic()+"/sse")}catch(e){return}
+    es.onmessage=e=>{let d;try{const m=JSON.parse(e.data);if(m.event&&m.event!=="message")return;d=JSON.parse(m.message)}catch(x){return}
+      if(!d||!d.c||!d.b||d.b===sha||(d.at&&C.savedAt&&d.at<C.savedAt))return;onPing(d)}}
+  async function onPing(d){if(busy){setTimeout(()=>onPing(d),3e3);return}
+    if(isDM()&&dirty){pull();return} // unsaved work here: the normal check asks before replacing anything
+    busy=true;let failed=false;
+    try{const text=await rawText(`https://raw.githubusercontent.com/${cfg().repo}/${d.c}/${cfg().path}`);let data;try{data=JSON.parse(text)}catch(e){throw new Error("partial download")}
+      if(!data||data.app!==APP_ID)throw new Error("not the campaign");
+      const r={sha:d.b,data:await assemble(resolveImgs(data))};last=Date.now();remoteAt=r.data.savedAt;
+      adopt(r,isDM()?"Loaded the latest save from GitHub":"Updated with the DM's latest save");setStatus("Up to date")}
+    catch(e){failed=true}finally{busy=false}
+    if(failed)pull()}
+  /* soon: save to GitHub (and ping players) a moment after a player-visible toggle, so the DM needn't press Save */
+  let soonT=null;
+  function soon(){if(!isDM()||!canPush())return false;clearTimeout(soonT);const go=()=>{if(saving)soonT=setTimeout(go,2e3);else saveCampaign()};soonT=setTimeout(go,1500);return true}
   let timer=null;
-  function start(){pull();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:2*60e3);
+  function start(){pull();live();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:2*60e3);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden&&last&&Date.now()-last>30e3&&(!isDM()||!dirty))pull()})}
   function settingsHTML(){const c=cfg();return `
     <p class="hint">Saves go to <b>${esc(c.repo)}</b> → <code>${esc(c.path)}</code>, and every copy of the app (players included) pulls the latest automatically. Saving needs a GitHub token on this browser; it's kept here only, never in the campaign.</p>
@@ -182,10 +203,10 @@ const Sync=(()=>{
       <li>The repo owner must add the DM as a collaborator first, or the DM uses a token from the owner's account.</li></ol></details>`}
   function bindSettings(host){host.onclick=async e=>{const id=e.target.id;
     if(id==="ghSave"){const t=$("#ghTok").value.trim();if(t)lsSet("ygh.ghtoken",t);lsSet("ygh.sync",{repo:$("#ghRepo").value.trim()||SYNC_DEF.repo,branch:$("#ghBranch").value.trim()||"main",path:$("#ghPath").value.trim()||SYNC_DEF.path});
-      sha=null;lsSet("ygh.sha",null);toast("GitHub settings saved");await pull(true);App.render()}
+      sha=null;lsSet("ygh.sha",null);toast("GitHub settings saved");live();await pull(true);App.render()}
     else if(id==="ghPull")pull(true);
     else if(id==="ghCheck")check();
     else if(id==="ghForce")force();
     else if(id==="ghForget"){lsSet("ygh.ghtoken","");toast("Token removed from this browser");App.render()}}}
-  return {force,check,pull,push,start,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
+  return {force,check,pull,push,start,soon,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
 })();

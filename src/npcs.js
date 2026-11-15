@@ -153,7 +153,7 @@ Return ONLY JSON:
       if(candidate){if(a==="keep"){add(m);cands=cands.filter(x=>x!==m)}else if(a==="reroll")cands[cands.indexOf(m)]=generate(genOpts());render();return}
       if(a==="edit"){Roster.edit(m);return}
       if(a==="view"){openBig(m);return}
-      if(a==="shown"){m.shown=!m.shown;commit();render();toast(m.shown?`${m.name} is visible in Player View`:`${m.name} is hidden from players`);return}
+      if(a==="shown"){m.shown=!m.shown;commit();render();const live=Sync.soon();toast((m.shown?`${m.name} is visible in Player View`:`${m.name} is hidden from players`)+(live?"; updating their screens":""));return}
       if(a==="pin")m.pinned=!m.pinned;else if(a==="rival")m.rival=!m.rival;
       else if(a==="write"){writeUp(m,ev.target);return}else if(a==="sb"){statBlock(m,ev.target);return}
       else if(a==="join"){addToGuild(m);return}
