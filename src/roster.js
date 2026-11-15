@@ -16,7 +16,7 @@ const Roster=(()=>{
     c.after(h);h.classList.add("inline-ed");if(scroll)setTimeout(()=>{const r=h.getBoundingClientRect(),top=($(".topbar")?.offsetHeight||0)+12;if(r.top>innerHeight*0.7||r.top<top)window.scrollBy({top:r.top-Math.max(top,innerHeight*0.3),behavior:"smooth"})},30)}
   function render0(){
     const sub=UI.rosterSub||"members";$$("#rSub button").forEach(b=>b.classList.toggle("on",b.dataset.sub===sub));
-    $("#rMemCtl").hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub==="members";$("#rHint").hidden=sub!=="members";
+    $("#rMemCtl").hidden=sub!=="members";$("#rMemCtl").parentElement.hidden=sub!=="members";$("#roster").hidden=sub!=="members";$("#npcHost").hidden=sub==="members";$("#rHint").hidden=sub!=="members";
     renderEditor();if(sub!=="members"){importing=false;renderImport();$("#roster").innerHTML="";NPCs.render(sub);return}
     $("#npcHost").innerHTML="";
     const el=$("#roster");if(!el)return;el.innerHTML="";renderImport();
@@ -143,7 +143,7 @@ ${t}`:""}`;
       ${m.kind==="Founder"?`<label>Secrets / motive (DM) <textarea data-k="motive" rows="2">${esc(m.motive||"")}</textarea></label><label>Forms (one per line, in order) <textarea data-k="forms" rows="2">${esc((m.forms||[]).join("\n"))}</textarea></label>`:""}</details>`}
   /* at-a-glance picture for DM cards: PC portrait (or full-body), else the NPC image, else initials. Click opens the full card. */
   function thumb(m){const src=m.pc?.portrait||m.pc?.body||m.img;
-    return src?`<img class="npc-thumb" src="${esc(src)}" alt="" data-a="view" title="Open full view">`:`<div class="npc-thumb npc-noimg" data-a="view" title="Open full view">${esc(((m.name||"?").trim().match(/\S+/g)||["?"]).slice(0,2).map(w=>w[0]).join("").toUpperCase())}</div>`}
+    return src?`<img class="npc-thumb" src="${esc(src)}" alt="" data-a="view" title="Open full view">`:`<div class="npc-thumb npc-noimg" data-a="view" title="Open full view">${esc((((m.name||"?").replace(/[^\p{L}\s]/gu,"").trim().match(/\S+/g))||["?"]).slice(0,2).map(w=>w[0]).join("").toUpperCase())}</div>`}
   function openFull(m){/^(Active|Retired) PC$/.test(m.kind)?PCs.openBig(m):NPCs.openBig(m)}
   function edit(m){editing=clone(m);renderEditor();if(!document.querySelector(`.card[data-npc="${m.id}"],.card[data-member="${m.id}"]`)){$("#editorHost").scrollIntoView({behavior:"smooth"});return}place(true)}
   function bind(){

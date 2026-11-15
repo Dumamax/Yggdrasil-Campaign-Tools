@@ -58,21 +58,20 @@ const Home=(()=>{
   function spot(R,w,bw){let best=null;for(let x=0;x<=Math.max(0,bw-w);x+=Math.max(20,Math.floor((bw-w)/24)||20)){
       const y=R.filter(r=>r.x<x+w+GAP&&x<r.x+r.w+GAP).reduce((m,r)=>Math.max(m,r.y+r.h+GAP),0);if(!best||y<best.y)best={x,y}}
     return best||{x:0,y:0}}
-  /* new tiles drop into the highest free spot. Their content can still be loading (monster list, pictures), so they're re-placed while
-     they settle (ResizeObserver, ~4 s), and a tile still showing "Loading…" isn't given a saved spot until the next render. */
-  let ro=null,roT=null;
+  /* Tiles nobody has moved yet (it.auto) flow into the highest free spot around the ones that have been moved, in list order.
+     The flow re-runs whenever any tile changes size (loading monsters, pictures, fonts, expanding cards), so they never overlap.
+     Dragging or resizing a tile pins it where it is (auto=false); Tidy up returns everything to the flow. */
+  let ro=null;
   function layout(g,all){const bw=BW(g),L=items(),byId=id=>g.querySelector(`.tile[data-id="${id}"]`);let ch=false;
-    const fresh=L.filter(it=>all||it.x==null||it.y==null).map(it=>it.id),fs=new Set(fresh);
-    L.forEach(it=>{if(!it.w){it.w=W0[it.size||"m"];ch=true}if(!fs.has(it.id))place(g,it,byId(it.id))});
-    const placeFresh=()=>{const R=rects(g,fs);let c=false;
-      fresh.forEach(id=>{const it=L.find(i=>i.id===id),d=byId(id);if(!it||!d)return;const w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";
-        const p=spot(R,w,bw),loading=!!d.querySelector(".tile-loading");
-        if(loading){d.style.left=p.x+"px";d.style.top=p.y+"px";d.style.zIndex=0}else{if(it.x!==p.x||it.y!==p.y){it.x=p.x;it.y=p.y;c=true}place(g,it,d)}
-        R.push({x:p.x,y:p.y,w,h:d.offsetHeight})});grow(g);return c};
-    if(placeFresh())ch=true;
-    try{ro&&ro.disconnect()}catch(e){}clearTimeout(roT);
-    if(fresh.length&&window.ResizeObserver){let t=0;ro=new ResizeObserver(()=>{cancelAnimationFrame(t);t=requestAnimationFrame(()=>{if(placeFresh())persist()})});
-      fresh.forEach(id=>{const d=byId(id);d&&ro.observe(d)});roT=setTimeout(()=>{try{ro.disconnect()}catch(e){}},4000)}
+    L.forEach(it=>{if(!it.w){it.w=W0[it.size||"m"];ch=true}if(all||it.x==null||it.y==null){if(!it.auto)ch=true;it.auto=true}});
+    L.filter(it=>!it.auto).forEach(it=>place(g,it,byId(it.id)));
+    const flow=()=>{const R=L.filter(it=>!it.auto).map(it=>byId(it.id)).filter(Boolean).map(d=>({x:d.offsetLeft,y:d.offsetTop,w:d.offsetWidth,h:d.offsetHeight}));let c=false;
+      L.filter(it=>it.auto).forEach(it=>{const d=byId(it.id);if(!d)return;const w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";
+        const p=spot(R,w,bw);if(it.x!==p.x||it.y!==p.y){it.x=p.x;it.y=p.y;c=true}place(g,it,d);R.push({x:p.x,y:p.y,w,h:d.offsetHeight})});grow(g);return c};
+    if(flow())ch=true;
+    try{ro&&ro.disconnect()}catch(e){}
+    if(window.ResizeObserver){let t=0;ro=new ResizeObserver(()=>{cancelAnimationFrame(t);t=requestAnimationFrame(()=>{if(!g.isConnected){ro.disconnect();return}if(flow())persist();else grow(g)})});
+      [...g.children].forEach(d=>ro.observe(d))}
     grow(g);if(ch)commit()}
   function grow(g){const b=[...g.children].reduce((m,t)=>Math.max(m,t.offsetTop+t.offsetHeight),0);g.style.height=(b+40)+"px"}
   const topZ=()=>items().reduce((m,i)=>Math.max(m,i.z||0),0)+1;
@@ -89,7 +88,7 @@ const Home=(()=>{
     const sy0=window.scrollY;
     scrollT=setInterval(()=>{if(lastY>innerHeight-50)window.scrollBy(0,14);else if(lastY<90&&window.scrollY>0)window.scrollBy(0,-14)},30);
     const up=()=>{clearInterval(scrollT);t.removeEventListener("pointermove",move);t.removeEventListener("pointerup",up);t.removeEventListener("pointercancel",up);t.classList.remove("moving");
-      if(moved){if(rs){it.w=t.offsetWidth;it.h=t.offsetHeight}else{it.x=t.offsetLeft;it.y=t.offsetTop}Usage.event(rs?"home:resize":"home:move")}
+      if(moved){items().forEach(i=>i.auto=false);it.x=t.offsetLeft;it.y=t.offsetTop;if(rs){it.w=t.offsetWidth;it.h=t.offsetHeight}Usage.event(rs?"home:resize":"home:move")}
       grow(g);commit()};
     t.addEventListener("pointermove",move);t.addEventListener("pointerup",up);t.addEventListener("pointercancel",up)}
   function title(it){if(!it.ref)return WIDGETS[it.type]?.n||it.type;
@@ -175,7 +174,7 @@ const Home=(()=>{
   async function onClick(e){
     const h=e.target.closest("[data-h]")?.dataset.h;
     if(h==="add")return picker();
-    if(h==="tidy"){const g=$(".home-board");if(g){items().forEach(i=>{i.h=null;i.z=1});render();layout($(".home-board"),true);toast("Tidied up · Ctrl+Z to undo")}return}
+    if(h==="tidy"){const g=$(".home-board");if(g){items().forEach(i=>{i.h=null;i.z=0;i.auto=true});commit();render();toast("Tidied up · Ctrl+Z to undo")}return}
     if(h==="clear"){const b=e.target.closest("[data-h]");const n=items().filter(i=>!i.locked).length;if(!n){toast("Everything here is locked");return}
       if(!b.dataset.sure){b.dataset.sure=1;b.textContent=`Remove ${n} unlocked? Click again`;return}
       items().filter(i=>!i.locked).forEach(i=>{if(i.type==="npc"){const m=C.roster.find(x=>x.id===i.ref);if(m)m.pinned=false}});
@@ -242,7 +241,7 @@ const Home=(()=>{
       let b=c.querySelector(":scope>.pinbtn");if(!b){b=document.createElement("button");b.className="pinbtn";c.classList.add("has-pin");c.prepend(b)}
       const on=isPinned(...r);b.dataset.pin=r.join(":");b.classList.toggle("on",on);b.title=on?"On Home (click to unpin)":"Pin to Home";b.textContent="📌"});
     $$("main section:not(#tab-home) p.hint:not(.tk):not(#pPages):not(#jobAI)").forEach(p=>{if(!p.textContent.trim())return;p.classList.add("tk");
-      const q=document.createElement("button");q.className="hint-q";q.type="button";q.textContent="?";q.title="Show the tip";q.onclick=()=>{p.classList.toggle("tk-open");q.classList.toggle("on")};const h=p.previousElementSibling;if(h&&/^(H2|H3|H4)$/.test(h.tagName)&&!h.querySelector(".hint-q")){q.classList.add("in-h");h.append(q)}else p.before(q)})}
+      const q=document.createElement("button");q.className="hint-q";q.type="button";q.textContent="?";q.title="Show the tip";q.onclick=()=>{p.classList.toggle("tk-open");q.classList.toggle("on")};const h=p.previousElementSibling;if(h&&/^(H2|H3|H4)$/.test(h.tagName)&&!h.querySelector(".hint-q")){q.classList.add("in-h");h.append(q)}else{q.classList.add("tip");q.textContent="ⓘ Tip";p.before(q)}})}
   let decoT=0;new MutationObserver(()=>{if(!decoT)decoT=requestAnimationFrame(()=>{decoT=0;decorate()})}).observe(document.querySelector("main"),{childList:true,subtree:true});
   document.addEventListener("click",e=>{const b=e.target.closest(".pinbtn");if(!b)return;e.preventDefault();e.stopPropagation();const [type,ref]=b.dataset.pin.split(":");
     const on=toggle(type,ref);b.classList.toggle("on",on);toast(on?"Pinned to Home":"Removed from Home");Usage.event("pin:"+type)},true);

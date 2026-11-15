@@ -25,7 +25,7 @@ const PCs=(()=>{
   const lines=t=>String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);
   const attacks=m=>lines(P(m).attacks).map(l=>{const [n,h,d]=l.split("|").map(x=>x.trim());return {n,h:h||"",d:d||""}});
   const tools=m=>(m.skills||[]).filter(s=>!SK[String(s.s).toLowerCase()]).map(s=>s.s+(/^(exp|expert|master)$/i.test(s.g)?" (expertise)":""));
-  const initials=n=>String(n||"?").split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const initials=n=>String(n||"?").replace(/[^\p{L}\s]/gu,"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
   const pic=(m,cls)=>P(m).portrait?`<img class="${cls}" src="${esc(P(m).portrait)}" alt="">`:`<div class="${cls} pc-noimg">${esc(initials(m.name))}</div>`;
   const list=()=>Roster.sorted().filter(isPC).filter(m=>m.status!=="Left");
 

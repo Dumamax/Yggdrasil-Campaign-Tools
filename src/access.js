@@ -30,7 +30,7 @@ function lockDM(){lsSet("ygh.dm",null);UI.preview=false;UI.tab="p-board";saveUI(
 /* small modal helper: returns {el,close} */
 function modal(html,cls=""){const w=document.createElement("div");w.className="qs";w.innerHTML=`<div class="qs-box modal ${cls}">${html}</div>`;document.body.appendChild(w);
   const close=()=>w.remove();w.addEventListener("click",e=>{if(e.target===w)close()});w.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
-  setTimeout(()=>w.querySelector("input,button")?.focus(),30);return {el:w,close}}
+  setTimeout(()=>{w.querySelector("input,button")?.focus({preventScroll:true});const b=w.querySelector(".qs-box");if(b)b.scrollTop=0},30);return {el:w,close}}
 function ask(title,msg,buttons){return new Promise(res=>{const m=modal(`<h2>${esc(title)}</h2><p>${msg}</p><div class="actions">${buttons.map((b,i)=>`<button class="btn${i===0?" primary":""}" data-i="${i}">${esc(b)}</button>`).join("")}</div>`);
   m.el.addEventListener("click",e=>{const i=e.target.dataset.i;if(i==null)return;m.close();res(+i)})})}
 

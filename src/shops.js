@@ -99,7 +99,7 @@ Use official names for standard gear and magic items, add a few invented local g
       <span class="btn-pair"><button class="btn primary" id="mGen">Generate</button><button class="btn" id="mGenAI" title="Generate, then have Claude write it up">+ Claude write-up</button></span>
     </div>
     <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
-    <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
+    <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">Editing</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player preview</button></div>
       <button class="btn small" id="mClear">Clear unkept</button><span class="hint" style="margin:0">${AI.mode()==="none"?"No Claude connection: shops come from the tables; custom ideas give you a prompt to copy into Claude.":"Claude write-ups use "+(AI.mode()==="claude"?"Claude directly.":"your API key.")} Quick buttons generate instantly. Kept shops go to Print; pin one to Home with 📌.</span></div>
     <div id="mShops" class="board shops"></div>`;
     const box=$("#mShops");

@@ -50,8 +50,8 @@ const Bestiary=(()=>{
     if(!SRD&&!loading)load().then(()=>{if(UI.tab==="bestiary")render()}).catch(e=>toast(e.message));
     const types=[...new Set(all().map(m=>(m.type||"").replace(/\s*\(.*$/,"").toLowerCase()).filter(Boolean))].sort();
     el.innerHTML=`<div class="panel enc-panel"><div class="enc-head"><h2>Encounters</h2><button class="btn primary small" data-b="newenc">＋ New encounter</button></div><div id="encList"></div></div>
-      <div class="controls bx-controls"><input id="bxQ" placeholder="Search monsters" value="${esc(f.q)}" style="flex:1;min-width:180px">
-        <label>CR <select id="bxLo"><option value="">any</option>${CRS.map(c=>`<option${f.lo===c?" selected":""}>${c}</option>`).join("")}</select> to <select id="bxHi"><option value="">any</option>${CRS.map(c=>`<option${f.hi===c?" selected":""}>${c}</option>`).join("")}</select></label>
+      <div class="controls bx-controls"><label class="bx-search" style="flex:1;min-width:180px">Search<input id="bxQ" placeholder="Name or type" value="${esc(f.q)}"></label>
+        <label>CR from<select id="bxLo"><option value="">any</option>${CRS.map(c=>`<option${f.lo===c?" selected":""}>${c}</option>`).join("")}</select></label><label>CR to<select id="bxHi"><option value="">any</option>${CRS.map(c=>`<option${f.hi===c?" selected":""}>${c}</option>`).join("")}</select></label>
         <label>Type <select id="bxType"><option value="">any</option>${types.map(t=>`<option${f.type===t?" selected":""}>${esc(t)}</option>`).join("")}</select></label>
         <div class="seg" id="bxSrc">${[["all","All"],["mine","Mine"],["srd","Free rules"]].map(([k,l])=>`<button class="btn${f.src===k?" on":""}" data-src="${k}">${l}</button>`).join("")}</div>
         <details class="more bx-new"><summary class="btn primary">＋ Add monster</summary><div class="menu">

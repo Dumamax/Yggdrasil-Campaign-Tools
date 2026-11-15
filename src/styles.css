@@ -645,7 +645,6 @@ body:not(.mobile) .fb-m{display:none!important}
 .hpbar span{position:relative;display:block;text-align:center;font:600 13px/20px "Crimson Pro",serif;color:#fff;text-shadow:0 1px 2px #000}
 .cr-cond{display:flex;flex-wrap:wrap;gap:4px;align-items:center}.cr-cond .badge{cursor:pointer}.cr-cond select{font-size:13px;padding:1px 4px}
 body.mobile .bx-hide{display:none}body.mobile .sb-grid{grid-template-columns:1fr}body.mobile #encList{grid-template-columns:minmax(0,1fr)}
-.bx-controls>label{display:flex;align-items:center;gap:5px;white-space:nowrap}.bx-controls>label select{width:auto}
 .dice-count{gap:4px}.dice-count .btn{min-width:30px;padding:2px 6px}.dice-count .muted{font-size:13px;margin-right:4px}
 /* ---- Home free board ---- */
 .home-board{position:relative;min-height:300px}
@@ -658,3 +657,18 @@ body.mobile .bx-hide{display:none}body.mobile .sb-grid{grid-template-columns:1fr
 .init-in{width:58px;padding:2px 4px;font-weight:700}table.init tr.on .init-in{color:var(--gold)}
 body.mobile .home-board{height:auto!important;display:grid;gap:12px}
 body.mobile .home-board>.tile{position:static;width:auto!important;height:auto!important}body.mobile .tile-rs{display:none}body.mobile .home-board .tile-head{cursor:default}
+/* ---- UI polish pass ---- */
+.aimode{display:none!important}
+.subnav{padding:10px 22px 12px;border-bottom:1px solid var(--line)}
+nav:has(+ .subnav:not([hidden])){border-bottom:0;padding-bottom:4px}
+.subnav .seg .btn{padding:5px 16px;font-size:15px}
+#tab-roster>.controls[hidden],#rMemCtl[hidden]{display:none!important}
+.hint-q.tip{width:auto;height:auto;border-radius:12px;padding:1px 9px;font:600 12.5px "Crimson Pro",serif;margin:6px 0 2px}
+.banner span{white-space:normal!important;overflow:visible!important}
+body.mobile .subnav{padding:8px 12px;border-bottom:1px solid var(--line)}
+body.mobile #tab-bestiary .controls>details,body.mobile #tab-bestiary .controls>.bx-search{grid-column:1/-1}
+body.mobile #tab-bestiary details.bx-new>summary{display:block;text-align:center;min-height:42px;line-height:30px}
+body.mobile #tab-bestiary details.bx-new .menu{left:0;right:0}
+body.mobile .home-bar{display:flex;flex-wrap:nowrap;gap:8px}body.mobile .home-bar .btn{flex:1;min-height:40px;padding:6px}
+body.mobile .home-bar [data-h=tidy],body.mobile .home-tip{display:none}
+body.mobile .enc-head{flex-wrap:wrap}
