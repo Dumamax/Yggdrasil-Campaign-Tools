@@ -58,11 +58,21 @@ const Home=(()=>{
   function spot(R,w,bw){let best=null;for(let x=0;x<=Math.max(0,bw-w);x+=Math.max(20,Math.floor((bw-w)/24)||20)){
       const y=R.filter(r=>r.x<x+w+GAP&&x<r.x+r.w+GAP).reduce((m,r)=>Math.max(m,r.y+r.h+GAP),0);if(!best||y<best.y)best={x,y}}
     return best||{x:0,y:0}}
+  /* new tiles drop into the highest free spot. Their content can still be loading (monster list, pictures), so they're re-placed while
+     they settle (ResizeObserver, ~4 s), and a tile still showing "Loading…" isn't given a saved spot until the next render. */
+  let ro=null,roT=null;
   function layout(g,all){const bw=BW(g),L=items(),byId=id=>g.querySelector(`.tile[data-id="${id}"]`);let ch=false;
-    const fresh=new Set(L.filter(it=>all||it.x==null||it.y==null).map(it=>it.id));
-    L.forEach(it=>{if(!it.w){it.w=W0[it.size||"m"];ch=true}if(!fresh.has(it.id))place(g,it,byId(it.id))});
-    const R=rects(g,fresh);
-    L.filter(it=>fresh.has(it.id)).forEach(it=>{const d=byId(it.id),w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";const p=spot(R,w,bw);it.x=p.x;it.y=p.y;place(g,it,d);R.push({x:p.x,y:p.y,w,h:d.offsetHeight});ch=true});
+    const fresh=L.filter(it=>all||it.x==null||it.y==null).map(it=>it.id),fs=new Set(fresh);
+    L.forEach(it=>{if(!it.w){it.w=W0[it.size||"m"];ch=true}if(!fs.has(it.id))place(g,it,byId(it.id))});
+    const placeFresh=()=>{const R=rects(g,fs);let c=false;
+      fresh.forEach(id=>{const it=L.find(i=>i.id===id),d=byId(id);if(!it||!d)return;const w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";
+        const p=spot(R,w,bw),loading=!!d.querySelector(".tile-loading");
+        if(loading){d.style.left=p.x+"px";d.style.top=p.y+"px";d.style.zIndex=0}else{if(it.x!==p.x||it.y!==p.y){it.x=p.x;it.y=p.y;c=true}place(g,it,d)}
+        R.push({x:p.x,y:p.y,w,h:d.offsetHeight})});grow(g);return c};
+    if(placeFresh())ch=true;
+    try{ro&&ro.disconnect()}catch(e){}clearTimeout(roT);
+    if(fresh.length&&window.ResizeObserver){let t=0;ro=new ResizeObserver(()=>{cancelAnimationFrame(t);t=requestAnimationFrame(()=>{if(placeFresh())persist()})});
+      fresh.forEach(id=>{const d=byId(id);d&&ro.observe(d)});roT=setTimeout(()=>{try{ro.disconnect()}catch(e){}},4000)}
     grow(g);if(ch)commit()}
   function grow(g){const b=[...g.children].reduce((m,t)=>Math.max(m,t.offsetTop+t.offsetHeight),0);g.style.height=(b+40)+"px"}
   const topZ=()=>items().reduce((m,i)=>Math.max(m,i.z||0),0)+1;
@@ -105,8 +115,8 @@ const Home=(()=>{
       case "job":{const h=C.jobs.find(x=>x.id===it.ref);return h?Jobs.dmCard(h,true):""}
       case "shop":{const s=C.shops.find(x=>x.id===it.ref);return s?shopHTML(s):""}
       case "map":{const m=C.maps.find(x=>x.id===it.ref);return m?`<img class="tile-map" src="${m.img}" alt="${esc(m.name||"Map")}" data-w="map" title="Open full screen">`:""}
-      case "mon":{const m=Bestiary.get(it.ref);if(!m&&Bestiary.isSRD(it.ref)){Bestiary.load().then(()=>{if(UI.tab==="home")render()}).catch(e=>toast(e.message));return '<p class="muted">Loading…</p>'}return Bestiary.statHTML(m,{compact:true})}
-      case "enc":{const en=C.encounters.find(x=>x.id===it.ref);if(!en)return "";if(!Bestiary.loaded()&&en.groups.some(g=>Bestiary.isSRD(g.mid)))Bestiary.load().then(()=>{if(UI.tab==="home")render()}).catch(()=>{});return Bestiary.encTile(en)}
+      case "mon":{const m=Bestiary.get(it.ref);if(!m&&Bestiary.isSRD(it.ref)){Bestiary.load().then(()=>{if(UI.tab==="home")render()}).catch(e=>toast(e.message));return '<p class="muted tile-loading">Loading…</p>'}return Bestiary.statHTML(m,{compact:true})}
+      case "enc":{const en=C.encounters.find(x=>x.id===it.ref);if(!en)return "";if(!Bestiary.loaded()&&en.groups.some(g=>Bestiary.isSRD(g.mid))){Bestiary.load().then(()=>{if(UI.tab==="home")render()}).catch(()=>{});return '<p class="muted tile-loading">Loading…</p>'}return Bestiary.encTile(en)}
       case "gen-npc":{const m=gen[it.id];return `<div class="actions"><button class="btn primary small" data-w="roll">${m?"↻ Reroll":"Roll an NPC"}</button>${m?'<button class="btn small" data-w="savenpc">Save to NPCs</button><button class="btn small" data-w="pinnpc">📌 Save &amp; pin</button>':""}</div>`+
         (m?`<h4 class="gen-name">${esc(m.name)}</h4>${NPCs.badges(m)}${NPCs.profileHTML(m)}`:"")}
       case "gen-name":{const L=gen[it.id]||(gen[it.id]=names());return `<div class="name-list">${L.map(n=>`<button class="btn small ghost" data-w="copy" data-v="${esc(n)}" title="Copy">${esc(n)}</button>`).join("")}</div><div class="actions"><button class="btn small primary" data-w="roll">↻ New names</button></div>`}
@@ -121,8 +131,8 @@ const Home=(()=>{
         return `<div class="timer-face" data-timer="${it.id}">${clock(t)}</div><div class="dice-row">${[1,5,10,30].map(n=>`<button class="btn small" data-w="tset" data-v="${n}">${n} min</button>`).join("")}</div>
           <div class="actions"><button class="btn small primary" data-w="tgo">${t.end?"Pause":"Start"}</button><button class="btn small" data-w="treset">Reset</button></div>`}
       case "init":{const st=it.state||(it.state={rows:[],turn:0,round:1});const R=st.rows;
-        return `<div class="init-top"><b>Round ${st.round}</b><button class="btn small primary" data-w="inext">Next turn ▶</button><button class="btn small ghost" data-w="iclear">Clear</button></div>
-          <table class="ref init">${R.map((r,i)=>`<tr class="${i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><input class="init-in" type="number" data-w="iset" data-v="${i}" value="${r.i}"></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
+        return `<div class="init-top">${st.started?`<b>Round ${st.round}</b><button class="btn small primary" data-w="inext">Next turn ▶</button><button class="btn small ghost" data-w="iend" title="Stop tracking turns; keeps the list">End</button>`:`<b class="muted">Setting up</b><button class="btn small primary" data-w="istart"${R.length?"":" disabled"}>Start round 1 ▶</button>`}<button class="btn small ghost" data-w="iclear">Clear</button></div>
+          <table class="ref init">${R.map((r,i)=>`<tr class="${st.started&&i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><input class="init-in" type="number" data-w="iset" data-v="${i}" value="${r.i}"></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
           <form class="dice-row" data-w="iadd">${whoSel(st)}<input name="n" placeholder="Name" hidden style="flex:1;min-width:90px"><input name="i" type="number" placeholder="Roll" title="Leave blank to roll d20 + their initiative bonus" style="width:64px"><button class="btn small">Add</button></form>`}
       case "party":return PCs.tableSection();
       case "quests":{const w=document.createElement("div");w.className="tile-stack";const L=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
@@ -191,9 +201,11 @@ const Home=(()=>{
     if(a==="tset"){it.text=v;timers[it.id]={left:+v*60e3,end:0};commit();return render()}
     if(a==="tgo"){const tm=timers[it.id];if(tm.end){tm.left=Math.max(0,tm.end-Date.now());tm.end=0}else{if(!tm.left)tm.left=(+it.text||5)*60e3;tm.end=Date.now()+tm.left}return render()}
     if(a==="treset"){timers[it.id]={left:(+it.text||5)*60e3,end:0};return render()}
-    if(a==="inext"){const st=it.state;if(!st.rows.length)return;st.turn++;if(st.turn>=st.rows.length){st.turn=0;st.round++}commit();return render()}
-    if(a==="iclear"){it.state={rows:[],turn:0,round:1};commit();return render()}
-    if(a==="irm"){it.state.rows.splice(+v,1);if(it.state.turn>=it.state.rows.length)it.state.turn=0;commit();return render()}}
+    if(a==="istart"){const st=it.state;if(!st.rows.length)return;st.started=true;st.turn=0;st.round=1;commit();Usage.event("init:start");return render()}
+    if(a==="iend"){it.state.started=false;it.state.turn=0;it.state.round=1;commit();return render()}
+    if(a==="inext"){const st=it.state;if(!st.rows.length||!st.started)return;st.turn++;if(st.turn>=st.rows.length){st.turn=0;st.round++}commit();return render()}
+    if(a==="iclear"){it.state={rows:[],turn:0,round:1,started:false};commit();return render()}
+    if(a==="irm"){const st=it.state;st.rows.splice(+v,1);if(+v<st.turn)st.turn--;if(st.turn>=st.rows.length)st.turn=0;if(!st.rows.length)st.started=false;commit();return render()}}
   let noteT=null;
   function onInput(e){const it=find(e);if(!it)return;const w=e.target.dataset.w;
     if(w==="notes"||w==="expr"){it.text=e.target.value;if(w==="notes"){clearTimeout(noteT);noteT=setTimeout(commit,700)}}}
