@@ -159,32 +159,34 @@ const Sync=(()=>{
     imgJob=(async()=>{const {imgs}=await pack(C),have=await listKnown(),list=[...imgs].filter(([n,v])=>pieces([[n,v]],have).length);if(!list.length)return;
       const keep=status;let i=0;
       for(const [n,v] of list){i++;const files=pieces([[n,v]],have);if(!files.length)continue;
-        const tree=await uploadFiles(files,(k,N)=>`Uploading picture ${i} of ${list.length}${N>1?` (${Math.round(100*(k-1)/N)}%)`:""}…`);
+        const tree=await uploadFiles(files,(k,N)=>{if(!saving)Progress.set((i-1+(k-1)/N)/list.length,`Uploading picture ${i} of ${list.length}…`);return `Uploading picture ${i} of ${list.length}${N>1?` (${Math.round(100*(k-1)/N)}%)`:""}…`});
         setStatus(`Uploading picture ${i} of ${list.length}…`);await commitFiles(tree,`Add picture ${n.split(".")[0].slice(0,8)}`);
         files.forEach(f=>have.add(f[0]));const s=lsGet("ygh.blobs",{});files.forEach(f=>delete s[f[0]]);lsSet("ygh.blobs",s)}
-      Alerts.clear("img");setStatus(keep&&!/^(Uploading picture|Picture upload)/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
-      .catch(e=>{setStatus("Picture upload paused (retrying)");clearTimeout(imgT);imgT=setTimeout(syncImages,60e3)})
+      Alerts.clear("img");if(!saving)Progress.done(true,"Pictures uploaded");setStatus(keep&&!/^(Uploading picture|Picture upload)/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
+      .catch(e=>{if(!saving)Progress.done(false);setStatus("Picture upload paused (retrying)");clearTimeout(imgT);imgT=setTimeout(syncImages,60e3)})
       .finally(()=>{imgJob=null});
     return imgJob}
   async function push(retry=0){const c=cfg();
     /* someone else saved since we loaded? */
+    const P=(f,l)=>{if(saving)Progress.set(f,l)};P(0.05,"Checking GitHub for newer saves…");
     const mr=await fetch(api(true),{headers:hdr(),cache:"no-store"});const meta=mr.status===404?null:mr.ok?await mr.json():null;
     if(!mr.ok&&mr.status!==404)throw new Error(mr.status===401?"GitHub refused the token (mistyped or expired)":"GitHub error "+mr.status);
     if(meta&&meta.sha!==sha){const remote=await fetchRemote().catch(()=>null);const i=await choose(remote,"GitHub has a different save");
       if(i===0&&remote){adopt(remote,"Loaded the GitHub version (yours is in Backups)");setStatus("Up to date");return false}
       if(i===0){toast("Couldn't download the GitHub copy; try again");return false}
       if(i!==1)return false;sha=meta.sha}
-    const {json,imgs}=await pack(C);
-    if(imgJob)await imgJob.catch(()=>{}); // a background picture upload is finishing: reuse its work
-    const have=await listKnown(true),todo=pieces(imgs,have),tree=await uploadFiles(todo,(k,n)=>`Saving to GitHub… picture piece ${k} of ${n} (keep this screen open)`);
-    setStatus("Saving to GitHub…");
+    P(0.12,"Packing the campaign…");const {json,imgs}=await pack(C);
+    if(imgJob){P(0.15,"Waiting for pictures to finish uploading…");await imgJob.catch(()=>{})}
+    P(0.2,"Checking which pictures GitHub has…"); // a background picture upload is finishing: reuse its work
+    const have=await listKnown(true),todo=pieces(imgs,have),tree=await uploadFiles(todo,(k,n)=>{P(0.25+0.45*(k-1)/n,`Uploading picture piece ${k} of ${n} (keep this screen open)…`);return `Saving to GitHub… picture piece ${k} of ${n} (keep this screen open)`});
+    setStatus("Saving to GitHub…");P(0.75,"Sending the campaign file…");
     const cb=await gh("git/blobs",{method:"POST",body:JSON.stringify({content:json,encoding:"utf-8"})});tree.push({path:c.path,mode:"100644",type:"blob",sha:cb.sha});
-    const head=await gh(`git/ref/heads/${encodeURIComponent(c.branch)}`),base=await gh(`git/commits/${head.object.sha}`);
-    let t;try{t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})})}
+    P(0.82,"Preparing the save…");const head=await gh(`git/ref/heads/${encodeURIComponent(c.branch)}`),base=await gh(`git/commits/${head.object.sha}`);
+    P(0.88,"Preparing the save…");let t;try{t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})})}
     catch(e){if(e.status===422&&todo.length&&retry<2){lsSet("ygh.blobs",{});return push(retry+1)}throw e} // a remembered image blob expired on GitHub: send them again
     lsSet("ygh.blobs",{});todo.forEach(f=>have.add(f[0]));
-    const cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message:`Save campaign · ${new Date().toLocaleString()}${todo.length?` (+${todo.length} image${todo.length>1?"s":""})`:""}`,tree:t.sha,parents:[head.object.sha]})});
-    try{await gh(`git/refs/heads/${encodeURIComponent(c.branch)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}
+    P(0.93,"Recording the save…");const cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message:`Save campaign · ${new Date().toLocaleString()}${todo.length?` (+${todo.length} image${todo.length>1?"s":""})`:""}`,tree:t.sha,parents:[head.object.sha]})});
+    P(0.97,"Finishing…");try{await gh(`git/refs/heads/${encodeURIComponent(c.branch)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}
     catch(e){if(e.status===422&&retry<2)return push(retry+1);throw e} // the branch moved meanwhile: redo on top of it
     sha=cb.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);setStatus("Saved to GitHub");ping({c:cm.sha,b:cb.sha,at:C.savedAt});return true}
   /* ---- live updates: after a GitHub save, a tiny "updated" ping goes out through ntfy.sh (no account; carries only commit ids, never campaign content).

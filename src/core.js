@@ -119,12 +119,12 @@ async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"
 function markSaved(msg){Alerts.clear("save");Alerts.clear("stale");dirty=false;lsSet("ygh.dirty",false);persist();banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
 /* show that a save is in progress (GitHub saves can take a while) and ignore repeat presses meanwhile */
 let saving=false;
-function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…");banner()}
+function savingUI(on,ok=true){saving=on;if(on)Progress.set(0.02,"Saving to GitHub…");else if(Progress.active())Progress.done(ok,"Saved to GitHub");document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…");banner()}
 async function saveCampaign(asNew){
   if(!isDM())return;
   if(saving){toast("Still saving…");return}
   C.savedAt=new Date().toISOString();if(typeof Usage!=="undefined")Usage.merge();
-  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");Alerts.set("save",`Couldn't save to GitHub: ${e.message}. Your changes are safe in this browser; try again in a moment.`);if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false,!err&&ok)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");Alerts.set("save",`Couldn't save to GitHub: ${e.message}. Your changes are safe in this browser; try again in a moment.`);if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
   const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
@@ -159,6 +159,16 @@ function importData(d){
     commit();App.reloadAll();toast("Imported Upgrade Chart data");return}
   toast("Didn't recognize that file");
 }
+/* ---- progress bar for GitHub saves and picture uploads: a thin bar under the header with step, percent, elapsed time and a rough time left ---- */
+const Progress=(()=>{let t0=0,f=0,label="",tick=null,hideT=null;
+  function el(){let b=$("#progBar");if(!b){b=document.createElement("div");b.id="progBar";b.className="progbar";b.hidden=true;b.innerHTML="<i></i><span></span>";$(".topbar")?.appendChild(b)}return b}
+  const secs=ms=>{const s=Math.round(ms/1000);return s<60?`${s} s`:`${Math.floor(s/60)} min ${s%60} s`};
+  function draw(){const b=el(),el2=Date.now()-t0,pct=Math.round(f*100);b.querySelector("i").style.width=pct+"%";
+    const left=f>0.15&&f<1&&el2>3000?` · about ${secs(el2*(1-f)/f)} left`:"";b.querySelector("span").textContent=`${label} · ${pct}% · ${secs(el2)}${left}`}
+  function set(fr,lab){clearTimeout(hideT);if(!tick){t0=Date.now();tick=setInterval(draw,1000)}f=Math.max(0,Math.min(1,fr));if(lab)label=lab;const b=el();b.hidden=false;b.classList.remove("fail");draw();banner()}
+  function done(ok=true,msg="Done"){if(!tick)return;clearInterval(tick);tick=null;const b=el();if(ok){f=1;label=msg;draw()}else{b.classList.add("fail");b.querySelector("span").textContent=`${label} · stopped`}
+    hideT=setTimeout(()=>{b.hidden=true;banner()},ok?1500:4000);banner()}
+  return {set,done,active:()=>!!tick,pct:()=>Math.round(f*100)}})();
 /* ---- problems the DM must notice (failed saves, GitHub unreachable, long-unsaved work).
    Shown as a red banner; Minimize hides it until a *different* problem appears, and the header keeps a red ⚠ until it's fixed. ---- */
 const Alerts=(()=>{const L={};let min=new Set(lsGet("ygh.alertMin",[]));
@@ -179,7 +189,7 @@ function banner(){
     const a=$("#bannerAct");a.textContent=v.act==="sync"?"Check again":"Save now";a.dataset.act=v.act||"save"}
   const st=$("#saveState");if(st){const off=typeof Sync!=="undefined"&&/Offline|Can't reach/.test(Sync.status()||"");
     const [cls,lbl,tip]=!dm?["","",""]:t?["bad","⚠ "+(t[0]==="stale"?"Not saved":t[0]==="sync"?(off?"Offline":"GitHub"):t[0]==="img"?"Pictures":"Not saved"),t[1].msg+" (click for details)"]:
-      saving?["busy","Saving…","Saving now"]:dirty?["warn","Unsaved","You have changes that aren't saved yet. Ctrl+S saves them."]:["ok","Saved ✓",C.savedAt?`Last saved ${new Date(C.savedAt).toLocaleString()}`:"Saved"];
+      saving||Progress.active()?["busy",`Saving ${Progress.pct()}%`,"Saving now (see the bar under the header)"]:dirty?["warn","Unsaved","You have changes that aren't saved yet. Ctrl+S saves them."]:["ok","Saved ✓",C.savedAt?`Last saved ${new Date(C.savedAt).toLocaleString()}`:"Saved"];
     st.className="btn ghost hb state "+cls;st.querySelector(".st-lbl").textContent=lbl;st.title=tip;st.hidden=!dm}
   const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
