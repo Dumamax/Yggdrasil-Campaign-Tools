@@ -1,7 +1,7 @@
 {
  "app": "yggdrasil-guild-hall",
  "schema": 9,
- "savedAt": "2026-11-15T08:30:33.448Z",
+ "savedAt": "2026-11-15T08:35:25.002Z",
  "settings": {
   "cp": {
    "name": "Contribution Points",
@@ -1151,13 +1151,19 @@
    "Nadia",
    "Horatio",
    "Bronwen",
-   "Amara"
+   "Amara",
+   "Chidi",
+   "Leopold",
+   "Adaeze"
   ],
   "last": [
    "Mendoza",
    "Fletcher",
    "Dunmore",
-   "Adeyemi"
+   "Adeyemi",
+   "Oddfellow",
+   "Tallow",
+   "Greaves"
   ],
   "nanc:Dark fantasy / grimdark": [
    "human"
@@ -1199,6 +1205,91 @@
   ],
   "ntitle:Crafter": [
    "alchemist"
+  ],
+  "sanc": [
+   "orc",
+   "thri-kreen",
+   "hadozee"
+  ],
+  "slook": [
+   "spectacles on a chain, pushed up into wild hair",
+   "mismatched shoes, on purpose",
+   "wears gloves with the fingertips cut off"
+  ],
+  "spers": [
+   "fiercely independent",
+   "pious and earnest",
+   "generous with time, stingy with coin"
+  ],
+  "svoice": [
+   "laughs at the end of every sentence",
+   "calls everyone 'friend' in a slightly threatening way",
+   "uses baby talk on adults, unironically"
+  ],
+  "swant": [
+   "is hunting for a specific rare coin",
+   "is saving up to move the shop closer to the Tree",
+   "wants a rare plant for a sick friend"
+  ],
+  "lk:face": [
+   "a nose like a hawk's beak"
+  ],
+  "lk:mark": [
+   "a prosthetic wooden leg carved with vines",
+   "a crooked finger that points the wrong way"
+  ],
+  "lk:build": [
+   "powerfully built, gentle-eyed",
+   "wiry, all sinew and nerves"
+  ],
+  "shopname": [
+   "{owner} & Kin, {kind}",
+   "The {noun} & {noun2}"
+  ],
+  "shopadj": [
+   "Honest",
+   "Velvet"
+  ],
+  "sext:The City (base bazaar)": [
+   "a narrow storefront built into a root that broke through the street",
+   "a tall, skinny shop with a crooked chimney and a hand-painted sign"
+  ],
+  "sint:Alchemist & Apothecary": [
+   "bundles of drying herbs hang so low you have to duck",
+   "bubbling flasks on every surface, connected by glass tubing"
+  ],
+  "ssen:The City (base bazaar)": [
+   "sap-sweet air from the Tree mixes with lamp oil",
+   "street-food smoke and haggling drift in from outside"
+  ],
+  "sdet": [
+   "a portrait of the founder whose eyes follow gold, not people",
+   "a 'You break it, you've adopted it' sign"
+  ],
+  "smag:common": [
+   "Rope of Mending"
+  ],
+  "stock:Alchemist & Apothecary": [
+   "Smelling salts",
+   "Basic poison (vial)",
+   "Alchemist's supplies",
+   "Holy water (flask)",
+   "Antitoxin",
+   "Healer's kit",
+   "Sleep tonic",
+   "Alchemist's fire",
+   "Glowsap lamp oil"
+  ],
+  "squirk": [
+   "a ghostly previous owner still offers unsolicited advice",
+   "the stock changes completely every new moon"
+  ],
+  "srumor": [
+   "The owner would pay well for a rare ingredient from a dangerous world.",
+   "Something in the back room was bought from a world that no longer exists."
+  ],
+  "lk:fur": [
+   "scruffy brown fur, groomed only on the face"
   ]
  },
  "home": {
@@ -1208,18 +1299,19 @@
  "usage": {
   "74k49c": {
    "label": "Computer",
-   "at": 1794731433449,
+   "at": 1794731725002,
    "since": 1794728609411,
    "tabs": {
     "home": 4,
-    "npcs": 8,
-    "council": 5,
-    "bestiary": 5,
+    "npcs": 10,
+    "council": 6,
+    "bestiary": 6,
     "jobs": 3,
-    "shop": 6,
-    "members": 7,
+    "shop": 7,
+    "members": 9,
     "standing": 4,
-    "market": 1
+    "market": 2,
+    "maps": 1
    },
    "events": {
     "widget:gen-name": 1,
@@ -1249,21 +1341,124 @@
  "councilSeeded": true,
  "maps": [
   {
-   "id": "p8paohf6",
-   "name": "Tree & Bazaar",
-   "img": "ghimg:2323e639b11cd2dcd2293efa.jpg#5"
+   "id": "0wvdf0gs",
+   "hidden": true,
+   "name": "Bronze Ward",
+   "img": "ghimg:720d3bb4d60b9c143d783423.webp#4"
   },
   {
-   "id": "ir9zi0su",
+   "id": "wncvmnsf",
+   "hidden": true,
+   "name": "Gaslamp Lane",
+   "img": "ghimg:2010094ce6786743279a3f05.webp#5"
+  },
+  {
+   "id": "8hammuut",
+   "hidden": true,
+   "name": "Gold Ward",
+   "img": "ghimg:90dca7efdf7734ec9c0a2355.webp#4"
+  },
+  {
+   "id": "ydue18ay",
+   "hidden": true,
+   "name": "Hearthring",
+   "img": "ghimg:2e00d2baf939f213096421c9.webp#4"
+  },
+  {
+   "id": "u1mql2l0",
+   "hidden": true,
+   "name": "Iron Ward",
+   "img": "ghimg:a39d2d3f479d9ea5fff6855d.webp#5"
+  },
+  {
+   "id": "lm7he5fi",
    "hidden": false,
    "name": "Pinboard Plaza",
-   "img": "ghimg:b715bb7e269a70c5892fe0c6.jpg#8"
+   "img": "ghimg:4663acb8a8b681873dd295f3.webp#4"
   },
   {
-   "id": "191oqtpc",
+   "id": "b608y77h",
+   "hidden": true,
+   "name": "Platinum Ward",
+   "img": "ghimg:27c3438b71d3d9cafe2acd78.webp#4"
+  },
+  {
+   "id": "if81aa01",
+   "hidden": true,
+   "name": "Player map — Tree & Bazaar",
+   "img": "ghimg:acc450bb21beac7c5a2f77df.webp#3"
+  },
+  {
+   "id": "kpbpbu1l",
+   "hidden": true,
+   "name": "Scrapper's Gnarl",
+   "img": "ghimg:583bbf95b62545aa0a088594.webp#4"
+  },
+  {
+   "id": "qb2ywvx6",
+   "hidden": true,
+   "name": "Silver Ward",
+   "img": "ghimg:386656089fe5349949450a66.webp#4"
+  },
+  {
+   "id": "sbm77gay",
+   "hidden": true,
+   "name": "Skyfoot Steps",
+   "img": "ghimg:f2de05691532929b2cb2248b.webp#4"
+  },
+  {
+   "id": "qilar12n",
+   "hidden": true,
+   "name": "The Bough Docks",
+   "img": "ghimg:c236f0ba66c4a4281c0bff43.webp#4"
+  },
+  {
+   "id": "wge2rkh4",
    "hidden": true,
    "name": "The Exchange Burl",
-   "img": "ghimg:10fc3ed3527fa906263edd25.jpg#9"
+   "img": "ghimg:2d28e1780c2557123f200ea2.webp#6"
+  },
+  {
+   "id": "5f6fisyk",
+   "hidden": true,
+   "name": "The Gatewood",
+   "img": "ghimg:f35113a847e30589b80743f0.webp#4"
+  },
+  {
+   "id": "q7xogpcp",
+   "hidden": true,
+   "name": "The Glowmarket",
+   "img": "ghimg:3c97e40691d04c632631da08.webp#4"
+  },
+  {
+   "id": "er4hc32b",
+   "hidden": true,
+   "name": "The Heartwood Atrium",
+   "img": "ghimg:0867d3d6f7d6ca9d347c1d62.webp#5"
+  },
+  {
+   "id": "c2j4dj4f",
+   "hidden": true,
+   "name": "The Mossbank",
+   "img": "ghimg:e6b744fb1aace59645b0f5b9.webp#4"
+  },
+  {
+   "id": "apgkggrb",
+   "hidden": true,
+   "name": "The Rootgate",
+   "img": "ghimg:cf4e008854ea2ceeb011e837.webp#4"
+  },
+  {
+   "id": "rc2h3ixi",
+   "hidden": true,
+   "name": "Tumbleroot Post",
+   "img": "ghimg:1634b1be4a92277c2a5e3be7.webp#5"
+  },
+  {
+   "id": "bixx7zd4",
+   "hidden": true,
+   "name": "Twilight Fair",
+   "img": "ghimg:c0e8b2baa469b4d7a94c0df5.webp#5"
   }
  ],
  "worlds": []
