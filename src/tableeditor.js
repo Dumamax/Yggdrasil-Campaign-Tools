@@ -2,7 +2,7 @@
 const TableEditor=(()=>{
   const HIDE=new Set(["version","tiers"]);
   const RECORD=new Set(["levelCurve","council","seats","mordecai","fantasyShare","worldBlock","sizes","locations","offers","names","typeWeightsByTier","op","genres"]);
-  const LABELS={w:"Weight",wealth:"Wealth (gold ×)",jobTypes:"Job types",fantasyShare:"Fantasy share",worldBlock:"World details",patronNames:"Patron names",patronQuirks:"Patron quirks",
+  const LABELS={w:"Weight",wealth:"Wealth (gold ×)",jobTypes:"Job types",fantasyShare:"Fantasy share",worldBlock:"World details",patronNames:"Patron names",patronQuirks:"Patron quirks",lookParts:"Look parts (combined into one description)",
     goldBaseByLevel:"Job gold by party level",rarityByTier:"Incentive rarity by tier",xpBudget:"XP budget per character",fightPlan:"Fight plan",goldMult:"Gold multiplier",
     perkLabels:"Perk type labels",typeWeightsByTier:"Peddler type weights by tier",dealReasons:"Deal reasons",jobs:"Price (in jobs)",gp:"Price override (gp)",days:"Build days",
     tier:"Recommended tier",types:"Perk types (P/A/B/C)",op:"Operator",makes:"Makes (per level)",cat:"Category",s:"Skill",g:"Grade",cap:"Rarity cap",output:"Items per downtime",

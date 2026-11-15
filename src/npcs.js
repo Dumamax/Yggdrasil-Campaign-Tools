@@ -25,9 +25,9 @@ const NPCs=(()=>{
     const con=o.con||wpick(wkeys(T.connections)),K=T.connections[con]||{};
     const genre=o.genre||rollGenre(),arch=o.arch||wpick(Object.entries(O.arch||{Noncombatant:1}));
     const adv=occ==="Adventurer"||(con==="Hireable"&&arch!=="Noncombatant");
-    const N=SN(),m={id:uid(),kind:"NPC",status:"",name:rollName(genre),ancestry:pickFresh(ancList(genre),"nanc:"+genre)||"",genre,occupation:occ,
+    const N=SN(),anc=pickFresh(ancList(genre),"nanc:"+genre)||"",m={id:uid(),kind:"NPC",status:"",name:rollName(genre),ancestry:anc,genre,occupation:occ,
       title:pickFresh(O.titles||[occ.toLowerCase()],"ntitle:"+occ)||"",connection:con,archetype:arch,level:+o.level||rollLevel(adv),label:"",
-      look:pickFresh(N.looks||[],"nlook")||"",voice:pickFresh(N.voices||[],"nvoice")||"",manner:pickFresh(N.personalities||[],"nmanner")||"",
+      look:Shops.npcLook(anc),voice:pickFresh(N.voices||[],"nvoice")||"",manner:pickFresh(N.personalities||[],"nmanner")||"",
       want:pickFresh(K.wants||N.wants||[],"nwant:"+con)||"",secret:pickFresh(T.secrets||[],"nsecret")||"",attitude:wpick(Object.entries(K.attitude||{Neutral:1})),
       notes:"",skills:[],role:"",player:"",assign:"",guild:"",public:"",seat:"",rival:false,pinned:false};
     if(con==="Hireable"){const sk=(O.skills||[]).slice(),n=Math.min(sk.length,Math.random()<0.4?2:1),g=gradeFor(m.level);

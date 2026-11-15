@@ -20,7 +20,16 @@ const Shops=(()=>{
   function rollName(type,owner){const ty=T.shopTypes[type]||{},nouns=ty.nouns&&ty.nouns.length?ty.nouns:["Lantern"],n1=pick(nouns);let n2=pick(nouns);for(let i=0;i<4&&n2===n1;i++)n2=pick(nouns);
     return pickFresh(T.namePatterns,"shopname").replace("{adj}",pickFresh(T.adjectives,"shopadj")).replace("{noun2}",n2).replace("{noun}",n1)
       .replace("{kind}",pick(ty.kinds&&ty.kinds.length?ty.kinds:["Shop"])).replace("{owner}",ownerKey(owner)).replace("{place}",pick(T.placeNouns||["Old Knot"]))}
-  function rollNPC(role){const N=T.npc;return {name:Jobs.genName(),role,ancestry:pickFresh(N.ancestries,"sanc"),look:pickFresh(N.looks,"slook"),
+  /* npcLook: composed physical description (build + two features + outfit or odd detail), features matched to the ancestry's body type */
+  const LOOKGROUPS=[["scales",/dragonborn|kobold|lizard|tortle|yuan|serpent|draconic|naga|triton/i],["feathers",/kenku|owlin|aarakocra|bird|raven/i],["fur",/tabaxi|rat ?folk|harengon|bugbear|fox|leonin|loxodon|hadozee|giff|cat|mouse|shifter/i],["construct",/warforged|construct|autognome|android|modron|clockwork|golem|automaton/i],["plant",/mushroom|myconid|dryad|plant|sap-born|fung|moss|verdan/i],["elemental",/genasi|azer|elemental/i],["none",/plasmoid|thri-kreen|swarm|door|\bhat\b|ghost|mimic|slime|ooze|bees|poet/i]];
+  function npcLook(anc){const N=T.npc||{},P=N.lookParts||DEFAULT_SHOP_TABLES.npc.lookParts||{},a=String(anc||""),odd=()=>pickFresh(N.looks||[],"slook")||"";
+    if(!(P.build&&P.build.length)||Math.random()<0.12)return odd();
+    const g=(LOOKGROUPS.find(([,re])=>re.test(a))||["hair"])[0],pf=k=>pickFresh(P[k]||[],"lk:"+k);
+    const slots=[],top=g==="none"?"":pf(g);if(top)slots.push(top);
+    const rest=(g==="construct"?["mark"]:Math.random()<0.5?["face","mark"]:["mark","face"]);while(slots.length<2&&rest.length){const v=pf(rest.shift());if(v)slots.push(v)}
+    const tail=Math.random()<0.35?odd():pf("attire");
+    return `${pf("build")}${slots.length?", with "+slots.join(" and "):""}${tail?"; "+tail:""}`}
+  function rollNPC(role){const N=T.npc,anc=pickFresh(N.ancestries,"sanc");return {name:Jobs.genName(),role,ancestry:anc,look:npcLook(anc),
     personality:pickFresh(N.personalities,"spers"),voice:pickFresh(N.voices,"svoice"),want:pickFresh(N.wants,"swant")}}
   function rollStaff(s){const roles=(T.shopTypes[s.type].roles||["Owner"]).slice(),n=between((T.wealth[s.wealth]||{}).staffCount);
     const out=[rollNPC(roles.shift()||"Owner")];for(let i=1;i<n;i++)out.push(rollNPC(roles.length?roles.splice(rnd(roles.length),1)[0]:"Helper"));return out}
@@ -165,5 +174,5 @@ Quirk: ${s.quirk}\nRumor: ${s.rumor}\nHaggling: ${s.haggle}`}
 .shopsheet .sh-foot{text-align:center;font-size:12px;margin-top:8px;color:#6b4d26}.pr-shops{display:grid;gap:24px}.pr-shop{break-inside:avoid;page-break-inside:avoid}`;
   document.head.insertAdjacentHTML("beforeend",`<style>${PRINT_CSS}.board.shops{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}.sh4{margin:6px 0 0;font:600 14px "Cinzel",serif;color:var(--leaf);letter-spacing:.03em}table.ref.stock td:last-child{vertical-align:top}</style>`);
   if(UI.print&&UI.print.shops===undefined)UI.print.shops=true;
-  return {reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,tables:()=>T};
+  return {reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,npcLook,tables:()=>T};
 })();
