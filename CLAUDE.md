@@ -32,6 +32,13 @@ A single-file HTML app ("Guild Hall"), hosted on GitHub Pages from this public r
 - DM View is remembered per browser; Player View from DM View is a preview (`UI.preview`), and only Settings → Lock this browser forgets the password (`lockDM`).
 - `notice.css` is shared by the page and print output (injected as `NOTICE_CSS`).
 
+## Navigation & Home (Nov 2026 cleanup)
+- DM nav is six groups (`GROUPS` in app.js): **Home · Quests (`jobs`) · Guild (`shop` Hall / `members` / `standing`) · NPCs (`npcs` / `council`) · Shops (`market`) · World (`maps` / `worlds`)**; sub-tabs render in `#subNav`. `members`/`npcs`/`council`/`worlds` all show `tab-roster` with `UI.rosterSub` set (the old `#rSub` seg is hidden); code may still set `UI.tab="roster"`+`UI.rosterSub`, `nav()` normalizes it. Print, Settings, Load, sync check, Player preview and Feedback (phone) live in the ⋯ menu. Table Mode is gone: Home replaces it. Player tabs: Quests · Party · Guild (Our Guild / Builder's Ledger sub, `UI.pGuild`) · NPCs · Shops · World.
+- Naming: one word per concept, same in DM and player view. Lock button = "DM Mode"; in-tab view toggles = "Editing / Player preview"; roster filter "Staff".
+- `home.js`: `Home` = pinned page `C.home.items` `[{id,type,ref?,size s/m/l,locked,text,state}]` (schema 8). Pin types npc/job/shop/map (📌 `.pinbtn` injected on cards by a MutationObserver `decorate()`; NPC/member pins mirror `m.pinned`, so the NPC cheat sheet still works). Widgets in `Home.WIDGETS` (generators, dice, notepad, timer, initiative, party, quests, npcs in play, standing, hall, prices, revival). "Clear unlocked pins" keeps `locked` items. Generator results/timers/dice history are device-only. `decorate()` also tucks `p.hint` text behind "?" buttons.
+- `Usage` counts tabs/searches/actions per device in `ygh.usage`, copied into `C.usage[deviceId]` on save; `Feedback` notes go to `C.feedback`. Both shown in Settings → Advanced → Feedback & usage.
+- `Alerts` (core.js): failed saves, GitHub unreachable, stuck picture uploads, and >30 min of unsaved work show a red banner; Minimize hides it until a different problem appears, and the header `#saveState` pill stays red ⚠ until fixed (Saved ✓ / Unsaved / Saving… otherwise).
+
 ## Character import
 Roster → Import character accepts the JSON in the project doc `claude/Guild Hall Import Format.md` (keep `Roster.mapMember` in sync with it), or a sheet's text/PDF sent through Claude.
 

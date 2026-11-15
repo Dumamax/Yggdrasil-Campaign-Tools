@@ -316,7 +316,7 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
 body.mobile .st-btns{margin-left:0;width:100%}body.mobile .st-btns .btn{flex:1;min-height:38px}
 body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-form>label[style]{grid-column:1/-1}body.mobile .st-form select,body.mobile .st-form input{width:100%}
 /* player view */
-body.player #qsBtn,body.player #undoBtn,body.player #tmToggle,body.player #loadCamp,body.player #saveCamp,body.player #aiMode,body.player .banner{display:none!important}
+body.player #qsBtn,body.player #undoBtn,body.player #fbBtn,body.player #saveState,body.player #saveCamp,body.player #aiMode,body.player .banner{display:none!important}
 body.player #dmBtn{color:var(--mute)}
 #syncBtn .lbl{font-size:13px;color:var(--mute)}
 .pv{display:grid;gap:22px;justify-items:center}
@@ -332,14 +332,12 @@ body.mobile #syncBtn .lbl{display:none}
 body.player header .sub{display:none}
 
 /* phone header: keep to one row, extras in ⋯ */
-#hdrMore{display:none}
 body.mobile{overflow-x:clip}
 body.mobile header{min-width:0}
 body.mobile h1{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto}
 body.mobile .hdr-right{flex:none;gap:0}
 body.mobile .hb{width:38px;height:40px}
-body.mobile:not(.player) #tmToggle,body.mobile:not(.player) #loadCamp,body.mobile:not(.player) #syncBtn,body.mobile:not(.player) #dmBtn{display:none}
-body.mobile:not(.player) #hdrMore{display:block}
+body.mobile #fbBtn{display:none}
 body.mobile #hdrMore>summary{font-size:22px;display:flex;align-items:center;justify-content:center;padding:0}
 body.mobile #hdrMore .menu{right:0;min-width:220px}
 body.mobile #hdrMore .menu .btn{min-height:44px;font-size:16px}
@@ -577,6 +575,65 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
 .crop-box i[data-h=sw]{left:-12px;bottom:-12px;cursor:nesw-resize}.crop-box i[data-h=se]{right:-12px;bottom:-12px;cursor:nwse-resize}
 .crop-wrap{overflow:hidden}body.mobile .qs-box.crop-modal{max-height:100vh}body.mobile .crop-wrap img{max-height:58vh}
 
+/* ---- header: save status, menu, alerts ---- */
+body:not(.player) #dmBtn,body.player .dm-m,body:not(.player) .pl-m{display:none!important}
+.state{display:inline-flex;align-items:center;gap:6px;font-size:14px;white-space:nowrap}
+.state .st-dot{width:9px;height:9px;border-radius:50%;background:var(--leaf);flex:none}
+.state.ok{color:var(--leaf)}.state.warn{color:var(--gold);border-color:#6a5328}.state.warn .st-dot{background:var(--gold)}
+.state.busy .st-dot{background:var(--blue);animation:stpulse 1s infinite}.state.busy{color:var(--blue)}
+.state.bad{background:#5a1f17;border-color:var(--red);color:#ffd9cf;font-weight:700}.state.bad .st-dot{display:none}
+@keyframes stpulse{50%{opacity:.3}}
+.banner.err{background:#5a1f17;border-bottom:2px solid var(--red);color:#ffe2da;font-weight:600}
+.banner.err .btn.ghost{color:#ffe2da;border-color:#a8574a}
+body.mobile .state .st-lbl{max-width:74px;overflow:hidden;text-overflow:ellipsis}
+body.mobile .state{width:auto!important;padding:0 8px;font-size:12.5px}
+body.mobile .banner.err{white-space:normal}body.mobile .banner.err span{white-space:normal!important}
+body.mobile #bannerAct{margin-left:auto}
+/* ---- sub-tabs under the main nav ---- */
+.subnav{padding:0 22px 8px}.subnav .seg .btn{padding:4px 14px}
+body.mobile .subnav{padding:6px 12px}body.mobile .subnav .seg{display:flex;width:100%}body.mobile .subnav .seg .btn{flex:1;min-height:36px}
+#rSub{display:none!important}
+/* ---- tucked hints ---- */
+p.hint.tk{display:none}p.hint.tk.tk-open{display:block}
+.hint-q{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--mute);font:700 13px "Crimson Pro",serif;cursor:pointer;padding:0;margin:4px 0;vertical-align:middle}
+.hint-q.on,.hint-q:hover{color:var(--gold);border-color:var(--gold)}
+/* ---- pins on cards ---- */
+.has-pin{position:relative}.has-pin>h3,.has-pin>.card-head{padding-right:34px}
+.pinbtn{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:14px;line-height:1;opacity:.45;filter:grayscale(1);z-index:2;padding:0}
+.pinbtn:hover{opacity:.9}.pinbtn.on{opacity:1;filter:none;border-color:var(--gold);background:#3a2e18}
+body.player .pinbtn{display:none}
+/* ---- Home ---- */
+.home-bar{align-items:center}.home-tip{flex:1;min-width:220px;font-size:14px}
+.home-empty{text-align:center;padding:50px 16px;color:var(--mute)}.home-empty h2{color:var(--gold)}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start;grid-auto-flow:dense}
+.tile{padding:10px 12px;min-width:0;overflow-wrap:anywhere}.tile.size-m{grid-column:span 2}.tile.size-l{grid-column:1/-1}
+@media (max-width:640px){.tile.size-m{grid-column:auto}}
+.tile.locked{border-color:#6a5328}
+.tile-head{display:flex;align-items:center;gap:8px;margin:-2px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.tile-head h3{margin:0;flex:1;min-width:0;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-kind{font:600 11px "Cinzel",serif;letter-spacing:.06em;color:var(--mute);text-transform:uppercase}
+.tile-ctl{display:flex;gap:2px;align-items:center;flex:none}.tile-ctl .btn{padding:2px 7px}.tile-ctl select{font-size:13px;padding:2px}
+.lockbtn{opacity:.55}.lockbtn.on{opacity:1}
+.arranging .tile{cursor:grab;outline:1px dashed var(--line);outline-offset:3px}.tile.dragging{opacity:.4}
+.tile-body .card{margin:0}.tile-stack{display:grid;gap:10px}
+.tile-map{width:100%;border-radius:6px;cursor:zoom-in;display:block}
+.dice-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.dice-out{min-height:28px}.dice-top b{font:700 30px "Cinzel",serif;color:var(--gold)}.dice-out .muted{font-size:14px}
+.timer-face{font:700 44px "Cinzel",serif;color:var(--gold);text-align:center;margin:4px 0 8px}.timer-face.done{color:var(--red)}
+.home-notes{width:100%;min-height:150px;resize:vertical}
+.init-top{display:flex;gap:8px;align-items:center;margin-bottom:6px}.init-top b{flex:1}
+table.init tr.on td{background:#3a2e18;color:var(--gold)}table.init td:last-child{width:30px}
+.name-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.gen-name{margin:6px 0 4px;color:var(--gold)}
+.picker h4{margin:12px 0 6px;color:var(--gold)}.picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.picker-grid .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;padding:8px 10px}.picker-grid .btn span{font-size:13px;font-weight:400}
+.home-picker{max-width:720px;max-height:85vh;overflow:auto}
+body.mobile .home-grid{grid-template-columns:minmax(0,1fr)}body.mobile .tile{grid-column:auto!important}
+/* ---- settings: advanced + feedback ---- */
+details.adv{margin-top:6px}details.adv>summary{cursor:pointer;font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 0}details.adv>summary .muted{font:400 14px "Crimson Pro",serif;margin-left:8px}
+details.usage{margin:6px 0}.usage-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.hint-q.in-h{margin:0 0 0 8px;width:20px;height:20px;font-size:12px}
+body:not(.mobile) .fb-m{display:none!important}
+
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
   radial-gradient(ellipse at 80% 90%,rgba(120,80,30,.25),transparent 60%),
@@ -603,34 +660,37 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
-    <button class="btn ghost hb" id="syncBtn" data-ico="refresh" title="Check for the latest save"><span class="lbl">…</span></button>
+    <button class="btn ghost hb state" id="saveState" title="Save status"><span class="st-dot"></span><span class="st-lbl">Saved</span></button>
     <button class="btn ghost hb" id="qsBtn" data-ico="search" title="Search everything (Ctrl+K)" aria-label="Search"><span class="lbl">Search</span></button>
     <button class="btn ghost hb" id="undoBtn" data-ico="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo" disabled><span class="lbl">Undo</span></button>
-    <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
-    <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
-    <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM View</span></button>
+    <button class="btn ghost hb" id="fbBtn" data-ico="chat" title="Note something confusing or annoying" aria-label="Feedback"><span class="lbl">Feedback</span></button>
+    <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM Mode</span></button>
     <details class="more" id="hdrMore"><summary class="btn ghost hb" title="More" aria-label="More">⋯</summary><div class="menu">
-      <button class="btn small ghost" data-proxy="tmToggle">Table Mode</button><button class="btn small ghost" data-proxy="loadCamp">Load Campaign</button>
-      <button class="btn small ghost" data-proxy="syncBtn">Check for a newer save</button><button class="btn small ghost" data-proxy="dmBtn">Player View</button><div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
+      <button class="btn small ghost dm-m" data-go="print">Print handouts</button><button class="btn small ghost dm-m" data-go="settings">Settings</button>
+      <button class="btn small ghost dm-m" data-act="load">Load a campaign file</button><button class="btn small ghost" data-act="sync">Check for a newer save</button>
+      <button class="btn small ghost dm-m fb-m" data-act="feedback">Feedback: note something confusing</button><button class="btn small ghost dm-m" data-act="preview">Preview Player View</button><button class="btn small ghost pl-m" data-act="dm">DM Mode 🔒</button>
+      <div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
     <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 </header>
-<div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
+<div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerAct">Try again</button><button class="btn small ghost" id="bannerMin" title="Hide this until something new goes wrong; the red ⚠ in the header stays until it's fixed">Minimize</button></div>
 <nav id="mainNav">
-  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
-  <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
-  <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
-  <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
-  <button data-tab="market" data-ico="store"><span class="lbl">Shop Generator</span><span class="slbl">Shops</span></button>
-  <button data-tab="table" data-ico="dice"><span class="lbl">At the Table</span><span class="slbl">Table</span></button>
-  <button data-tab="maps" data-ico="map"><span class="lbl">Maps</span><span class="slbl">Maps</span></button><button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
-  <button data-tab="settings" data-ico="gear"><span class="lbl">Settings &amp; Tables</span><span class="slbl">Settings</span></button>
+  <button data-tab="home" data-ico="home"><span class="lbl">Home</span><span class="slbl">Home</span></button>
+  <button data-tab="jobs" data-ico="jobs"><span class="lbl">Quests</span><span class="slbl">Quests</span></button>
+  <button data-tab="guild" data-ico="shield"><span class="lbl">Guild</span><span class="slbl">Guild</span></button>
+  <button data-tab="npcs" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button>
+  <button data-tab="market" data-ico="store"><span class="lbl">Shops</span><span class="slbl">Shops</span></button>
+  <button data-tab="world" data-ico="map"><span class="lbl">World</span><span class="slbl">World</span></button>
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quests</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Shops</span><span class="slbl">Shops</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">World</span><span class="slbl">World</span></button>
 </nav>
+<div class="subnav" id="subNav" hidden></div>
 </div>
 <main>
   <section id="tab-p" hidden></section>
-  <section id="tab-jobs">
+  <section id="tab-home" hidden><div id="homeView"></div></section>
+  <section id="tab-standing" hidden><div class="standing-host"></div><div id="standingView"></div></section>
+  <section id="tab-jobs" hidden>
     <div class="standing-host"></div>
     <div class="controls">
       <label>Guild tier <select id="tierSel"></select></label>
@@ -638,11 +698,11 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
       <label>Party size <input id="ps" type="number" min="1" max="8"></label>
       <button class="btn primary" id="rollBtn">Roll the Board</button>
       <button class="btn ghost" id="jobsAll" title="Show or hide details on every card">Open all</button>
-      <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">DM view</button><button class="btn" id="vNotice">Notice view</button></div>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">Editing</button><button class="btn" id="vNotice">Player preview</button></div>
     </div>
     <div id="jobBoard" class="board"></div>
     <p class="hint" id="jobAI"></p>
-    <p class="hint">Keep the hooks you like; mark them Final to send their Quest Notices to Print and to the At the Table view. "Paid → treasury" adds the guild fee.</p>
+    <p class="hint">Keep the hooks you like; mark them Final to send their Quest Notices to Print; pin the ones you need at the table to Home with 📌. "Paid → treasury" adds the guild fee.</p>
   </section>
 
   <section id="tab-shop" hidden>
@@ -650,7 +710,7 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
     <div class="controls">
       <label>Treasury (gp) <input id="treasury" type="number" min="0" placeholder="—"></label>
       <button class="btn primary dmonly" id="rollOffers">Roll Peddlers</button>
-      <div class="seg" style="margin-left:auto"><button class="btn" id="vDMs">DM view</button><button class="btn" id="vShop">Shop view</button></div>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDMs">Editing</button><button class="btn" id="vShop">Player preview</button></div>
     </div>
     <div class="seg cats" id="cats"><button class="btn" data-c="All">All</button><button class="btn" data-c="Facilities">Facilities</button><button class="btn" data-c="Services">Services</button><button class="btn" data-c="Staff">Staff</button><button class="btn" data-c="Offers">Peddlers</button></div>
     <div id="shop"></div>
@@ -661,7 +721,7 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
       <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button><button class="btn" data-sub="council">Council</button><button class="btn" data-sub="worlds">Worlds</button></div>
       <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
-      <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
+      <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">Staff</button></div>
       <button class="btn" id="importPC">Import character</button>
       <button class="btn" id="copyRoster">Copy roster</button></span>
     </div>
@@ -673,10 +733,6 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
   </section>
 
   <section id="tab-market" hidden></section>
-
-  <section id="tab-table" hidden>
-    <div id="tableView" class="tm-grid"></div>
-  </section>
 
   <section id="tab-print" hidden>
     <div class="controls print-opts">
@@ -722,22 +778,27 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
       </div>
       <div class="panel">
-        <h2>GitHub saves</h2>
-        <div id="syncSettings"></div>
-      </div>
-      <div class="panel">
         <h2>DM password</h2>
-        <p class="hint">Keeps players from wandering into DM View. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
+        <p class="hint">Keeps players from wandering into DM Mode. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
         <form class="actions" id="pwForm"><input type="password" name="pw" placeholder="New password" required><input type="password" name="pw2" placeholder="Repeat" required><button class="btn">Change password</button><button type="button" class="btn ghost" id="lockNow">Lock this browser</button></form>
-      </div>
-      <div class="panel">
-        <h2>Guild standing</h2>
-        <div id="cpSettings"></div>
       </div>
       <div class="panel">
         <h2>Display</h2>
         <div class="actions"><span class="muted">Layout</span><div class="seg" id="layoutSeg"><button class="btn" data-l="auto">Auto</button><button class="btn" data-l="phone">Phone</button><button class="btn" data-l="desktop">Desktop</button></div><span class="muted" id="layoutNow"></span></div>
         <p class="hint">Auto uses the phone layout on narrow screens (under 760 px wide). This choice is saved in this browser only.</p>
+      </div>
+      <details class="adv"><summary>Advanced settings <span class="muted">GitHub, Claude, standing rules, economy, tables, feedback</span></summary><div class="settings">
+      <div class="panel">
+        <h2>Feedback &amp; usage</h2>
+        <div id="fbSettings"></div>
+      </div>
+      <div class="panel">
+        <h2>GitHub saves</h2>
+        <div id="syncSettings"></div>
+      </div>
+      <div class="panel">
+        <h2>Guild standing</h2>
+        <div id="cpSettings"></div>
       </div>
       <div class="panel">
         <h2>Claude</h2>
@@ -771,6 +832,7 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
         <p class="hint">Open a section to edit it; changes apply when you click Save tables. Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
       </div>
+      </div></details>
     </div>
   </section>
 </main>
@@ -779,7 +841,7 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
 <div class="toast" id="toast"></div>
 <script>
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=7;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=8;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -825,7 +887,7 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
   tables:{jobs:null,upgrades:null,prices:null,shops:null,npcs:null},jobs:[],shops:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[],cp:{pts:0,log:[]}},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
-  expanded:{},recent:{}}}
+  expanded:{},recent:{},home:{items:[]},feedback:[],usage:{}}}
 /* v3: "The Trunk" was renamed "The Roots" */
 function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
@@ -834,7 +896,9 @@ function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assi
   /* v5: guild standing (points toward the next rank) */
   o.guild.cp=Object.assign({pts:0,log:[]},o.guild.cp||{});const sc=o.settings.cp||{};o.settings.cp=Object.assign(clone(DEFAULT_CP),sc,{stepJobs:Object.assign(clone(DEFAULT_CP.stepJobs),sc.stepJobs||{}),deeds:Object.assign(clone(DEFAULT_CP.deeds),sc.deeds||{})});
   {const s=o.settings.cp.stepJobs;if(s.Iron===4&&s.Bronze===5&&s.Silver===6&&s.Gold===7&&s.Platinum===8)o.settings.cp.stepJobs=clone(DEFAULT_CP.stepJobs)} /* old v1 pacing → new default */
-  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
+  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};
+  /* v8: pinned Home page, DM feedback notes, per-device usage counts */
+  o.home=Object.assign({items:[]},o.home||{});o.feedback=o.feedback||[];o.usage=o.usage||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
 let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
@@ -845,7 +909,7 @@ const UNDO=[],BIGS=new Map(),BIGL=[];
 const snap=()=>JSON.stringify(C,(k,v)=>{if(typeof v!=="string"||v.length<20000)return v;let i=BIGS.get(v);if(i==null){i=BIGL.length;BIGL.push(v);BIGS.set(v,i)}return "\u0000big:"+i});
 const unsnap=s=>JSON.parse(s,(k,v)=>typeof v==="string"&&v.startsWith("\u0000big:")?BIGL[+v.slice(5)]:v);
 let lastSnap=snap();
-function commit(){if(typeof Sync!=="undefined")Sync.imagesSoon();if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function commit(){if(typeof Sync!=="undefined")Sync.imagesSoon();if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();if(!dirty)lsSet("ygh.dirtyAt",Date.now());dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
 function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
 function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(unsnap(s));S=C.settings;lastSnap=s;persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
 function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;persist();UNDO.length=0;BIGS.clear();BIGL.length=0;lastSnap=snap();undoBtn();App.reloadAll()}
@@ -892,21 +956,21 @@ async function linkHandle(h){fileHandle=h;try{await IDB.set("fileHandle",h)}catc
 async function unlinkFile(){fileHandle=null;try{await IDB.del("fileHandle")}catch(e){}banner();App.render();toast("Unlinked: Save will ask where to save next time")}
 async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"}))!=="granted"&&(await h.requestPermission({mode:"readwrite"}))!=="granted")throw new Error("permission");
   const w=await h.createWritable();await w.write(text);await w.close()}
-function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);persist();banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
+function markSaved(msg){Alerts.clear("save");Alerts.clear("stale");dirty=false;lsSet("ygh.dirty",false);persist();banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
 /* show that a save is in progress (GitHub saves can take a while) and ignore repeat presses meanwhile */
 let saving=false;
-function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…")}
+function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…");banner()}
 async function saveCampaign(asNew){
   if(!isDM())return;
   if(saving){toast("Still saving…");return}
-  C.savedAt=new Date().toISOString();
-  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
+  C.savedAt=new Date().toISOString();if(typeof Usage!=="undefined")Usage.merge();
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");Alerts.set("save",`Couldn't save to GitHub: ${e.message}. Your changes are safe in this browser; try again in a moment.`);if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
   const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
     catch(e){toast(`Couldn't write ${fileHandle.name}; choose where to save`)}
     try{const h=await showSaveFilePicker({suggestedName:"yggdrasil-campaign.json",types:FILE_TYPES});await writeHandle(h,text);await linkHandle(h);markSaved(`Saved to ${h.name}. Ctrl+S updates this file from now on`)}
-    catch(e){if(e.name!=="AbortError")toast("Save failed: "+e.message)}
+    catch(e){if(e.name!=="AbortError"){toast("Save failed: "+e.message);Alerts.set("save","Couldn't save the campaign file: "+e.message)}}
     return}
   const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,text);
   if(ok)markSaved("Campaign saved to file");
@@ -935,10 +999,28 @@ function importData(d){
     commit();App.reloadAll();toast("Imported Upgrade Chart data");return}
   toast("Didn't recognize that file");
 }
+/* ---- problems the DM must notice (failed saves, GitHub unreachable, long-unsaved work).
+   Shown as a red banner; Minimize hides it until a *different* problem appears, and the header keeps a red ⚠ until it's fixed. ---- */
+const Alerts=(()=>{const L={};let min=new Set(lsGet("ygh.alertMin",[]));
+  const keyOf=(k,m)=>k+"|"+m.replace(/\d+/g,"#");
+  function set(k,msg,act){if(L[k]&&L[k].msg===msg)return;L[k]={msg,act,t:Date.now()};banner()}
+  function clear(k){if(!L[k])return;delete L[k];banner()}
+  function top(){return Object.entries(L).sort((a,b)=>b[1].t-a[1].t)[0]}
+  function minimize(){Object.entries(L).forEach(([k,v])=>min.add(keyOf(k,v.msg)));lsSet("ygh.alertMin",[...min].slice(-30));banner()}
+  function expand(){min=new Set();lsSet("ygh.alertMin",[]);banner()}
+  const open=()=>Object.entries(L).filter(([k,v])=>!min.has(keyOf(k,v.msg)));
+  return {set,clear,top,minimize,expand,open,any:()=>!!top()}})();
+setInterval(()=>{if(!isDM())return;const at=lsGet("ygh.dirtyAt",0);if(dirty&&at&&Date.now()-at>30*60e3)Alerts.set("stale",`You have changes from over ${Math.floor((Date.now()-at)/60e3/10)*10} minutes ago that aren't saved yet.`,"save");else Alerts.clear("stale")},60e3);
 function banner(){
-  const b=$("#banner");if(!b)return;
-  b.classList.toggle("show",dirty);
-  $("#bannerText").textContent=Sync.canPush()?"Unsaved changes. Ctrl+S saves them to GitHub so everyone gets them.":fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  const b=$("#banner");if(!b)return;const dm=typeof isDM==="function"&&isDM();
+  const o=dm?Alerts.open():[],t=dm&&Alerts.top();
+  b.classList.toggle("show",!!o.length);b.classList.add("err");
+  if(o.length){const [k,v]=o.sort((x,y)=>y[1].t-x[1].t)[0];$("#bannerText").textContent="⚠ "+v.msg+(o.length>1?` (+${o.length-1} more)`:"");
+    const a=$("#bannerAct");a.textContent=v.act==="sync"?"Check again":"Save now";a.dataset.act=v.act||"save"}
+  const st=$("#saveState");if(st){const off=typeof Sync!=="undefined"&&/Offline|Can't reach/.test(Sync.status()||"");
+    const [cls,lbl,tip]=!dm?["","",""]:t?["bad","⚠ "+(t[0]==="stale"?"Not saved":t[0]==="sync"?(off?"Offline":"GitHub"):t[0]==="img"?"Pictures":"Not saved"),t[1].msg+" (click for details)"]:
+      saving?["busy","Saving…","Saving now"]:dirty?["warn","Unsaved","You have changes that aren't saved yet. Ctrl+S saves them."]:["ok","Saved ✓",C.savedAt?`Last saved ${new Date(C.savedAt).toLocaleString()}`:"Saved"];
+    st.className="btn ghost hb state "+cls;st.querySelector(".st-lbl").textContent=lbl;st.title=tip;st.hidden=!dm}
   const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
 document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false}));
@@ -1004,12 +1086,12 @@ async function printHTML(title,body,css){
   setTimeout(()=>{window.print();setTimeout(done,1500)},150);
 }
 
-/* ===== Player View / DM View + GitHub sync =====
-   Player View (default): read-only handouts, no editing, no secrets on screen. DM View: unlocked per browser with the DM password
+/* ===== Player View / DM Mode + GitHub sync =====
+   Player View (default): read-only handouts, no editing, no secrets on screen. DM Mode: unlocked per browser with the DM password
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 14 22:02";
+const BUILD="Nov 15 00:12";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -1028,8 +1110,8 @@ async function hashPw(pw){const s="ygh-dm:"+pw;
   catch(e){let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return "d"+h.toString(16)}}
 const unlocked=()=>!!S.dmHash&&lsGet("ygh.dm",null)===S.dmHash;
 const isDM=()=>unlocked()&&!UI.preview;
-/* Player View from DM View is just a preview: this browser stays unlocked, so DM View comes back without the password */
-function previewPlayer(){UI.preview=true;UI.tab="p-board";saveUI();App.render();toast("Player View (DM View is one tap away)")}
+/* Player View from DM Mode is just a preview: this browser stays unlocked, so DM Mode comes back without the password */
+function previewPlayer(){UI.preview=true;UI.tab="p-board";saveUI();App.render();toast("Player View (DM Mode is one tap away)")}
 function backToDM(){UI.preview=false;UI.tab="jobs";saveUI();App.render()}
 function lockDM(){lsSet("ygh.dm",null);UI.preview=false;UI.tab="p-board";saveUI();App.render();toast("Locked: this browser will ask for the password again")}
 
@@ -1042,15 +1124,15 @@ function ask(title,msg,buttons){return new Promise(res=>{const m=modal(`<h2>${es
 
 function dmGate(){
   const first=!S.dmHash;
-  const m=modal(`<h2>${first?"Set a DM password":"DM View"}</h2>
-    <p class="muted">${first?"DM View shows secrets and lets you edit everything. Pick a password to keep players from wandering in; this browser stays unlocked until you lock it.":"Enter the DM password. This browser stays unlocked until you switch back to Player View."}</p>
+  const m=modal(`<h2>${first?"Set a DM password":"DM Mode"}</h2>
+    <p class="muted">${first?"DM Mode shows secrets and lets you edit everything. Pick a password to keep players from wandering in; this browser stays unlocked until you lock it.":"Enter the DM password. This browser stays unlocked until you switch back to Player View."}</p>
     <form><input type="password" name="pw" placeholder="Password" autocomplete="current-password" required>${first?'<input type="password" name="pw2" placeholder="Repeat password" required>':""}
     <div class="actions"><button class="btn primary">${first?"Set password & unlock":"Unlock"}</button><button type="button" class="btn ghost" data-x>Cancel</button></div><p class="muted" id="gateMsg"></p></form>`);
   m.el.querySelector("[data-x]").onclick=m.close;
   m.el.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),pw=f.get("pw");
     if(first){if(pw!==f.get("pw2")){$("#gateMsg").textContent="Passwords don't match.";return}S.dmHash=await hashPw(pw);commit()}
     else if(await hashPw(pw)!==S.dmHash){$("#gateMsg").textContent="That's not it.";e.target.pw.select();return}
-    lsSet("ygh.dm",S.dmHash);m.close();UI.preview=false;UI.tab="jobs";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM View unlocked")}}
+    lsSet("ygh.dm",S.dmHash);m.close();UI.preview=false;UI.tab="home";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM Mode unlocked")}}
 
 const Sync=(()=>{
   const cfg=()=>Object.assign({},SYNC_DEF,lsGet("ygh.sync",{}));
@@ -1061,7 +1143,11 @@ const Sync=(()=>{
   const enc=s=>{const b=new TextEncoder().encode(s);let o="";for(let i=0;i<b.length;i+=0x8000)o+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(o)};
   const dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
   const canPush=()=>isDM()&&!!token();
-  function setStatus(s){if(s==="Up to date"&&C.savedAt)s+=` · save from ${whenStr(C.savedAt)}`;status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
+  function setStatus(s){if(s==="Up to date"&&C.savedAt)s+=` · save from ${whenStr(C.savedAt)}`;status=s;const h=$("#hdrSync");if(h)h.textContent=s;
+    if(/^(Offline|Can't reach GitHub)/.test(s))Alerts.set("sync",(s.startsWith("Offline")?"You're offline":"Can't reach GitHub")+". Changes stay safe in this browser and save once the connection is back.","sync");
+    else if(/^Picture upload paused/.test(s))Alerts.set("img","Pictures haven't finished uploading to GitHub (retrying every minute). Keep the app open until this clears.","sync");
+    else if(/^(Up to date|Saved to GitHub|Unsaved changes|Your copy differs)/.test(s))Alerts.clear("sync");
+    banner()}
   async function fetchRemote(skipIfSha){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
     if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403||r.status===429?"GitHub is busy (too many checks from this network); retrying shortly":"GitHub error "+r.status);
     const j=await r.json();if(skipIfSha&&j.sha===skipIfSha)return {sha:j.sha,same:true};let text;
@@ -1164,7 +1250,7 @@ const Sync=(()=>{
         const tree=await uploadFiles(files,(k,N)=>`Uploading picture ${i} of ${list.length}${N>1?` (${Math.round(100*(k-1)/N)}%)`:""}…`);
         setStatus(`Uploading picture ${i} of ${list.length}…`);await commitFiles(tree,`Add picture ${n.split(".")[0].slice(0,8)}`);
         files.forEach(f=>have.add(f[0]));const s=lsGet("ygh.blobs",{});files.forEach(f=>delete s[f[0]]);lsSet("ygh.blobs",s)}
-      setStatus(keep&&!/^Uploading picture/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
+      Alerts.clear("img");setStatus(keep&&!/^(Uploading picture|Picture upload)/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
       .catch(e=>{setStatus("Picture upload paused (retrying)");clearTimeout(imgT);imgT=setTimeout(syncImages,60e3)})
       .finally(()=>{imgJob=null});
     return imgJob}
@@ -6020,7 +6106,7 @@ const Standing=(()=>{
     <label style="flex:1;min-width:200px">What happened <input name="label" placeholder="e.g. Rebuilt the Lantern Market after the fire" required></label>
     <span class="st-btns"><button class="btn primary small">Add</button><button type="button" class="btn small ghost" data-st="cancel">Cancel</button></span></form>`}
   function logHTML(){const L=G().log;
-    return `<div class="st-log">${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td><span class="badge${e.kind==="Promotion"?" leaf":e.kind==="Demotion"?" red":""}">${esc(e.kind)}</span> ${esc(e.label)}<br><span class="muted" style="font-size:13px">${new Date(e.t).toLocaleDateString()} · at ${rankName(e.rank)}</span></td><td>${e.pts?`${e.pts>0?"+":""}${fmt(e.pts)}`:""} <button class="btn small ghost danger" data-st="del" data-id="${e.id}" title="Remove this entry (its points too)">✕</button></td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Complete jobs on the Job Board or log a deed.</p>'}
+    return `<div class="st-log">${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td><span class="badge${e.kind==="Promotion"?" leaf":e.kind==="Demotion"?" red":""}">${esc(e.kind)}</span> ${esc(e.label)}<br><span class="muted" style="font-size:13px">${new Date(e.t).toLocaleDateString()} · at ${rankName(e.rank)}</span></td><td>${e.pts?`${e.pts>0?"+":""}${fmt(e.pts)}`:""} <button class="btn small ghost danger" data-st="del" data-id="${e.id}" title="Remove this entry (its points too)">✕</button></td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Complete jobs on the Quests tab or log a deed.</p>'}
       <div class="actions" style="margin-top:6px"><button class="btn small ghost" data-st="adjust">± Adjust ${U()}</button>${S.tierRank>0?'<button class="btn small ghost danger" data-st="demote">Lower guild rank</button>':""}</div></div>`}
   function onClick(e){const a=e.target.closest("[data-st]")?.dataset.st;
     if(e.target.name==="size"||e.target.closest?.(".st-form")&&!a){return}
@@ -6483,7 +6569,7 @@ const PCs=(()=>{
         <section><h3>Other</h3>${[["Movement",moves(m)&&p.speed],["Senses",p.senses],["Resistances",p.resist],["Languages",p.langs],["Tools",tl.join(", ")],["In the guild",[m.status,m.assign&&("operating "+Roster.assignName(m))].filter(Boolean).join(" · ")]].filter(x=>x[1]).map(([k,v])=>`<div class="row"><b>${k}:</b> ${esc(v)}</div>`).join("")||'<p class="muted">Nothing else recorded.</p>'}</section>
       </div></div></div>`}
   function tableSection(){const d=document.createElement("section");d.className="pc-section";const L=list();
-    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:!isDM()?'<p class="muted">The party hasn\'t been entered yet.</p>':'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
+    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:!isDM()?'<p class="muted">The party hasn\'t been entered yet.</p>':'<p class="muted">Add the party in Guild → Members (type Active PC) and fill in their play stats.</p>'}`;
     d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(m)openBig(m)};
     return d}
   /* full card, with in-place editing of play stats (and level) during play */
@@ -6775,7 +6861,7 @@ Use official names for standard gear and magic items, add a few invented local g
     </div>
     <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
     <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
-      <button class="btn small" id="mClear">Clear unkept</button><span class="hint" style="margin:0">${AI.mode()==="none"?"No Claude connection: shops come from the tables; custom ideas give you a prompt to copy into Claude.":"Claude write-ups use "+(AI.mode()==="claude"?"Claude directly.":"your API key.")} Quick buttons generate instantly. Kept shops go to Print and At the Table.</span></div>
+      <button class="btn small" id="mClear">Clear unkept</button><span class="hint" style="margin:0">${AI.mode()==="none"?"No Claude connection: shops come from the tables; custom ideas give you a prompt to copy into Claude.":"Claude write-ups use "+(AI.mode()==="claude"?"Claude directly.":"your API key.")} Quick buttons generate instantly. Kept shops go to Print; pin one to Home with 📌.</span></div>
     <div id="mShops" class="board shops"></div>`;
     const box=$("#mShops");
     if(!C.shops.length)box.innerHTML='<p class="muted">Pick a shop type (or describe your own) and generate.</p>';
@@ -6849,7 +6935,7 @@ Quirk: ${s.quirk}\nRumor: ${s.rumor}\nHaggling: ${s.haggle}`}
 .shopsheet .sh-foot{text-align:center;font-size:12px;margin-top:8px;color:#6b4d26}.pr-shops{display:grid;gap:24px}.pr-shop{break-inside:avoid;page-break-inside:avoid}`;
   document.head.insertAdjacentHTML("beforeend",`<style>${PRINT_CSS}.board.shops{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}.sh4{margin:6px 0 0;font:600 14px "Cinzel",serif;color:var(--leaf);letter-spacing:.03em}table.ref.stock td:last-child{vertical-align:top}</style>`);
   if(UI.print&&UI.print.shops===undefined)UI.print.shops=true;
-  return {reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,npcLook,tables:()=>T};
+  return {newShop,reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,npcLook,tables:()=>T};
 })();
 
 /* NPC & Council default tables. Looks, voices and mannerisms come from the Shop Generator's "Shopkeeper parts". */
@@ -7094,7 +7180,7 @@ Return ONLY JSON:
       ${(sb.attacks||[]).length?`<br><b>Attacks:</b> ${sb.attacks.map(esc).join("; ")}`:""}${(sb.traits||[]).length?`<br><b>Traits:</b> ${sb.traits.map(esc).join("; ")}`:""}
       ${sb.tactics?`<br><i>${esc(sb.tactics)}</i>`:""}${sb.adjust?`<br>${esc(sb.adjust)}`:""}${sb.reskin?`<br><span class="muted">${esc(sb.reskin)}</span>`:""}${sb.note?`<br><span class="muted">${esc(sb.note)}</span>`:""}</div>`:""}`}
   function badges(m){return `<div class="badges">${m.seat?`<span class="badge gold">${esc(m.seat)} Seat</span>`:""}${m.occupation?`<span class="badge">${esc(m.occupation)}${m.title?`: ${esc(m.title)}`:""}</span>`:""}${m.connection?`<span class="badge">${esc(m.connection)}</span>`:""}
-    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 Pinned</span>':""}${m.shown?'<span class="badge">👁 Players can see</span>':""}</div>`}
+    <span class="badge">${esc(m.archetype||"Noncombatant")}${m.level?` · Lvl ${esc(m.level)}`:""}</span>${m.label?`<span class="badge"><i>${esc(m.label)}</i></span>`:""}<span class="badge ${attCls(m.attitude)}">${esc(m.attitude||"Neutral")}</span>${m.rival?'<span class="badge t-hostile">Rival</span>':""}${m.pinned?'<span class="badge gold">📌 On Home</span>':""}${m.shown?'<span class="badge">👁 Players can see</span>':""}</div>`}
   /* full view (click a card): one image + profile. Players get only the public side. */
   function sub(m){return [m.title&&cap(m.title),m.guild,m.ancestry].filter(Boolean).map(esc).join(" · ")}
   function bigHTML(m,dm){return `<div class="pc-big npc-big${m.img?" has-body":""}">${m.img?`<img class="pc-bodyimg" src="${esc(m.img)}" alt="" data-zoom title="Zoom">`:""}<div><div class="pc-tools">${dm?'<button class="btn small" data-edit>✎ Edit</button>':""}<button class="btn ghost" data-close aria-label="Close">✕</button></div>
@@ -7114,7 +7200,7 @@ Return ONLY JSON:
       ${(m.skills||[]).length?`<div class="chips">${m.skills.map(s=>`<span class="chip">${esc(s.s)} · <b>${Roster.gradeOf(m,s)}</b></span>`).join("")}${m.role?` <span class="muted" style="font-size:14px">suits: ${esc(m.role)}</span>`:""}</div>`:""}
       ${m.notes?`<div class="row muted">${esc(m.notes)}</div>`:""}
       <div class="actions">${candidate?`<button class="btn small primary" data-a="keep">Save NPC</button><button class="btn small" data-a="reroll">Reroll</button>`:
-      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="view">Full view</button><button class="btn small" data-a="shown">${m.shown?"Hide from players":"👁 Show players"}</button><button class="btn small" data-a="pin">${m.pinned?"Unpin":"📌 Pin"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
+      `<button class="btn small" data-a="edit">Edit</button>${attSel(m)}<button class="btn small" data-a="view">Full view</button><button class="btn small" data-a="shown">${m.shown?"Hide from players":"👁 Show players"}</button><button class="btn small" data-a="pin">${m.pinned?"📌 Unpin from Home":"📌 Pin to Home"}</button><button class="btn small" data-a="rival">${m.rival?"Not a rival":"Mark rival"}</button>
       <button class="btn small primary" data-a="write">${m.x?.ai?"Rewrite":"Write up"}</button><button class="btn small" data-a="sb">${m.sb?"Re-roll stat block":"Roll stat block"}</button><button class="btn small" data-a="join">Add to Guild</button><button class="btn small danger" data-a="del">Delete</button>`}</div>`;
     if(!candidate){const acts=d.querySelector(".actions");if(m.x&&m.x.prompt)acts.appendChild(aiButtons(m.x,r=>{merge(m,r);commit();App.render()}));
       if(m.sb&&m.sb.prompt){const w=aiButtons(m.sb,r=>{m.sb=r;commit();App.render()});w.querySelectorAll("button").forEach(b=>b.textContent=b.textContent.replace("Claude prompt","stat block prompt").replace("Paste result","Paste stat block"));acts.appendChild(w)}}
@@ -7545,21 +7631,252 @@ const TableEditor=(()=>{
   return {render};
 })();
 
+/* ================= HOME: the DM's pinned page (pins + widgets), feedback notes, usage counts =================
+   C.home.items = [{id,type,ref?,size:"s"|"m"|"l",locked?,text?,state?}]. Pinned NPCs/members mirror m.pinned (one source of truth
+   for the NPC cheat sheet too). Widgets are types without a ref. Generator results and timers live only on this device. */
+const Home=(()=>{
+  const PIN_TYPES={npc:"Person",job:"Quest",shop:"Shop",map:"Map"};
+  const WIDGETS={
+    "gen-npc":{g:"Generators",n:"NPC generator",d:"Roll a full NPC; save or pin the keepers",size:"m"},
+    "gen-name":{g:"Generators",n:"Name generator",d:"Six fresh names; tap one to copy it",size:"s"},
+    "gen-shop":{g:"Generators",n:"Shop generator",d:"Roll a shop with staff and stock",size:"m"},
+    dice:{g:"Tools",n:"Dice roller",d:"Any dice, advantage and disadvantage",size:"s"},
+    notes:{g:"Tools",n:"Notepad",d:"Quick notes that save with the campaign",size:"m"},
+    timer:{g:"Tools",n:"Timer",d:"Countdown with a chime",size:"s"},
+    init:{g:"Tools",n:"Initiative tracker",d:"Turn order and rounds",size:"s"},
+    party:{g:"Guild & party",n:"Party",d:"The PCs' play stat cards",size:"l"},
+    quests:{g:"Guild & party",n:"Quests in play",d:"Every kept or final quest",size:"m"},
+    npcsplay:{g:"Guild & party",n:"NPCs in play",d:"Quest patrons, the Iron Seat, pinned people",size:"m"},
+    standing:{g:"Guild & party",n:"Guild standing",d:"Rank progress and points",size:"m"},
+    hall:{g:"Guild & party",n:"The guild hall",d:"Treasury and owned upgrades",size:"m"},
+    prices:{g:"Reference",n:"Price reference",d:"What things cost",size:"m"},
+    revival:{g:"Reference",n:"Revival fee",d:"The Root Chapel's price by level",size:"s"}};
+  const H=()=>C.home,items=()=>H().items;
+  const gen={},timers={},rolls={};let arrange=false,dragId=null;
+  const byRef=(type,ref)=>items().find(i=>i.type===type&&i.ref===ref);
+  const isPinned=(type,ref)=>type==="npc"?!!C.roster.find(m=>m.id===ref)?.pinned:!!byRef(type,ref);
+  function add(type,ref,extra){const it=Object.assign({id:uid(),type,size:ref?(type==="map"?"m":type==="job"?"m":"m"):(WIDGETS[type]?.size||"m")},ref?{ref}:{},extra||{});items().push(it);return it}
+  function toggle(type,ref){
+    if(type==="npc"){const m=C.roster.find(x=>x.id===ref);if(!m)return false;m.pinned=!m.pinned;sync();commit();return m.pinned}
+    const it=byRef(type,ref);if(it)items().splice(items().indexOf(it),1);else add(type,ref);commit();return !it}
+  /* keep pinned people and pins of deleted things in step (no commit: called on render) */
+  function sync(){const L=items();
+    C.roster.filter(m=>m.pinned&&!byRef("npc",m.id)).forEach(m=>add("npc",m.id));
+    for(let i=L.length-1;i>=0;i--){const it=L[i];if(!it.ref)continue;
+      const gone=it.type==="npc"?!C.roster.find(m=>m.id===it.ref&&m.pinned):it.type==="job"?!C.jobs.find(h=>h.id===it.ref):it.type==="shop"?!C.shops.find(s=>s.id===it.ref):it.type==="map"?!C.maps.find(m=>m.id===it.ref):true;
+      if(gone)L.splice(i,1)}}
+
+  /* ---------- render ---------- */
+  function render(){const el=$("#homeView");if(!el)return;sync();
+    const L=items();
+    el.innerHTML=`<div class="controls home-bar"><button class="btn primary" data-h="add">＋ Add widget</button>
+      <button class="btn${arrange?" on":""}" data-h="arrange" title="Move and resize what's on Home">${arrange?"Done arranging":"Arrange"}</button>
+      <button class="btn ghost" data-h="clear" title="Remove everything that isn't locked 🔒">Clear unlocked pins</button>
+      <span class="muted home-tip">Pin things here with 📌 on any card. Lock 🔒 what should stay between sessions.</span></div>
+      ${L.length?`<div class="home-grid${arrange?" arranging":""}"></div>`:`<div class="home-empty"><h2>Your table, your way</h2><p>Pin the NPCs, quest, map and shops you'll need with 📌 on their cards, then add tools like dice or a notepad with <b>＋ Add widget</b>.</p></div>`}`;
+    const g=el.querySelector(".home-grid");if(g)L.forEach(it=>{try{g.appendChild(tile(it))}catch(e){console.error(e)}});
+    el.onclick=onClick;el.oninput=onInput;el.onchange=onChange;
+    if(g){g.ondragstart=e=>{const t=e.target.closest(".tile");if(!t||!arrange)return;dragId=t.dataset.id;t.classList.add("dragging")};
+      g.ondragover=e=>{if(dragId)e.preventDefault()};
+      g.ondrop=e=>{e.preventDefault();const t=e.target.closest(".tile");if(!t||!dragId||t.dataset.id===dragId){dragId=null;return}
+        const a=L.findIndex(i=>i.id===dragId),it=L.splice(a,1)[0];L.splice(L.findIndex(i=>i.id===t.dataset.id),0,it);dragId=null;commit();render()};
+      g.ondragend=()=>{dragId=null}}}
+  function title(it){if(!it.ref)return WIDGETS[it.type]?.n||it.type;
+    if(it.type==="npc")return C.roster.find(m=>m.id===it.ref)?.name||"Person";
+    if(it.type==="job"){const h=C.jobs.find(x=>x.id===it.ref);return h?Jobs.hookTitle(h):"Quest"}
+    if(it.type==="shop")return C.shops.find(s=>s.id===it.ref)?.name||"Shop";
+    if(it.type==="map")return C.maps.find(m=>m.id===it.ref)?.name||"Map";return ""}
+  function tile(it){const d=document.createElement("div");d.className=`panel tile size-${it.size||"m"}${it.locked?" locked":""}`;d.dataset.id=it.id;if(arrange)d.draggable=true;
+    const kind=it.ref?PIN_TYPES[it.type]:WIDGETS[it.type]?.g.replace(/s$/,"")||"";
+    d.innerHTML=`<div class="tile-head"><span class="tile-kind">${esc(kind)}</span><h3>${esc(title(it))}</h3><span class="tile-ctl">
+      ${arrange?`<button class="btn small ghost" data-t="left" title="Move earlier">◀</button><button class="btn small ghost" data-t="right" title="Move later">▶</button>
+      <select data-t="size" title="Size">${[["s","Small"],["m","Medium"],["l","Wide"]].map(([k,l])=>`<option value="${k}"${(it.size||"m")===k?" selected":""}>${l}</option>`).join("")}</select>`:""}
+      ${it.ref?`<button class="btn small ghost" data-t="open" title="Open where it lives">↗</button>`:""}
+      <button class="btn small ghost lockbtn${it.locked?" on":""}" data-t="lock" title="${it.locked?"Locked: stays when you clear pins (click to unlock)":"Lock so Clear unlocked pins keeps it"}">${it.locked?"🔒":"🔓"}</button>
+      <button class="btn small ghost" data-t="rm" title="Remove from Home">✕</button></span></div><div class="tile-body"></div>`;
+    const b=d.querySelector(".tile-body"),c=body(it);if(typeof c==="string")b.innerHTML=c;else if(c)b.appendChild(c);return d}
+
+  function body(it){
+    switch(it.type){
+      case "npc":{const m=C.roster.find(x=>x.id===it.ref);if(!m)return "";const mem=NPCs.isMember(m);
+        return `<div class="card-head">${Roster.thumb(m)}<div>${mem?`<div class="badges"><span class="badge gold">${esc(m.kind)}</span>${m.role?`<span class="badge">${esc(m.role)}</span>`:""}</div>`:NPCs.badges(m)}</div></div>
+          ${mem?(m.notes?`<div class="row">${esc(m.notes)}</div>`:""):NPCs.profileHTML(m)}<div class="actions"><button class="btn small" data-w="bigview">Full view</button></div>`}
+      case "job":{const h=C.jobs.find(x=>x.id===it.ref);return h?Jobs.dmCard(h,true):""}
+      case "shop":{const s=C.shops.find(x=>x.id===it.ref);return s?shopHTML(s):""}
+      case "map":{const m=C.maps.find(x=>x.id===it.ref);return m?`<img class="tile-map" src="${m.img}" alt="${esc(m.name||"Map")}" data-w="map" title="Open full screen">`:""}
+      case "gen-npc":{const m=gen[it.id];return `<div class="actions"><button class="btn primary small" data-w="roll">${m?"↻ Reroll":"Roll an NPC"}</button>${m?'<button class="btn small" data-w="savenpc">Save to NPCs</button><button class="btn small" data-w="pinnpc">📌 Save &amp; pin</button>':""}</div>`+
+        (m?`<h4 class="gen-name">${esc(m.name)}</h4>${NPCs.badges(m)}${NPCs.profileHTML(m)}`:"")}
+      case "gen-name":{const L=gen[it.id]||(gen[it.id]=names());return `<div class="name-list">${L.map(n=>`<button class="btn small ghost" data-w="copy" data-v="${esc(n)}" title="Copy">${esc(n)}</button>`).join("")}</div><div class="actions"><button class="btn small primary" data-w="roll">↻ New names</button></div>`}
+      case "gen-shop":{const s=gen[it.id];return `<div class="actions"><button class="btn primary small" data-w="roll">${s?"↻ Reroll":"Roll a shop"}</button>${s?'<button class="btn small" data-w="saveshop">Save to Shops</button><button class="btn small" data-w="pinshop">📌 Save &amp; pin</button>':""}</div>`+(s?shopHTML(s):`<p class="muted">Uses the type, place and wealth last picked on the Shops tab (${esc(UI.mkt?.type||"any type")}).</p>`)}
+      case "dice":{const R=rolls[it.id]||[];return `<div class="dice-row">${[4,6,8,10,12,20,100].map(n=>`<button class="btn small" data-w="die" data-v="1d${n}">d${n}</button>`).join("")}</div>
+        <div class="dice-row"><button class="btn small" data-w="die" data-v="adv">d20 adv</button><button class="btn small" data-w="die" data-v="dis">d20 dis</button>
+        <input data-w="expr" placeholder="2d6+3" value="${esc(it.text||"")}" style="width:90px"><button class="btn small primary" data-w="die" data-v="expr">Roll</button></div>
+        <div class="dice-out">${R.map((r,i)=>`<div class="${i?"muted":"dice-top"}"><b>${r.total}</b> <span>${esc(r.label)}</span> <span class="muted">${esc(r.detail)}</span></div>`).join("")||'<span class="muted">Tap a die.</span>'}</div>`}
+      case "notes":return `<textarea class="home-notes" data-w="notes" placeholder="Notes for this session…">${esc(it.text||"")}</textarea>`;
+      case "timer":{const t=timers[it.id]||(timers[it.id]={left:(+it.text||5)*60e3,end:0});
+        return `<div class="timer-face" data-timer="${it.id}">${clock(t)}</div><div class="dice-row">${[1,5,10,30].map(n=>`<button class="btn small" data-w="tset" data-v="${n}">${n} min</button>`).join("")}</div>
+          <div class="actions"><button class="btn small primary" data-w="tgo">${t.end?"Pause":"Start"}</button><button class="btn small" data-w="treset">Reset</button></div>`}
+      case "init":{const st=it.state||(it.state={rows:[],turn:0,round:1});const R=st.rows;
+        return `<div class="init-top"><b>Round ${st.round}</b><button class="btn small primary" data-w="inext">Next turn ▶</button><button class="btn small ghost" data-w="iclear">Clear</button></div>
+          <table class="ref init">${R.map((r,i)=>`<tr class="${i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><b>${r.i}</b></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
+          <form class="dice-row" data-w="iadd"><input name="n" placeholder="Name" style="flex:1;min-width:90px"><input name="i" type="number" placeholder="Init" style="width:64px"><button class="btn small">Add</button></form>`}
+      case "party":return PCs.tableSection();
+      case "quests":{const w=document.createElement("div");w.className="tile-stack";const L=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
+        if(!L.length)w.innerHTML='<p class="muted">Keep or finalize quests on the Quests tab and they show up here.</p>';L.forEach(h=>w.appendChild(Jobs.dmCard(h,true)));return w}
+      case "npcsplay":return NPCs.tableEl();
+      case "standing":return Standing.tablePanel();
+      case "hall":{const UT=Upgrades.tables(),g=C.guild,owned=UT.catalog.filter(u=>(g.owned[u.id]||0)>0);
+        return `<div class="row"><b>Treasury:</b> ${g.treasury==null?"—":fmt(g.treasury)+" gp"}</div>${owned.length||g.uniques.length?`<ul style="margin:4px 0;padding-left:18px">${owned.map(u=>{const lv=g.owned[u.id],L=u.levels[lv-1],op=C.roster.find(m=>m.assign===u.id);return `<li><b>${esc(u.name)} ${Upgrades.ROMAN[lv-1]}</b>: ${esc(L.perk)}${op?` <span class="muted">(${esc(op.name)})</span>`:""}</li>`}).join("")}${g.uniques.map(u=>`<li><b>${esc(u.name)}</b>: ${esc(u.perk)}</li>`).join("")}</ul>`:'<p class="muted">No upgrades yet.</p>'}`}
+      case "prices":return App.priceHTML();
+      case "revival":{const chapel=C.guild.owned.chapel||0,disc=[0,.25,.5,.75][chapel]||0,l=Math.max(1,+it.text||S.partyLevel||1);
+        return `<label class="inline">Character level <input data-w="rvl" type="number" min="1" max="20" value="${l}" style="width:64px"></label>
+          <div class="row"><b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span></div><p class="muted" style="font-size:14px">${S.revive} gp × level${chapel?`, −${disc*100}% from the Root Chapel ${Upgrades.ROMAN[chapel-1]}`:""}.</p>`}
+    }
+    return `<p class="muted">This widget isn't available in this version.</p>`}
+  function shopHTML(s){return `<div class="badges"><span class="badge gold">${esc(s.typeLabel||s.type)}</span><span class="badge">${esc(s.place||"")}</span><span class="badge">${esc(s.wealth||"")}</span></div>
+    ${(s.staff||[]).map(p=>`<div class="row"><b>${esc(p.name)}</b>, ${esc(p.role)}${p.personality?` <span class="muted">· ${esc(p.personality)}</span>`:""}</div>`).join("")}
+    <table class="ref stock">${(s.stock||[]).map(i=>`<tr><td>${esc(i.name)}${i.rarity?` <span class="badge leaf">${esc(i.rarity)}</span>`:""}</td><td>${Shops.coins(i.price)}</td></tr>`).join("")}</table>
+    ${s.quirk?`<div class="row muted"><b>Quirk:</b> ${esc(s.quirk)}</div>`:""}`}
+  function names(){const L=[];for(let i=0;i<6;i++){const n=Jobs.genName();if(!L.includes(n))L.push(n)}return L}
+  const clock=t=>{const ms=t.end?Math.max(0,t.end-Date.now()):t.left,s=Math.ceil(ms/1000);return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`};
+  setInterval(()=>{for(const [id,t] of Object.entries(timers)){if(!t.end)continue;const el=document.querySelector(`[data-timer="${id}"]`);if(el)el.textContent=clock(t);
+    if(Date.now()>=t.end){t.end=0;t.left=0;chime();if(el){el.textContent="0:00";el.classList.add("done")}toast("⏰ Time's up");if(UI.tab==="home")render()}}},500);
+  function chime(){try{const a=new (window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(dt=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.25,a.currentTime+dt);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dt+.3);o.start(a.currentTime+dt);o.stop(a.currentTime+dt+.3)})}catch(e){}try{navigator.vibrate?.([200,100,200])}catch(e){}}
+  /* dice: "2d6+1d4+3", "d20-1" */
+  function roll(expr){const terms=String(expr).replace(/\s+/g,"").toLowerCase().match(/[+-]?(\d*d\d+|\d+)/g);if(!terms)return null;let total=0;const det=[];
+    for(const t of terms){const sg=t[0]==="-"?-1:1,b=t.replace(/^[+-]/,"");
+      if(b.includes("d")){let [n,f]=b.split("d").map(Number);n=Math.min(n||1,100);if(!f)continue;const R=Array.from({length:n},()=>1+rnd(f));total+=sg*R.reduce((a,x)=>a+x,0);det.push((sg<0?"−":"")+`[${R.join(", ")}]`)}
+      else{total+=sg*+b;det.push((sg<0?"− ":"+ ")+b)}}
+    return {total,label:expr,detail:det.join(" ")}}
+
+  /* ---------- events ---------- */
+  function find(e){const t=e.target.closest(".tile");return t&&items().find(i=>i.id===t.dataset.id)}
+  async function onClick(e){
+    const h=e.target.closest("[data-h]")?.dataset.h;
+    if(h==="add")return picker();
+    if(h==="arrange"){arrange=!arrange;return render()}
+    if(h==="clear"){const b=e.target.closest("[data-h]");const n=items().filter(i=>!i.locked).length;if(!n){toast("Everything here is locked");return}
+      if(!b.dataset.sure){b.dataset.sure=1;b.textContent=`Remove ${n} unlocked? Click again`;return}
+      items().filter(i=>!i.locked).forEach(i=>{if(i.type==="npc"){const m=C.roster.find(x=>x.id===i.ref);if(m)m.pinned=false}});
+      H().items=items().filter(i=>i.locked);commit();render();toast("Cleared · Ctrl+Z to undo");return}
+    const it=find(e);if(!it)return;const L=items(),i=L.indexOf(it);
+    const t=e.target.closest("[data-t]")?.dataset.t;
+    if(t==="lock"){it.locked=!it.locked;commit();return render()}
+    if(t==="rm"){if(it.type==="npc"){const m=C.roster.find(x=>x.id===it.ref);if(m)m.pinned=false}L.splice(i,1);commit();render();toast("Removed from Home · Ctrl+Z to undo");return}
+    if(t==="left"&&i>0){[L[i-1],L[i]]=[L[i],L[i-1]];commit();return render()}
+    if(t==="right"&&i<L.length-1){[L[i+1],L[i]]=[L[i],L[i+1]];commit();return render()}
+    if(t==="open")return openRef(it);
+    const w=e.target.closest("[data-w]");if(!w||w.tagName==="INPUT"||w.tagName==="TEXTAREA"||w.tagName==="FORM")return;const a=w.dataset.w,v=w.dataset.v;
+    if(a==="bigview"){const m=C.roster.find(x=>x.id===it.ref);if(m)(m.pc?PCs:NPCs).openBig(m);return}
+    if(a==="map"){const m=C.maps.find(x=>x.id===it.ref);if(m)App.openMap(m.img,m.name||"Map");return}
+    if(a==="roll"){gen[it.id]=it.type==="gen-npc"?NPCs.generate():it.type==="gen-shop"?Shops.newShop():names();Usage.event("gen:"+it.type);return render()}
+    if(a==="copy")return copyText(v);
+    if(a==="savenpc"||a==="pinnpc"){const m=gen[it.id];if(!m)return;m.pinned=a==="pinnpc";C.roster.push(m);delete gen[it.id];commit();render();toast(`${m.name} saved to NPCs${m.pinned?" and pinned here":""}`);return}
+    if(a==="saveshop"||a==="pinshop"){const s=gen[it.id];if(!s)return;s.kept=true;C.shops.unshift(s);if(a==="pinshop")add("shop",s.id);delete gen[it.id];commit();render();toast(`${s.name} saved to Shops${a==="pinshop"?" and pinned here":""}`);return}
+    if(a==="die"){const ex=v==="expr"?(it.text||"").trim():v;let r;
+      if(v==="adv"||v==="dis"){const x=1+rnd(20),y=1+rnd(20);r={total:v==="adv"?Math.max(x,y):Math.min(x,y),label:v==="adv"?"d20 advantage":"d20 disadvantage",detail:`[${x}, ${y}]`}}else r=roll(ex);
+      if(!r){toast("Try something like 2d6+3");return}(rolls[it.id]||(rolls[it.id]=[])).unshift(r);rolls[it.id].length=Math.min(rolls[it.id].length,6);return render()}
+    if(a==="tset"){it.text=v;timers[it.id]={left:+v*60e3,end:0};commit();return render()}
+    if(a==="tgo"){const tm=timers[it.id];if(tm.end){tm.left=Math.max(0,tm.end-Date.now());tm.end=0}else{if(!tm.left)tm.left=(+it.text||5)*60e3;tm.end=Date.now()+tm.left}return render()}
+    if(a==="treset"){timers[it.id]={left:(+it.text||5)*60e3,end:0};return render()}
+    if(a==="inext"){const st=it.state;if(!st.rows.length)return;st.turn++;if(st.turn>=st.rows.length){st.turn=0;st.round++}commit();return render()}
+    if(a==="iclear"){it.state={rows:[],turn:0,round:1};commit();return render()}
+    if(a==="irm"){it.state.rows.splice(+v,1);if(it.state.turn>=it.state.rows.length)it.state.turn=0;commit();return render()}}
+  let noteT=null;
+  function onInput(e){const it=find(e);if(!it)return;const w=e.target.dataset.w;
+    if(w==="notes"||w==="expr"){it.text=e.target.value;if(w==="notes"){clearTimeout(noteT);noteT=setTimeout(commit,700)}}}
+  function onChange(e){const it=find(e);if(!it)return;
+    if(e.target.dataset.t==="size"){it.size=e.target.value;commit();return render()}
+    if(e.target.dataset.w==="rvl"){it.text=e.target.value;commit();return render()}}
+  document.addEventListener("submit",e=>{if(e.target.dataset?.w!=="iadd")return;e.preventDefault();const it=find(e);if(!it)return;const f=new FormData(e.target),n=String(f.get("n")||"").trim();
+    if(!n)return;it.state.rows.push({n,i:+f.get("i")||0});it.state.rows.sort((a,b)=>b.i-a.i);it.state.turn=0;commit();render();$(`.tile[data-id="${it.id}"] input[name=n]`)?.focus()});
+  document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset?.w==="expr"){e.preventDefault();e.target.closest(".tile")?.querySelector('[data-v="expr"]')?.click()}});
+  function openRef(it){if(it.type==="npc"){const m=C.roster.find(x=>x.id===it.ref);if(!m)return;const mem=NPCs.isMember(m);App.go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=mem?"members":m.seat?"council":"npcs";NPCs.reset()})}
+    else if(it.type==="job"){const h=C.jobs.find(x=>x.id===it.ref);if(h)App.go("jobs",`[data-job="${h.id}"]`,()=>{UI.jobView="dm";Jobs.setOpen(h,true);Jobs.initControls()})}
+    else if(it.type==="shop")App.go("market",`[data-id="${it.ref}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")});
+    else if(it.type==="map")App.go("maps",`.map-card`)}
+  function picker(){const groups={};Object.entries(WIDGETS).forEach(([k,w])=>(groups[w.g]||(groups[w.g]=[])).push([k,w]));
+    const md=modal(`<h2>Add to Home</h2><div class="picker">${Object.entries(groups).map(([g,L])=>`<h4>${esc(g)}</h4><div class="picker-grid">${L.map(([k,w])=>`<button class="btn" data-add="${k}"><b>${esc(w.n)}</b><span class="muted">${esc(w.d)}</span></button>`).join("")}</div>`).join("")}
+      <p class="muted" style="margin-top:10px">To pin a person, quest, shop or map, use the 📌 on its card.</p></div><div class="actions"><button class="btn ghost" data-close>Close</button></div>`,"home-picker");
+    md.el.onclick=e=>{if(e.target.closest("[data-close]"))return md.close();const k=e.target.closest("[data-add]")?.dataset.add;if(!k)return;add(k);Usage.event("widget:"+k);commit();md.close();render();
+      setTimeout(()=>{const t=$$(".tile");t[t.length-1]?.scrollIntoView({behavior:"smooth",block:"center"})},50)}}
+
+  /* ---------- 📌 buttons on cards elsewhere (added after any re-render) ---------- */
+  function refOf(card){if(card.dataset.job)return ["job",card.dataset.job];if(card.dataset.member)return ["npc",card.dataset.member];
+    if(card.classList.contains("map-card")){const m=C.maps[+card.dataset.i];return m?["map",m.id]:null}
+    if(card.dataset.id&&card.closest("#tab-market"))return ["shop",card.dataset.id];return null}
+  function decorate(){if(!isDM())return;
+    $$("#tab-jobs .card[data-job],#tab-roster .card[data-member],#tab-market .card[data-id],#tab-maps .map-card").forEach(c=>{const r=refOf(c);if(!r)return;
+      let b=c.querySelector(":scope>.pinbtn");if(!b){b=document.createElement("button");b.className="pinbtn";c.classList.add("has-pin");c.prepend(b)}
+      const on=isPinned(...r);b.dataset.pin=r.join(":");b.classList.toggle("on",on);b.title=on?"On Home (click to unpin)":"Pin to Home";b.textContent="📌"});
+    $$("main section:not(#tab-home) p.hint:not(.tk):not(#pPages):not(#jobAI)").forEach(p=>{if(!p.textContent.trim())return;p.classList.add("tk");
+      const q=document.createElement("button");q.className="hint-q";q.type="button";q.textContent="?";q.title="Show the tip";q.onclick=()=>{p.classList.toggle("tk-open");q.classList.toggle("on")};const h=p.previousElementSibling;if(h&&/^(H2|H3|H4)$/.test(h.tagName)&&!h.querySelector(".hint-q")){q.classList.add("in-h");h.append(q)}else p.before(q)})}
+  let decoT=0;new MutationObserver(()=>{if(!decoT)decoT=requestAnimationFrame(()=>{decoT=0;decorate()})}).observe(document.querySelector("main"),{childList:true,subtree:true});
+  document.addEventListener("click",e=>{const b=e.target.closest(".pinbtn");if(!b)return;e.preventDefault();e.stopPropagation();const [type,ref]=b.dataset.pin.split(":");
+    const on=toggle(type,ref);b.classList.toggle("on",on);toast(on?"Pinned to Home":"Removed from Home");Usage.event("pin:"+type)},true);
+  return {render,toggle,isPinned,sync,WIDGETS}})();
+
+/* ---------- usage counts: which tabs get opened and what gets searched, per device. Kept in this browser and copied into the campaign on each save ---------- */
+const Usage=(()=>{
+  const dev=()=>{let d=lsGet("ygh.dev",null);if(!d){d={id:uid().slice(0,6),label:/Android|iPad|iPhone|Mobile|Tablet/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent))?"Tablet / phone":"Computer"};lsSet("ygh.dev",d)}return d};
+  const get=()=>Object.assign({since:Date.now(),tabs:{},events:{},search:[]},lsGet("ygh.usage",{}));
+  function bump(k,key){if(typeof isDM==="function"&&!isDM())return;const u=get();u[k][key]=(u[k][key]||0)+1;lsSet("ygh.usage",u)}
+  const tab=t=>bump("tabs",t),event=e=>bump("events",e);
+  function search(q,picked){if(!q||!isDM())return;const u=get();u.search.unshift({q,p:picked||"",t:Date.now()});u.search.length=Math.min(u.search.length,60);lsSet("ygh.usage",u)}
+  function merge(){if(!isDM())return;const d=dev();C.usage=C.usage||{};C.usage[d.id]=Object.assign({label:d.label,at:Date.now()},get())}
+  return {tab,event,search,merge,dev}})();
+
+/* ---------- feedback notes: the DM taps "Feedback" whenever something is confusing; notes travel with the campaign ---------- */
+const Feedback=(()=>{
+  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",standing:"Guild · Standing",npcs:"NPCs",council:"NPCs · Council",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
+  const tabName=t=>TAB_NAMES[t]||t;
+  function open(){const md=modal(`<h2>What was confusing or annoying?</h2><p class="muted">A quick note is plenty. It's saved with where you are now (${esc(tabName(UI.tab))}).</p>
+      <form id="fbForm"><textarea name="t" rows="4" style="width:100%" placeholder="e.g. I couldn't find where to change an NPC's attitude" required></textarea>
+      <div class="actions"><button class="btn primary">Save note</button><button type="button" class="btn ghost" data-close>Cancel</button></div></form>`,"fb-modal");
+    setTimeout(()=>md.el.querySelector("textarea").focus(),40);
+    md.el.querySelector("[data-close]").onclick=md.close;
+    md.el.querySelector("form").onsubmit=e=>{e.preventDefault();const t=new FormData(e.target).get("t").trim();if(!t)return;
+      C.feedback.unshift({id:uid(),t:Date.now(),tab:UI.tab,dev:Usage.dev().label,text:t});commit();md.close();toast("Noted. It travels with your next save")}}
+  function settingsHTML(){const F=C.feedback||[],U=Object.values(C.usage||{});
+    const top=o=>Object.entries(o||{}).sort((a,b)=>b[1]-a[1]);
+    return `<p class="hint">Notes from the Feedback button, plus how often each tab gets opened and what gets searched (each device's counts arrive when it saves).</p>
+      <h3>Notes (${F.length})</h3>${F.length?`<table class="ref">${F.map(f=>`<tr><td><b>${esc(f.text)}</b><br><span class="muted">${new Date(f.t).toLocaleString()} · ${esc(tabName(f.tab))} · ${esc(f.dev||"")}</span></td><td><button class="btn small ghost" data-fbdone="${f.id}">Done</button></td></tr>`).join("")}</table>`:'<p class="muted">No notes yet.</p>'}
+      <h3>Usage</h3>${U.length?U.map(u=>`<details class="usage"><summary><b>${esc(u.label)}</b> <span class="muted">since ${new Date(u.since).toLocaleDateString()}, last saved ${new Date(u.at).toLocaleString()}</span></summary>
+        <div class="usage-cols"><div><h4>Tabs opened</h4><table class="ref">${top(u.tabs).map(([k,n])=>`<tr><td>${esc(tabName(k))}</td><td>${n}</td></tr>`).join("")}</table></div>
+        <div><h4>Searches</h4><table class="ref">${(u.search||[]).slice(0,25).map(s=>`<tr><td>${esc(s.q)}</td><td class="muted">${s.p?"→ "+esc(s.p):"nothing picked"}</td></tr>`).join("")||'<tr><td class="muted">None</td></tr>'}</table></div>
+        <div><h4>Actions</h4><table class="ref">${top(u.events).slice(0,25).map(([k,n])=>`<tr><td>${esc(k)}</td><td>${n}</td></tr>`).join("")||'<tr><td class="muted">None</td></tr>'}</table></div></div></details>`).join(""):'<p class="muted">No usage saved yet.</p>'}`}
+  function bindSettings(el){el.onclick=e=>{const id=e.target.dataset.fbdone;if(!id)return;C.feedback=C.feedback.filter(f=>f.id!==id);commit();el.innerHTML=settingsHTML()}}
+  return {open,settingsHTML,bindSettings}})();
+
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","maps","print","settings"],TABLE_TABS=["table","maps","print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-ledger","p-map"];
+  /* DM nav: six groups; some hold sub-tabs (shown in #subNav). Members/NPCs/Council/Worlds all render in tab-roster. */
+  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members","standing"],npcs:["npcs","council"],market:["market"],world:["maps","worlds"]};
+  const SUBS={shop:"Hall",members:"Members",standing:"Standing",npcs:"NPCs",council:"The Council",maps:"Maps",worlds:"Worlds"};
+  const ROSTER_SUBS=["members","npcs","council","worlds"],EXTRA=["print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-map"];
+  const DM_TABS=[...Object.values(GROUPS).flat(),...EXTRA];
+  const groupOf=t=>Object.keys(GROUPS).find(g=>GROUPS[g].includes(t));
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
-  function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
-    if(!tabs().includes(UI.tab))UI.tab=tabs()[0];
-    $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
-    const pl=!isDM();document.body.classList.toggle("player",pl);
-    $$("main>section").forEach(s=>s.hidden=pl?s.id!=="tab-p":s.id!=="tab-"+UI.tab);
-    $("#dmBtn .lbl").textContent=pl?"DM View":"Player View";$("#dmBtn").title=pl?(unlocked()?"Back to DM View":"Unlock DM View"):"Preview what players see (stays unlocked)";
-    $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
+    const pl=!isDM();
+    if(UI.tab==="roster")UI.tab=UI.rosterSub||"members";if(UI.tab==="table")UI.tab="home";if(UI.tab==="p-ledger"){UI.tab="p-guild";UI.pGuild="ledger"}
+    if(!(pl?PLAYER_TABS:DM_TABS).includes(UI.tab))UI.tab=pl?PLAYER_TABS[0]:"home";
+    if(ROSTER_SUBS.includes(UI.tab))UI.rosterSub=UI.tab;
+    const g=groupOf(UI.tab);if(g){UI.lastSub=UI.lastSub||{};UI.lastSub[g]=UI.tab}
+    $$("#mainNav button").forEach(b=>{const t=b.dataset.tab;b.hidden=pl?!PLAYER_TABS.includes(t):!GROUPS[t];b.classList.toggle("on",pl?t===UI.tab:t===g)});
+    const sn=$("#subNav"),subs=!pl&&g?GROUPS[g]:[];sn.hidden=subs.length<2;
+    sn.innerHTML=subs.length<2?"":`<div class="seg">${subs.map(t=>`<button class="btn${t===UI.tab?" on":""}" data-sub="${t}">${SUBS[t]}</button>`).join("")}</div>`;
+    document.body.classList.toggle("player",pl);
+    const sec=pl?"tab-p":ROSTER_SUBS.includes(UI.tab)?"tab-roster":"tab-"+UI.tab;
+    $$("main>section").forEach(s=>s.hidden=s.id!==sec);
+    $("#dmBtn .lbl").textContent="DM Mode";$("#dmBtn").title=unlocked()?"Back to DM Mode":"Unlock DM Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
+    banner();
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,maps:renderMaps,"p-board":renderPlayer,"p-party":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function renderStanding(){const L=C.guild.cp.log||[];
+    $("#standingView").innerHTML=`<div class="panel"><h2>Rank ladder</h2>${Standing.ladderHTML()}</div>
+      <div class="panel"><h2>History</h2>${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td>${new Date(e.t).toLocaleDateString()}</td><td><b>${esc(e.kind)}</b> ${esc(e.label||"")}</td><td>${e.pts>0?"+":""}${fmt(e.pts)}</td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Completing quests and great deeds adds points here.</p>'}</div>`}
+  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,standing:renderStanding,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -7569,15 +7886,14 @@ const App=(()=>{
   function renderPlayer(){const el=$("#tab-p");
     const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
       "p-party":()=>"",
-      "p-guild":()=>Standing.printHTML({ladder:true})+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
+      "p-guild":()=>`<div class="seg pv-sub">${[["hall","Our Guild"],["ledger","Builder's Ledger"]].map(([k,l])=>`<button class="btn${(UI.pGuild||"hall")===k?" on":""}" data-pguild="${k}">${l}</button>`).join("")}</div>`+((UI.pGuild||"hall")==="ledger"?Upgrades.ledgerHTML(false,true):Standing.printHTML({ladder:true})+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:"")),
       "p-council":()=>`<div class="seg pv-sub">${[["people","Notable Figures"],["council","The Council"]].map(([k,l])=>`<button class="btn${(UI.pNpc||"people")===k?" on":""}" data-pnpc="${k}">${l}</button>`).join("")}</div>`+((UI.pNpc||"people")==="council"?NPCs.councilHTML()||none("The Council hasn't published its roll yet."):""),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
-      "p-ledger":()=>Upgrades.ledgerHTML(false,true),
       "p-map":()=>C.maps.some(m=>!m.hidden)?C.maps.filter(m=>!m.hidden).map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
     if(UI.tab==="p-party")el.querySelector(".pv").append(PCs.tableSection());
     if(UI.tab==="p-council"&&(UI.pNpc||"people")==="people"){const s=NPCs.playerSection();el.querySelector(".pv").insertAdjacentHTML("beforeend",s.childElementCount?"":none("No notable figures have been introduced yet."));el.querySelector(".pv").append(s)}
-    el.onclick=e=>{const sb=e.target.closest("[data-pnpc]");if(sb){UI.pNpc=sb.dataset.pnpc;saveUI();renderPlayer();return}const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
+    el.onclick=e=>{const sb=e.target.closest("[data-pnpc]");if(sb){UI.pNpc=sb.dataset.pnpc;saveUI();renderPlayer();return}const gb=e.target.closest("[data-pguild]");if(gb){UI.pGuild=gb.dataset.pguild;saveUI();renderPlayer();return}const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
   /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
   function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");
     const v=md.el.querySelector(".mapv-view"),img=v.querySelector("img");let z=1;
@@ -7613,37 +7929,9 @@ const App=(()=>{
     h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-card").dataset.i].name=e.target.value;commit()}};
     h.onclick=e=>{const r=e.target.closest(".map-card");if(!r)return;const i=+r.dataset.i,m=C.maps[i];
       if(e.target.dataset.open!=null)openMap(m.img,m.name||"Map");
-      else if(e.target.dataset.goworld){e.preventDefault();UI.tab="roster";UI.rosterSub="worlds";saveUI();render();flash(`[data-world="${e.target.dataset.goworld}"]`)}
+      else if(e.target.dataset.goworld){e.preventDefault();UI.tab="worlds";saveUI();render();flash(`[data-world="${e.target.dataset.goworld}"]`)}
       else if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
       else if(e.target.dataset.mapdel!=null){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Remove? Click again";return}C.maps.splice(i,1);commit();renderMaps();toast("Map removed · Ctrl+Z to undo")}}}
-  /* ---------- table mode ---------- */
-  function renderTable(){
-    const el=$("#tableView");el.innerHTML="";el.className="tm-layout";
-    el.appendChild(PCs.tableSection());
-    const side=document.createElement("aside");side.className="tm-side";el.appendChild(side);
-    const closed=UI.tmClosed||(UI.tmClosed=[]);
-    const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
-    const col=(title,inner)=>{const p=document.createElement("details");p.className="panel side-panel";p.open=!closed.includes(title);p.innerHTML=`<summary><h2>${title}</h2></summary>`;
-      p.ontoggle=()=>{const i=closed.indexOf(title);if(p.open&&i>=0)closed.splice(i,1);else if(!p.open&&i<0)closed.push(title);saveUI()};
-      const b=document.createElement("div");b.className="side-body";if(typeof inner==="string")b.innerHTML=inner;else b.appendChild(inner);p.appendChild(b);side.appendChild(p);return b};
-    col("Guild standing",Standing.tablePanel());
-    const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
-    if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
-    live.forEach(h=>jobs.appendChild(Jobs.dmCard(h,true)));
-    col("Jobs in play",jobs);
-    const UT=Upgrades.tables(),g=C.guild,owned=UT.catalog.filter(u=>(g.owned[u.id]||0)>0);
-    col("The guild hall",`<div class="row"><b>Treasury:</b> ${g.treasury==null?"—":fmt(g.treasury)+" gp"}</div>
-      ${owned.length||g.uniques.length?`<ul style="margin:4px 0;padding-left:18px">${owned.map(u=>{const lv=g.owned[u.id],L=u.levels[lv-1],op=C.roster.find(m=>m.assign===u.id);return `<li><b>${esc(u.name)} ${Upgrades.ROMAN[lv-1]}</b>: ${esc(L.perk)}${op?` <span class="muted">(${esc(op.name)})</span>`:""}</li>`}).join("")}${g.uniques.map(u=>`<li><b>${esc(u.name)}</b>: ${esc(u.perk)}</li>`).join("")}</ul>`:'<p class="muted">No upgrades yet.</p>'}`);
-    const chapel=g.owned.chapel||0,disc=[0,.25,.5,.75][chapel]||0;
-    const rv=col("Revival fee",`<label class="inline">Character level <input id="rvLvl" type="number" min="1" max="20" value="${S.partyLevel}"></label><div class="row" id="rvOut"></div><p class="hint">${S.revive} gp × level${chapel?`, −${disc*100}% from the Root Chapel ${Upgrades.ROMAN[chapel-1]}`:""}. Death in the worlds is normal D&D.</p>`);
-    const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
-    rv.querySelector("#rvLvl").oninput=upd;upd();
-    col("NPCs in play",NPCs.tableEl());
-    col("Also in the hall",`<table class="ref">${Roster.sorted().filter(m=>m.kind!=="Active PC").map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
-    col("Shops in play",Shops.tableHTML());
-    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p>${priceHTML()}`);
-  }
-
   /* price rows like ["Inn, one night (modest / comfortable)","5 sp / 8 sp"] → label each price instead of matching slashes by eye */
   function priceItems([name,val]){const V=String(val).split(/\s+\/\s+/),unit=(V[V.length-1].match(/\s(cp|sp|gp|pp)(\/\w+)?$/)||[""])[0];
     const vals=V.map(v=>/\d$/.test(v.trim())&&unit?v.trim()+unit:v.trim());
@@ -7715,7 +8003,7 @@ const App=(()=>{
     $("#pNoticeCount").textContent=`(${finals} marked final)`;
     $("#printGo").textContent=FRAMED?"Download printable":"Print";
     const body=printBody(true);if(!body)$("#pPages").textContent="";
-    $("#preview").innerHTML=body?`<style>${printCSS().replace(/@media print\{[^}]*\}\}?/g,"")}</style>${body}`:'<p class="muted" style="color:#5a3e1e">Nothing selected yet. Mark jobs final on the Job Board, buy upgrades, or tick a section above.</p>';
+    $("#preview").innerHTML=body?`<style>${printCSS().replace(/@media print\{[^}]*\}\}?/g,"")}</style>${body}`:'<p class="muted" style="color:#5a3e1e">Nothing selected yet. Mark jobs final on the Quests tab, buy upgrades, or tick a section above.</p>';
   }
 
   /* ---------- settings ---------- */
@@ -7730,7 +8018,7 @@ const App=(()=>{
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
     const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
-    const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
+    const fb=$("#fbSettings");fb.innerHTML=Feedback.settingsHTML();Feedback.bindSettings(fb);const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
   }
@@ -7756,11 +8044,15 @@ const App=(()=>{
   }
 
   function bind(){
-    $("#mainNav").onclick=e=>{const t=e.target.closest("[data-tab]")?.dataset.tab;if(!t)return;const same=UI.tab===t;UI.tab=t;saveUI();render();if(!same)window.scrollTo(0,0)};
-    $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
-    $("#saveCamp").onclick=$("#bannerSave").onclick=()=>saveCampaign();
+    const goTab=t=>{const same=UI.tab===t;UI.tab=t;saveUI();render();Usage.tab(UI.tab);if(!same)window.scrollTo(0,0)};
+    $("#mainNav").onclick=e=>{const t=e.target.closest("[data-tab]")?.dataset.tab;if(!t)return;goTab(GROUPS[t]?(UI.lastSub?.[t]&&GROUPS[t].includes(UI.lastSub[t])?UI.lastSub[t]:GROUPS[t][0]):t)};
+    $("#subNav").onclick=e=>{const t=e.target.closest("[data-sub]")?.dataset.sub;if(t)goTab(t)};
+    $("#saveCamp").onclick=()=>saveCampaign();
+    $("#bannerAct").onclick=e=>e.target.dataset.act==="sync"?Sync.pull(true):saveCampaign();
+    $("#bannerMin").onclick=()=>{Alerts.minimize();toast("Hidden. The red ⚠ next to Save stays until it's fixed")};
+    $("#saveState").onclick=()=>{if(Alerts.any()){Alerts.expand()}else if(dirty)saveCampaign();else Sync.pull(true)};
+    $("#fbBtn").onclick=()=>Feedback.open();
     $("#undoBtn").onclick=undo;
-    $("#loadCamp").onclick=openCampaign;
     $("#saveAsNew").onclick=()=>saveCampaign(true);$("#unlinkFile").onclick=unlinkFile;
     $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)loadCampaignFile(f);e.target.value=""};
     $("#tab-print").onchange=e=>{const k=e.target.dataset.p;if(!k)return;UI.print[k]=e.target.checked;saveUI();renderPrint()};
@@ -7796,6 +8088,7 @@ const App=(()=>{
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
     map:'<path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+    home:'<path d="M3 11 12 3l9 8"/><path d="M5 10v11h5v-6h4v6h5V10"/>',chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
   const MQ=window.matchMedia("(max-width: 760px), (pointer: coarse) and (max-height: 500px)");
@@ -7803,29 +8096,29 @@ const App=(()=>{
     $$("#layoutSeg button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));const n=$("#layoutNow");if(n)n.textContent=`Showing: ${phone?"Phone":"Desktop"}`}
   /* ---------- go to + quick search ---------- */
   function flash(sel){requestAnimationFrame(()=>{const el=document.querySelector(sel);if(!el)return;el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")})}
-  function go(tab,sel,prep){if(UI.tableMode&&!TABLE_TABS.includes(tab))UI.tableMode=false;UI.tab=tab;if(prep)prep();saveUI();render();flash(sel)}
+  function go(tab,sel,prep){UI.tab=tab;if(prep)prep();saveUI();render();flash(sel)}
   function index(){const R=[];
     C.jobs.forEach(h=>R.push({k:"Job",n:Jobs.hookTitle(h),d:`${h.objective} · ${h.patron.name}${h.final?" · Final":h.kept?" · Kept":""}`,
       go:()=>go("jobs",`[data-job="${h.id}"]`,()=>{UI.jobView="dm";Jobs.setOpen(h,true);Jobs.initControls()})}));
     C.roster.forEach(m=>{const mem=NPCs.isMember(m),sub=mem?"members":m.seat?"council":"npcs";
       R.push({k:mem?m.kind:m.seat?`${m.seat} Seat`:"NPC",n:m.name||"(unnamed)",d:[m.title||m.occupation||m.role,m.ancestry,m.guild].filter(Boolean).join(" · "),
-        go:()=>go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=sub;NPCs.reset()})})});
+        go:()=>go(sub,mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>NPCs.reset())})});
     C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
     Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
-    (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("roster",`[data-world="${w.id}"]`,()=>{UI.rosterSub="worlds"})}));
+    (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("worlds",`[data-world="${w.id}"]`)}));
     C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
-    [["jobs","Job Board"],["shop","Guild Upgrades"],["roster","Roster"],["market","Shop Generator"],["print","Print"],["settings","Settings & Tables"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
+    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["standing","Guild · Standing"],["npcs","NPCs"],["council","NPCs · The Council"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
   function qsOpen(){$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}
-  function qsClose(){$("#qs").hidden=true}
+  function qsClose(){const q=$("#qsIn").value.trim();if(!$("#qs").hidden&&q&&!qsClose.picked)Usage.search(q,"");qsClose.picked=false;$("#qs").hidden=true}
   function qsDraw(){const q=$("#qsIn").value.toLowerCase().trim(),w=q.split(/\s+/).filter(Boolean);
     let L=w.length?qsItems.filter(r=>{const s=(r.n+" "+r.d+" "+r.k).toLowerCase();return w.every(x=>s.includes(x))}):qsItems.filter(r=>r.k==="Tab"||r.k==="Job"&&/Final|Kept/.test(r.d));
     if(q)L.sort((a,b)=>(b.n.toLowerCase().startsWith(q)-a.n.toLowerCase().startsWith(q))||(b.n.toLowerCase().includes(q)-a.n.toLowerCase().includes(q)));
     L=L.slice(0,40);qsSel=Math.min(qsSel,Math.max(0,L.length-1));$("#qsRes")._L=L;
     $("#qsRes").innerHTML=L.length?L.map((r,i)=>`<div class="qs-item${i===qsSel?" on":""}" data-i="${i}"><span class="badge">${esc(r.k)}</span> <b>${esc(r.n)}</b> <span class="muted">${esc(r.d)}</span></div>`).join(""):'<p class="muted" style="padding:8px 12px">Nothing matches.</p>';
     $("#qsRes .qs-item.on")?.scrollIntoView({block:"nearest"})}
-  function qsPick(i){const r=$("#qsRes")._L[i];if(!r)return;qsClose();r.go()}
+  function qsPick(i){const r=$("#qsRes")._L[i];if(!r)return;const q=$("#qsIn").value.trim();if(q)Usage.search(q,r.k+": "+r.n);qsClose.picked=true;qsClose();r.go()}
   function bindSearch(){
     $("#qsBtn").onclick=qsOpen;
     $("#qs").onclick=e=>{if(e.target.id==="qs")qsClose();const it=e.target.closest(".qs-item");if(it)qsPick(+it.dataset.i)};
@@ -7840,8 +8133,9 @@ const App=(()=>{
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
     $("#dmBtn").onclick=()=>isDM()?previewPlayer():unlocked()?backToDM():dmGate();
-    $("#hdrMore").onclick=e=>{const p=e.target.dataset.proxy;if(!p)return;$("#hdrMore").open=false;$("#"+p).click()};
-    $("#hdrMore summary").addEventListener("click",()=>{$("#hdrSync").textContent=Sync.status()||"";const t=$("#hdrMore [data-proxy=tmToggle]");t.textContent=UI.tableMode?"Leave Table Mode":"Table Mode"});$("#syncBtn").onclick=()=>Sync.pull(true);
+    $("#hdrMore").onclick=e=>{const b=e.target.closest("[data-go],[data-act]");if(!b)return;$("#hdrMore").open=false;const g=b.dataset.go,a=b.dataset.act;Usage.event("menu:"+(g||a));
+      if(g){UI.tab=g;saveUI();render();window.scrollTo(0,0)}else if(a==="load")openCampaign();else if(a==="sync")Sync.pull(true);else if(a==="feedback")Feedback.open();else if(a==="preview")previewPlayer();else if(a==="dm")$("#dmBtn").click()};
+    $("#hdrMore summary").addEventListener("click",()=>{$("#hdrSync").textContent=Sync.status()||""});
     $("#pwForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(f.get("pw")!==f.get("pw2")){toast("Passwords don't match");return}S.dmHash=await hashPw(f.get("pw"));lsSet("ygh.dm",S.dmHash);commit();e.target.reset();toast("Password changed. Save so it travels with the campaign")};
     $("#lockNow").onclick=lockDM;
     Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();Sync.start();Updater.start();
@@ -7851,7 +8145,7 @@ const App=(()=>{
       render();
     }
   }
-  return {render,reloadAll,boot,flash,openMap};
+  return {render,reloadAll,boot,flash,openMap,go,priceHTML};
 })();
 App.boot();
 

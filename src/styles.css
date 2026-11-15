@@ -306,7 +306,7 @@ body.mobile #mQuick button{margin:0;border-radius:8px;white-space:normal;line-he
 body.mobile .st-btns{margin-left:0;width:100%}body.mobile .st-btns .btn{flex:1;min-height:38px}
 body.mobile .st-form{display:grid;grid-template-columns:1fr 1fr}body.mobile .st-form>label[style]{grid-column:1/-1}body.mobile .st-form select,body.mobile .st-form input{width:100%}
 /* player view */
-body.player #qsBtn,body.player #undoBtn,body.player #tmToggle,body.player #loadCamp,body.player #saveCamp,body.player #aiMode,body.player .banner{display:none!important}
+body.player #qsBtn,body.player #undoBtn,body.player #fbBtn,body.player #saveState,body.player #saveCamp,body.player #aiMode,body.player .banner{display:none!important}
 body.player #dmBtn{color:var(--mute)}
 #syncBtn .lbl{font-size:13px;color:var(--mute)}
 .pv{display:grid;gap:22px;justify-items:center}
@@ -322,14 +322,12 @@ body.mobile #syncBtn .lbl{display:none}
 body.player header .sub{display:none}
 
 /* phone header: keep to one row, extras in ⋯ */
-#hdrMore{display:none}
 body.mobile{overflow-x:clip}
 body.mobile header{min-width:0}
 body.mobile h1{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto}
 body.mobile .hdr-right{flex:none;gap:0}
 body.mobile .hb{width:38px;height:40px}
-body.mobile:not(.player) #tmToggle,body.mobile:not(.player) #loadCamp,body.mobile:not(.player) #syncBtn,body.mobile:not(.player) #dmBtn{display:none}
-body.mobile:not(.player) #hdrMore{display:block}
+body.mobile #fbBtn{display:none}
 body.mobile #hdrMore>summary{font-size:22px;display:flex;align-items:center;justify-content:center;padding:0}
 body.mobile #hdrMore .menu{right:0;min-width:220px}
 body.mobile #hdrMore .menu .btn{min-height:44px;font-size:16px}
@@ -566,3 +564,62 @@ body.mobile .np-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}bod
 .crop-box i[data-h=nw]{left:-12px;top:-12px;cursor:nwse-resize}.crop-box i[data-h=ne]{right:-12px;top:-12px;cursor:nesw-resize}
 .crop-box i[data-h=sw]{left:-12px;bottom:-12px;cursor:nesw-resize}.crop-box i[data-h=se]{right:-12px;bottom:-12px;cursor:nwse-resize}
 .crop-wrap{overflow:hidden}body.mobile .qs-box.crop-modal{max-height:100vh}body.mobile .crop-wrap img{max-height:58vh}
+
+/* ---- header: save status, menu, alerts ---- */
+body:not(.player) #dmBtn,body.player .dm-m,body:not(.player) .pl-m{display:none!important}
+.state{display:inline-flex;align-items:center;gap:6px;font-size:14px;white-space:nowrap}
+.state .st-dot{width:9px;height:9px;border-radius:50%;background:var(--leaf);flex:none}
+.state.ok{color:var(--leaf)}.state.warn{color:var(--gold);border-color:#6a5328}.state.warn .st-dot{background:var(--gold)}
+.state.busy .st-dot{background:var(--blue);animation:stpulse 1s infinite}.state.busy{color:var(--blue)}
+.state.bad{background:#5a1f17;border-color:var(--red);color:#ffd9cf;font-weight:700}.state.bad .st-dot{display:none}
+@keyframes stpulse{50%{opacity:.3}}
+.banner.err{background:#5a1f17;border-bottom:2px solid var(--red);color:#ffe2da;font-weight:600}
+.banner.err .btn.ghost{color:#ffe2da;border-color:#a8574a}
+body.mobile .state .st-lbl{max-width:74px;overflow:hidden;text-overflow:ellipsis}
+body.mobile .state{width:auto!important;padding:0 8px;font-size:12.5px}
+body.mobile .banner.err{white-space:normal}body.mobile .banner.err span{white-space:normal!important}
+body.mobile #bannerAct{margin-left:auto}
+/* ---- sub-tabs under the main nav ---- */
+.subnav{padding:0 22px 8px}.subnav .seg .btn{padding:4px 14px}
+body.mobile .subnav{padding:6px 12px}body.mobile .subnav .seg{display:flex;width:100%}body.mobile .subnav .seg .btn{flex:1;min-height:36px}
+#rSub{display:none!important}
+/* ---- tucked hints ---- */
+p.hint.tk{display:none}p.hint.tk.tk-open{display:block}
+.hint-q{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--mute);font:700 13px "Crimson Pro",serif;cursor:pointer;padding:0;margin:4px 0;vertical-align:middle}
+.hint-q.on,.hint-q:hover{color:var(--gold);border-color:var(--gold)}
+/* ---- pins on cards ---- */
+.has-pin{position:relative}.has-pin>h3,.has-pin>.card-head{padding-right:34px}
+.pinbtn{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:14px;line-height:1;opacity:.45;filter:grayscale(1);z-index:2;padding:0}
+.pinbtn:hover{opacity:.9}.pinbtn.on{opacity:1;filter:none;border-color:var(--gold);background:#3a2e18}
+body.player .pinbtn{display:none}
+/* ---- Home ---- */
+.home-bar{align-items:center}.home-tip{flex:1;min-width:220px;font-size:14px}
+.home-empty{text-align:center;padding:50px 16px;color:var(--mute)}.home-empty h2{color:var(--gold)}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start;grid-auto-flow:dense}
+.tile{padding:10px 12px;min-width:0;overflow-wrap:anywhere}.tile.size-m{grid-column:span 2}.tile.size-l{grid-column:1/-1}
+@media (max-width:640px){.tile.size-m{grid-column:auto}}
+.tile.locked{border-color:#6a5328}
+.tile-head{display:flex;align-items:center;gap:8px;margin:-2px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.tile-head h3{margin:0;flex:1;min-width:0;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-kind{font:600 11px "Cinzel",serif;letter-spacing:.06em;color:var(--mute);text-transform:uppercase}
+.tile-ctl{display:flex;gap:2px;align-items:center;flex:none}.tile-ctl .btn{padding:2px 7px}.tile-ctl select{font-size:13px;padding:2px}
+.lockbtn{opacity:.55}.lockbtn.on{opacity:1}
+.arranging .tile{cursor:grab;outline:1px dashed var(--line);outline-offset:3px}.tile.dragging{opacity:.4}
+.tile-body .card{margin:0}.tile-stack{display:grid;gap:10px}
+.tile-map{width:100%;border-radius:6px;cursor:zoom-in;display:block}
+.dice-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.dice-out{min-height:28px}.dice-top b{font:700 30px "Cinzel",serif;color:var(--gold)}.dice-out .muted{font-size:14px}
+.timer-face{font:700 44px "Cinzel",serif;color:var(--gold);text-align:center;margin:4px 0 8px}.timer-face.done{color:var(--red)}
+.home-notes{width:100%;min-height:150px;resize:vertical}
+.init-top{display:flex;gap:8px;align-items:center;margin-bottom:6px}.init-top b{flex:1}
+table.init tr.on td{background:#3a2e18;color:var(--gold)}table.init td:last-child{width:30px}
+.name-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.gen-name{margin:6px 0 4px;color:var(--gold)}
+.picker h4{margin:12px 0 6px;color:var(--gold)}.picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.picker-grid .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;padding:8px 10px}.picker-grid .btn span{font-size:13px;font-weight:400}
+.home-picker{max-width:720px;max-height:85vh;overflow:auto}
+body.mobile .home-grid{grid-template-columns:minmax(0,1fr)}body.mobile .tile{grid-column:auto!important}
+/* ---- settings: advanced + feedback ---- */
+details.adv{margin-top:6px}details.adv>summary{cursor:pointer;font:700 18px "Cinzel",serif;color:var(--gold);padding:10px 0}details.adv>summary .muted{font:400 14px "Crimson Pro",serif;margin-left:8px}
+details.usage{margin:6px 0}.usage-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.hint-q.in-h{margin:0 0 0 8px;width:20px;height:20px;font-size:12px}
+body:not(.mobile) .fb-m{display:none!important}

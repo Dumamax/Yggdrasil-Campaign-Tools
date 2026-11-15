@@ -100,7 +100,7 @@ Use official names for standard gear and magic items, add a few invented local g
     </div>
     <div class="seg cats" id="mQuick">${(T.quickTypes||[]).filter(t=>T.shopTypes[t]).map(t=>`<button class="btn" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div>
     <div class="actions" style="margin-bottom:10px"><div class="seg"><button class="btn ${m.view!=="player"?"on":""}" data-v="dm">DM view</button><button class="btn ${m.view==="player"?"on":""}" data-v="player">Player view</button></div>
-      <button class="btn small" id="mClear">Clear unkept</button><span class="hint" style="margin:0">${AI.mode()==="none"?"No Claude connection: shops come from the tables; custom ideas give you a prompt to copy into Claude.":"Claude write-ups use "+(AI.mode()==="claude"?"Claude directly.":"your API key.")} Quick buttons generate instantly. Kept shops go to Print and At the Table.</span></div>
+      <button class="btn small" id="mClear">Clear unkept</button><span class="hint" style="margin:0">${AI.mode()==="none"?"No Claude connection: shops come from the tables; custom ideas give you a prompt to copy into Claude.":"Claude write-ups use "+(AI.mode()==="claude"?"Claude directly.":"your API key.")} Quick buttons generate instantly. Kept shops go to Print; pin one to Home with 📌.</span></div>
     <div id="mShops" class="board shops"></div>`;
     const box=$("#mShops");
     if(!C.shops.length)box.innerHTML='<p class="muted">Pick a shop type (or describe your own) and generate.</p>';
@@ -174,5 +174,5 @@ Quirk: ${s.quirk}\nRumor: ${s.rumor}\nHaggling: ${s.haggle}`}
 .shopsheet .sh-foot{text-align:center;font-size:12px;margin-top:8px;color:#6b4d26}.pr-shops{display:grid;gap:24px}.pr-shop{break-inside:avoid;page-break-inside:avoid}`;
   document.head.insertAdjacentHTML("beforeend",`<style>${PRINT_CSS}.board.shops{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}.sh4{margin:6px 0 0;font:600 14px "Cinzel",serif;color:var(--leaf);letter-spacing:.03em}table.ref.stock td:last-child{vertical-align:top}</style>`);
   if(UI.print&&UI.print.shops===undefined)UI.print.shops=true;
-  return {reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,npcLook,tables:()=>T};
+  return {newShop,reloadTables,render,tableHTML,printHTML,PRINT_CSS,coins,npcLook,tables:()=>T};
 })();

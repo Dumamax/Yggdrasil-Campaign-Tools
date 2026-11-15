@@ -18,34 +18,37 @@
   <span class="sub">The DM's prep and table tools.</span>
   <div class="hdr-right">
     <span class="aimode" id="aiMode"></span>
-    <button class="btn ghost hb" id="syncBtn" data-ico="refresh" title="Check for the latest save"><span class="lbl">…</span></button>
+    <button class="btn ghost hb state" id="saveState" title="Save status"><span class="st-dot"></span><span class="st-lbl">Saved</span></button>
     <button class="btn ghost hb" id="qsBtn" data-ico="search" title="Search everything (Ctrl+K)" aria-label="Search"><span class="lbl">Search</span></button>
     <button class="btn ghost hb" id="undoBtn" data-ico="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo" disabled><span class="lbl">Undo</span></button>
-    <button class="btn hb" id="tmToggle" data-ico="dice" title="Table Mode" aria-label="Table Mode"><span class="lbl">Table Mode</span></button>
-    <button class="btn hb" id="loadCamp" data-ico="open" title="Load Campaign" aria-label="Load Campaign"><span class="lbl">Load Campaign</span></button>
-    <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM View</span></button>
+    <button class="btn ghost hb" id="fbBtn" data-ico="chat" title="Note something confusing or annoying" aria-label="Feedback"><span class="lbl">Feedback</span></button>
+    <button class="btn hb" id="dmBtn" data-ico="lock"><span class="lbl">DM Mode</span></button>
     <details class="more" id="hdrMore"><summary class="btn ghost hb" title="More" aria-label="More">⋯</summary><div class="menu">
-      <button class="btn small ghost" data-proxy="tmToggle">Table Mode</button><button class="btn small ghost" data-proxy="loadCamp">Load Campaign</button>
-      <button class="btn small ghost" data-proxy="syncBtn">Check for a newer save</button><button class="btn small ghost" data-proxy="dmBtn">Player View</button><div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
+      <button class="btn small ghost dm-m" data-go="print">Print handouts</button><button class="btn small ghost dm-m" data-go="settings">Settings</button>
+      <button class="btn small ghost dm-m" data-act="load">Load a campaign file</button><button class="btn small ghost" data-act="sync">Check for a newer save</button>
+      <button class="btn small ghost dm-m fb-m" data-act="feedback">Feedback: note something confusing</button><button class="btn small ghost dm-m" data-act="preview">Preview Player View</button><button class="btn small ghost pl-m" data-act="dm">DM Mode 🔒</button>
+      <div class="muted" id="hdrSync" style="padding:4px 10px;font-size:13px"></div></div></details>
     <button class="btn primary hb keep-lbl" id="saveCamp" data-ico="save" title="Save Campaign (Ctrl+S)"><span class="lbl">Save Campaign</span><span class="slbl">Save</span></button>
     <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 </header>
-<div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerSave">Save Campaign now</button></div>
+<div class="banner" id="banner"><span id="bannerText"></span><button class="btn small primary" id="bannerAct">Try again</button><button class="btn small ghost" id="bannerMin" title="Hide this until something new goes wrong; the red ⚠ in the header stays until it's fixed">Minimize</button></div>
 <nav id="mainNav">
-  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quest Board</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Our Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Market</span><span class="slbl">Market</span></button><button data-tab="p-ledger" data-ico="hall"><span class="lbl">Builder's Ledger</span><span class="slbl">Builds</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">Map</span><span class="slbl">Map</span></button>
-  <button data-tab="jobs" data-ico="jobs"><span class="lbl">Job Board</span><span class="slbl">Jobs</span></button>
-  <button data-tab="shop" data-ico="hall"><span class="lbl">Guild Upgrades</span><span class="slbl">Hall</span></button>
-  <button data-tab="roster" data-ico="people"><span class="lbl">Roster</span><span class="slbl">Roster</span></button>
-  <button data-tab="market" data-ico="store"><span class="lbl">Shop Generator</span><span class="slbl">Shops</span></button>
-  <button data-tab="table" data-ico="dice"><span class="lbl">At the Table</span><span class="slbl">Table</span></button>
-  <button data-tab="maps" data-ico="map"><span class="lbl">Maps</span><span class="slbl">Maps</span></button><button data-tab="print" data-ico="print"><span class="lbl">Print</span><span class="slbl">Print</span></button>
-  <button data-tab="settings" data-ico="gear"><span class="lbl">Settings &amp; Tables</span><span class="slbl">Settings</span></button>
+  <button data-tab="home" data-ico="home"><span class="lbl">Home</span><span class="slbl">Home</span></button>
+  <button data-tab="jobs" data-ico="jobs"><span class="lbl">Quests</span><span class="slbl">Quests</span></button>
+  <button data-tab="guild" data-ico="shield"><span class="lbl">Guild</span><span class="slbl">Guild</span></button>
+  <button data-tab="npcs" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button>
+  <button data-tab="market" data-ico="store"><span class="lbl">Shops</span><span class="slbl">Shops</span></button>
+  <button data-tab="world" data-ico="map"><span class="lbl">World</span><span class="slbl">World</span></button>
+  <button data-tab="p-board" data-ico="jobs"><span class="lbl">Quests</span><span class="slbl">Quests</span></button><button data-tab="p-party" data-ico="party"><span class="lbl">Party</span><span class="slbl">Party</span></button><button data-tab="p-guild" data-ico="shield"><span class="lbl">Guild</span><span class="slbl">Guild</span></button><button data-tab="p-council" data-ico="people"><span class="lbl">NPCs</span><span class="slbl">NPCs</span></button><button data-tab="p-market" data-ico="store"><span class="lbl">Shops</span><span class="slbl">Shops</span></button><button data-tab="p-map" data-ico="map"><span class="lbl">World</span><span class="slbl">World</span></button>
 </nav>
+<div class="subnav" id="subNav" hidden></div>
 </div>
 <main>
   <section id="tab-p" hidden></section>
-  <section id="tab-jobs">
+  <section id="tab-home" hidden><div id="homeView"></div></section>
+  <section id="tab-standing" hidden><div class="standing-host"></div><div id="standingView"></div></section>
+  <section id="tab-jobs" hidden>
     <div class="standing-host"></div>
     <div class="controls">
       <label>Guild tier <select id="tierSel"></select></label>
@@ -53,11 +56,11 @@
       <label>Party size <input id="ps" type="number" min="1" max="8"></label>
       <button class="btn primary" id="rollBtn">Roll the Board</button>
       <button class="btn ghost" id="jobsAll" title="Show or hide details on every card">Open all</button>
-      <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">DM view</button><button class="btn" id="vNotice">Notice view</button></div>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDM">Editing</button><button class="btn" id="vNotice">Player preview</button></div>
     </div>
     <div id="jobBoard" class="board"></div>
     <p class="hint" id="jobAI"></p>
-    <p class="hint">Keep the hooks you like; mark them Final to send their Quest Notices to Print and to the At the Table view. "Paid → treasury" adds the guild fee.</p>
+    <p class="hint">Keep the hooks you like; mark them Final to send their Quest Notices to Print; pin the ones you need at the table to Home with 📌. "Paid → treasury" adds the guild fee.</p>
   </section>
 
   <section id="tab-shop" hidden>
@@ -65,7 +68,7 @@
     <div class="controls">
       <label>Treasury (gp) <input id="treasury" type="number" min="0" placeholder="—"></label>
       <button class="btn primary dmonly" id="rollOffers">Roll Peddlers</button>
-      <div class="seg" style="margin-left:auto"><button class="btn" id="vDMs">DM view</button><button class="btn" id="vShop">Shop view</button></div>
+      <div class="seg" style="margin-left:auto"><button class="btn" id="vDMs">Editing</button><button class="btn" id="vShop">Player preview</button></div>
     </div>
     <div class="seg cats" id="cats"><button class="btn" data-c="All">All</button><button class="btn" data-c="Facilities">Facilities</button><button class="btn" data-c="Services">Services</button><button class="btn" data-c="Staff">Staff</button><button class="btn" data-c="Offers">Peddlers</button></div>
     <div id="shop"></div>
@@ -76,7 +79,7 @@
       <div class="seg" id="rSub"><button class="btn" data-sub="members">Guild Members</button><button class="btn" data-sub="npcs">NPCs</button><button class="btn" data-sub="council">Council</button><button class="btn" data-sub="worlds">Worlds</button></div>
       <span id="rMemCtl" style="display:contents">
       <button class="btn primary" id="addMember">＋ Add member</button>
-      <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">In the hall</button></div>
+      <div class="seg" id="rFilter"><button class="btn" data-f="all">All</button><button class="btn" data-f="pc">Active PCs</button><button class="btn" data-f="hall">Staff</button></div>
       <button class="btn" id="importPC">Import character</button>
       <button class="btn" id="copyRoster">Copy roster</button></span>
     </div>
@@ -88,10 +91,6 @@
   </section>
 
   <section id="tab-market" hidden></section>
-
-  <section id="tab-table" hidden>
-    <div id="tableView" class="tm-grid"></div>
-  </section>
 
   <section id="tab-print" hidden>
     <div class="controls print-opts">
@@ -137,22 +136,27 @@
         <div class="actions"><button class="btn" id="importPaste">Import</button></div>
       </div>
       <div class="panel">
-        <h2>GitHub saves</h2>
-        <div id="syncSettings"></div>
-      </div>
-      <div class="panel">
         <h2>DM password</h2>
-        <p class="hint">Keeps players from wandering into DM View. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
+        <p class="hint">Keeps players from wandering into DM Mode. It travels with the campaign, so after a change, save so other copies pick it up. This isn't strong security: the campaign file itself isn't encrypted.</p>
         <form class="actions" id="pwForm"><input type="password" name="pw" placeholder="New password" required><input type="password" name="pw2" placeholder="Repeat" required><button class="btn">Change password</button><button type="button" class="btn ghost" id="lockNow">Lock this browser</button></form>
-      </div>
-      <div class="panel">
-        <h2>Guild standing</h2>
-        <div id="cpSettings"></div>
       </div>
       <div class="panel">
         <h2>Display</h2>
         <div class="actions"><span class="muted">Layout</span><div class="seg" id="layoutSeg"><button class="btn" data-l="auto">Auto</button><button class="btn" data-l="phone">Phone</button><button class="btn" data-l="desktop">Desktop</button></div><span class="muted" id="layoutNow"></span></div>
         <p class="hint">Auto uses the phone layout on narrow screens (under 760 px wide). This choice is saved in this browser only.</p>
+      </div>
+      <details class="adv"><summary>Advanced settings <span class="muted">GitHub, Claude, standing rules, economy, tables, feedback</span></summary><div class="settings">
+      <div class="panel">
+        <h2>Feedback &amp; usage</h2>
+        <div id="fbSettings"></div>
+      </div>
+      <div class="panel">
+        <h2>GitHub saves</h2>
+        <div id="syncSettings"></div>
+      </div>
+      <div class="panel">
+        <h2>Guild standing</h2>
+        <div id="cpSettings"></div>
       </div>
       <div class="panel">
         <h2>Claude</h2>
@@ -186,6 +190,7 @@
         <div class="actions"><button class="btn primary" id="saveTbl">Save tables</button><button class="btn" id="mergeTbl" hidden>Add new default content</button><button class="btn" id="resetTbl">Reset to defaults</button><button class="btn" id="copyTbl">Copy JSON</button></div>
         <p class="hint">Open a section to edit it; changes apply when you click Save tables. Upgrade prices are in "jobs" (one Standard job's guild fee at mid-tier); set <code>gp</code> on a level to override. Custom tables travel in the campaign file.</p>
       </div>
+      </div></details>
     </div>
   </section>
 </main>

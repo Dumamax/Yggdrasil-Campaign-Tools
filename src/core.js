@@ -1,5 +1,5 @@
 /* ================= CORE: helpers, campaign state, files, AI, print ================= */
-const APP_ID="yggdrasil-guild-hall", SCHEMA=7;
+const APP_ID="yggdrasil-guild-hall", SCHEMA=8;
 const TIERS=["Iron","Bronze","Silver","Gold","Platinum"];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -45,7 +45,7 @@ function newCampaign(){return {app:APP_ID,schema:SCHEMA,savedAt:null,settings:cl
   tables:{jobs:null,upgrades:null,prices:null,shops:null,npcs:null},jobs:[],shops:[],
   guild:{treasury:null,owned:{},addons:{},offers:[],uniques:[],cp:{pts:0,log:[]}},
   roster:[{id:"mordecai",name:"Mordecai",kind:"Founder",status:"In the hall",level:null,ancestry:"Changeling (currently Rat Folk)",player:"",role:"Guild founder",skills:[{s:"Guild Administration",g:"Expert"}],assign:"",notes:"Gruff, sarcastic, world-weary; care hidden under complaints. Skills are placeholders."}],
-  expanded:{},recent:{}}}
+  expanded:{},recent:{},home:{items:[]},feedback:[],usage:{}}}
 /* v3: "The Trunk" was renamed "The Roots" */
 function renameTrunk(c){if(!c||(c.schema||1)>=3)return c;try{return JSON.parse(JSON.stringify(c).replace(/Trunk Guides/g,"Root Guides").replace(/Trunk ferry/g,"Roots ferry").replace(/the Trunk's/g,"the Roots'").replace(/([Tt])he Trunk/g,"$1he Roots"))}catch(e){return c}}
 function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assign(n,c||{});
@@ -54,7 +54,9 @@ function normalize(c){c=renameTrunk(c);const n=newCampaign();const o=Object.assi
   /* v5: guild standing (points toward the next rank) */
   o.guild.cp=Object.assign({pts:0,log:[]},o.guild.cp||{});const sc=o.settings.cp||{};o.settings.cp=Object.assign(clone(DEFAULT_CP),sc,{stepJobs:Object.assign(clone(DEFAULT_CP.stepJobs),sc.stepJobs||{}),deeds:Object.assign(clone(DEFAULT_CP.deeds),sc.deeds||{})});
   {const s=o.settings.cp.stepJobs;if(s.Iron===4&&s.Bronze===5&&s.Silver===6&&s.Gold===7&&s.Platinum===8)o.settings.cp.stepJobs=clone(DEFAULT_CP.stepJobs)} /* old v1 pacing → new default */
-  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};return o}
+  o.jobs=o.jobs||[];o.roster=o.roster||[];o.expanded=o.expanded||{};o.recent=o.recent||{};
+  /* v8: pinned Home page, DM feedback notes, per-device usage counts */
+  o.home=Object.assign({items:[]},o.home||{});o.feedback=o.feedback||[];o.usage=o.usage||{};return o}
 let C=normalize(lsGet("ygh.campaign",null));
 let S=C.settings;
 let UI=Object.assign({tab:"jobs",tableMode:false,jobView:"dm",shopView:"dm",shopCat:"All",model:"claude-sonnet-5-5",print:{notices:true,ledger:true,full:false,offers:true,cards:true,roster:false,shops:true,npcs:false,council:false}},lsGet("ygh.ui",{}));
@@ -65,7 +67,7 @@ const UNDO=[],BIGS=new Map(),BIGL=[];
 const snap=()=>JSON.stringify(C,(k,v)=>{if(typeof v!=="string"||v.length<20000)return v;let i=BIGS.get(v);if(i==null){i=BIGL.length;BIGL.push(v);BIGS.set(v,i)}return "\u0000big:"+i});
 const unsnap=s=>JSON.parse(s,(k,v)=>typeof v==="string"&&v.startsWith("\u0000big:")?BIGL[+v.slice(5)]:v);
 let lastSnap=snap();
-function commit(){if(typeof Sync!=="undefined")Sync.imagesSoon();if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function commit(){if(typeof Sync!=="undefined")Sync.imagesSoon();if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();if(!dirty)lsSet("ygh.dirtyAt",Date.now());dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
 function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
 function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(unsnap(s));S=C.settings;lastSnap=s;persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
 function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;persist();UNDO.length=0;BIGS.clear();BIGL.length=0;lastSnap=snap();undoBtn();App.reloadAll()}
@@ -112,21 +114,21 @@ async function linkHandle(h){fileHandle=h;try{await IDB.set("fileHandle",h)}catc
 async function unlinkFile(){fileHandle=null;try{await IDB.del("fileHandle")}catch(e){}banner();App.render();toast("Unlinked: Save will ask where to save next time")}
 async function writeHandle(h,text){if((await h.queryPermission({mode:"readwrite"}))!=="granted"&&(await h.requestPermission({mode:"readwrite"}))!=="granted")throw new Error("permission");
   const w=await h.createWritable();await w.write(text);await w.close()}
-function markSaved(msg){dirty=false;lsSet("ygh.dirty",false);persist();banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
+function markSaved(msg){Alerts.clear("save");Alerts.clear("stale");dirty=false;lsSet("ygh.dirty",false);persist();banner();toast(msg);backup("Saved to file");if(typeof App!=="undefined")App.render()}
 /* show that a save is in progress (GitHub saves can take a while) and ignore repeat presses meanwhile */
 let saving=false;
-function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…")}
+function savingUI(on){saving=on;document.body.classList.toggle("saving",on);["#saveCamp","#bannerSave"].forEach(q=>{const b=$(q);if(b)b.disabled=on});if(on&&typeof Sync!=="undefined")Sync.setStatus("Saving to GitHub…");banner()}
 async function saveCampaign(asNew){
   if(!isDM())return;
   if(saving){toast("Still saving…");return}
-  C.savedAt=new Date().toISOString();
-  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
+  C.savedAt=new Date().toISOString();if(typeof Usage!=="undefined")Usage.merge();
+  if(Sync.canPush()&&asNew!==true&&asNew!=="file"){let ok=false,err=null;savingUI(true);try{ok=await Sync.push()}catch(e){err=e}finally{savingUI(false)}if(!err){if(ok)markSaved("Saved to GitHub");return}{const e=err;Sync.setStatus("GitHub save failed");Alerts.set("save",`Couldn't save to GitHub: ${e.message}. Your changes are safe in this browser; try again in a moment.`);if(await ask("Could not save to GitHub",esc(e.message)+". Your changes are still safe in this browser. Settings → GitHub saves → <b>Check my token</b> shows the cause.",["Save a file instead","Cancel"])!==0)return}}
   const text=JSON.stringify(C,null,1);
   if(FS_OK){
     try{if(fileHandle&&!asNew){await writeHandle(fileHandle,text);markSaved(`Saved to ${fileHandle.name}`);return}}
     catch(e){toast(`Couldn't write ${fileHandle.name}; choose where to save`)}
     try{const h=await showSaveFilePicker({suggestedName:"yggdrasil-campaign.json",types:FILE_TYPES});await writeHandle(h,text);await linkHandle(h);markSaved(`Saved to ${h.name}. Ctrl+S updates this file from now on`)}
-    catch(e){if(e.name!=="AbortError")toast("Save failed: "+e.message)}
+    catch(e){if(e.name!=="AbortError"){toast("Save failed: "+e.message);Alerts.set("save","Couldn't save the campaign file: "+e.message)}}
     return}
   const ok=await saveFile(`yggdrasil-campaign-${stamp()}.json`,text);
   if(ok)markSaved("Campaign saved to file");
@@ -155,10 +157,28 @@ function importData(d){
     commit();App.reloadAll();toast("Imported Upgrade Chart data");return}
   toast("Didn't recognize that file");
 }
+/* ---- problems the DM must notice (failed saves, GitHub unreachable, long-unsaved work).
+   Shown as a red banner; Minimize hides it until a *different* problem appears, and the header keeps a red ⚠ until it's fixed. ---- */
+const Alerts=(()=>{const L={};let min=new Set(lsGet("ygh.alertMin",[]));
+  const keyOf=(k,m)=>k+"|"+m.replace(/\d+/g,"#");
+  function set(k,msg,act){if(L[k]&&L[k].msg===msg)return;L[k]={msg,act,t:Date.now()};banner()}
+  function clear(k){if(!L[k])return;delete L[k];banner()}
+  function top(){return Object.entries(L).sort((a,b)=>b[1].t-a[1].t)[0]}
+  function minimize(){Object.entries(L).forEach(([k,v])=>min.add(keyOf(k,v.msg)));lsSet("ygh.alertMin",[...min].slice(-30));banner()}
+  function expand(){min=new Set();lsSet("ygh.alertMin",[]);banner()}
+  const open=()=>Object.entries(L).filter(([k,v])=>!min.has(keyOf(k,v.msg)));
+  return {set,clear,top,minimize,expand,open,any:()=>!!top()}})();
+setInterval(()=>{if(!isDM())return;const at=lsGet("ygh.dirtyAt",0);if(dirty&&at&&Date.now()-at>30*60e3)Alerts.set("stale",`You have changes from over ${Math.floor((Date.now()-at)/60e3/10)*10} minutes ago that aren't saved yet.`,"save");else Alerts.clear("stale")},60e3);
 function banner(){
-  const b=$("#banner");if(!b)return;
-  b.classList.toggle("show",dirty);
-  $("#bannerText").textContent=Sync.canPush()?"Unsaved changes. Ctrl+S saves them to GitHub so everyone gets them.":fileHandle?`Unsaved changes. Ctrl+S saves them to ${fileHandle.name}.`:C.savedAt?`Unsaved changes since your last campaign file (${new Date(C.savedAt).toLocaleString()}).`:"This campaign hasn't been saved to a file yet.";
+  const b=$("#banner");if(!b)return;const dm=typeof isDM==="function"&&isDM();
+  const o=dm?Alerts.open():[],t=dm&&Alerts.top();
+  b.classList.toggle("show",!!o.length);b.classList.add("err");
+  if(o.length){const [k,v]=o.sort((x,y)=>y[1].t-x[1].t)[0];$("#bannerText").textContent="⚠ "+v.msg+(o.length>1?` (+${o.length-1} more)`:"");
+    const a=$("#bannerAct");a.textContent=v.act==="sync"?"Check again":"Save now";a.dataset.act=v.act||"save"}
+  const st=$("#saveState");if(st){const off=typeof Sync!=="undefined"&&/Offline|Can't reach/.test(Sync.status()||"");
+    const [cls,lbl,tip]=!dm?["","",""]:t?["bad","⚠ "+(t[0]==="stale"?"Not saved":t[0]==="sync"?(off?"Offline":"GitHub"):t[0]==="img"?"Pictures":"Not saved"),t[1].msg+" (click for details)"]:
+      saving?["busy","Saving…","Saving now"]:dirty?["warn","Unsaved","You have changes that aren't saved yet. Ctrl+S saves them."]:["ok","Saved ✓",C.savedAt?`Last saved ${new Date(C.savedAt).toLocaleString()}`:"Saved"];
+    st.className="btn ghost hb state "+cls;st.querySelector(".st-lbl").textContent=lbl;st.title=tip;st.hidden=!dm}
   const s=$("#saveCamp");if(s)s.title=fileHandle?`Save to ${fileHandle.name} (Ctrl+S)`:"Save Campaign (Ctrl+S)";
 }
 document.addEventListener("click",e=>$$("details.more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false}));

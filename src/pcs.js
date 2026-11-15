@@ -51,7 +51,7 @@ const PCs=(()=>{
         <section><h3>Other</h3>${[["Movement",moves(m)&&p.speed],["Senses",p.senses],["Resistances",p.resist],["Languages",p.langs],["Tools",tl.join(", ")],["In the guild",[m.status,m.assign&&("operating "+Roster.assignName(m))].filter(Boolean).join(" · ")]].filter(x=>x[1]).map(([k,v])=>`<div class="row"><b>${k}:</b> ${esc(v)}</div>`).join("")||'<p class="muted">Nothing else recorded.</p>'}</section>
       </div></div></div>`}
   function tableSection(){const d=document.createElement("section");d.className="pc-section";const L=list();
-    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:!isDM()?'<p class="muted">The party hasn\'t been entered yet.</p>':'<p class="muted">Add the party in Roster → Guild Members (type Active PC) and fill in their play stats.</p>'}`;
+    d.innerHTML=`<h2 class="pc-title">Characters</h2>${L.length?`<div class="pc-cards">${L.map(cardHTML).join("")}</div>`:!isDM()?'<p class="muted">The party hasn\'t been entered yet.</p>':'<p class="muted">Add the party in Guild → Members (type Active PC) and fill in their play stats.</p>'}`;
     d.onclick=e=>{const b=e.target.closest("[data-pc]");if(!b)return;const m=C.roster.find(x=>x.id===b.dataset.pc);if(m)openBig(m)};
     return d}
   /* full card, with in-place editing of play stats (and level) during play */

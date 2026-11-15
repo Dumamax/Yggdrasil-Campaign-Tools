@@ -1,18 +1,32 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
-  const PREP_TABS=["jobs","shop","roster","market","maps","print","settings"],TABLE_TABS=["table","maps","print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-ledger","p-map"];
+  /* DM nav: six groups; some hold sub-tabs (shown in #subNav). Members/NPCs/Council/Worlds all render in tab-roster. */
+  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members","standing"],npcs:["npcs","council"],market:["market"],world:["maps","worlds"]};
+  const SUBS={shop:"Hall",members:"Members",standing:"Standing",npcs:"NPCs",council:"The Council",maps:"Maps",worlds:"Worlds"};
+  const ROSTER_SUBS=["members","npcs","council","worlds"],EXTRA=["print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-map"];
+  const DM_TABS=[...Object.values(GROUPS).flat(),...EXTRA];
+  const groupOf=t=>Object.keys(GROUPS).find(g=>GROUPS[g].includes(t));
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
-  function tabs(){return !isDM()?PLAYER_TABS:UI.tableMode?TABLE_TABS:PREP_TABS}
   function nav(){
-    if(!tabs().includes(UI.tab))UI.tab=tabs()[0];
-    $$("#mainNav button").forEach(b=>{b.hidden=!tabs().includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===UI.tab)});
-    const pl=!isDM();document.body.classList.toggle("player",pl);
-    $$("main>section").forEach(s=>s.hidden=pl?s.id!=="tab-p":s.id!=="tab-"+UI.tab);
-    $("#dmBtn .lbl").textContent=pl?"DM View":"Player View";$("#dmBtn").title=pl?(unlocked()?"Back to DM View":"Unlock DM View"):"Preview what players see (stays unlocked)";
-    $("#tmToggle").classList.toggle("on",UI.tableMode);$("#tmToggle .lbl").textContent=UI.tableMode?"Table Mode: on":"Table Mode";
+    const pl=!isDM();
+    if(UI.tab==="roster")UI.tab=UI.rosterSub||"members";if(UI.tab==="table")UI.tab="home";if(UI.tab==="p-ledger"){UI.tab="p-guild";UI.pGuild="ledger"}
+    if(!(pl?PLAYER_TABS:DM_TABS).includes(UI.tab))UI.tab=pl?PLAYER_TABS[0]:"home";
+    if(ROSTER_SUBS.includes(UI.tab))UI.rosterSub=UI.tab;
+    const g=groupOf(UI.tab);if(g){UI.lastSub=UI.lastSub||{};UI.lastSub[g]=UI.tab}
+    $$("#mainNav button").forEach(b=>{const t=b.dataset.tab;b.hidden=pl?!PLAYER_TABS.includes(t):!GROUPS[t];b.classList.toggle("on",pl?t===UI.tab:t===g)});
+    const sn=$("#subNav"),subs=!pl&&g?GROUPS[g]:[];sn.hidden=subs.length<2;
+    sn.innerHTML=subs.length<2?"":`<div class="seg">${subs.map(t=>`<button class="btn${t===UI.tab?" on":""}" data-sub="${t}">${SUBS[t]}</button>`).join("")}</div>`;
+    document.body.classList.toggle("player",pl);
+    const sec=pl?"tab-p":ROSTER_SUBS.includes(UI.tab)?"tab-roster":"tab-"+UI.tab;
+    $$("main>section").forEach(s=>s.hidden=s.id!==sec);
+    $("#dmBtn .lbl").textContent="DM Mode";$("#dmBtn").title=unlocked()?"Back to DM Mode":"Unlock DM Mode";
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
+    banner();
   }
-  function render(){nav();Standing.render();({jobs:Jobs.render,shop:Upgrades.render,roster:Roster.render,market:Shops.render,table:renderTable,print:renderPrint,settings:renderSettings,maps:renderMaps,"p-board":renderPlayer,"p-party":renderPlayer,"p-guild":renderPlayer,"p-council":renderPlayer,"p-market":renderPlayer,"p-ledger":renderPlayer,"p-map":renderPlayer}[UI.tab]||(()=>{}))();Standing.render()}
+  function renderStanding(){const L=C.guild.cp.log||[];
+    $("#standingView").innerHTML=`<div class="panel"><h2>Rank ladder</h2>${Standing.ladderHTML()}</div>
+      <div class="panel"><h2>History</h2>${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td>${new Date(e.t).toLocaleDateString()}</td><td><b>${esc(e.kind)}</b> ${esc(e.label||"")}</td><td>${e.pts>0?"+":""}${fmt(e.pts)}</td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Completing quests and great deeds adds points here.</p>'}</div>`}
+  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,standing:renderStanding,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -22,15 +36,14 @@ const App=(()=>{
   function renderPlayer(){const el=$("#tab-p");
     const P={"p-board":()=>Jobs.noticesPrintHTML()||none("No notices are posted right now. Check back soon."),
       "p-party":()=>"",
-      "p-guild":()=>Standing.printHTML({ladder:true})+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:""),
+      "p-guild":()=>`<div class="seg pv-sub">${[["hall","Our Guild"],["ledger","Builder's Ledger"]].map(([k,l])=>`<button class="btn${(UI.pGuild||"hall")===k?" on":""}" data-pguild="${k}">${l}</button>`).join("")}</div>`+((UI.pGuild||"hall")==="ledger"?Upgrades.ledgerHTML(false,true):Standing.printHTML({ladder:true})+playerRoster()+(Upgrades.cardsHTML()?`<h2 class="pv-h">The Hall</h2>${Upgrades.cardsHTML()}`:"")),
       "p-council":()=>`<div class="seg pv-sub">${[["people","Notable Figures"],["council","The Council"]].map(([k,l])=>`<button class="btn${(UI.pNpc||"people")===k?" on":""}" data-pnpc="${k}">${l}</button>`).join("")}</div>`+((UI.pNpc||"people")==="council"?NPCs.councilHTML()||none("The Council hasn't published its roll yet."):""),
       "p-market":()=>Shops.printHTML()||none("No shops have been charted yet."),
-      "p-ledger":()=>Upgrades.ledgerHTML(false,true),
       "p-map":()=>C.maps.some(m=>!m.hidden)?C.maps.filter(m=>!m.hidden).map(m=>`<figure class="pv-map"><figcaption>${esc(m.name||"Map")}</figcaption><img src="${m.img}" alt="${esc(m.name||"Map")}" data-map="${m.id}"><div class="muted pv-maphint">Tap to zoom</div></figure>`).join(""):none("No maps have been posted yet.")};
     el.innerHTML=`<style>${printCSS()}</style><div class="pv">${(P[UI.tab]||P["p-board"])()}</div><p class="pv-foot muted">${esc(Sync.status()||"")}</p>`;
     if(UI.tab==="p-party")el.querySelector(".pv").append(PCs.tableSection());
     if(UI.tab==="p-council"&&(UI.pNpc||"people")==="people"){const s=NPCs.playerSection();el.querySelector(".pv").insertAdjacentHTML("beforeend",s.childElementCount?"":none("No notable figures have been introduced yet."));el.querySelector(".pv").append(s)}
-    el.onclick=e=>{const sb=e.target.closest("[data-pnpc]");if(sb){UI.pNpc=sb.dataset.pnpc;saveUI();renderPlayer();return}const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
+    el.onclick=e=>{const sb=e.target.closest("[data-pnpc]");if(sb){UI.pNpc=sb.dataset.pnpc;saveUI();renderPlayer();return}const gb=e.target.closest("[data-pguild]");if(gb){UI.pGuild=gb.dataset.pguild;saveUI();renderPlayer();return}const i=e.target.closest("[data-map]");if(!i)return;const m=C.maps.find(x=>x.id===i.dataset.map);if(m)openMap(m.img,m.name||"Map")}}
   /* full-screen map viewer: wheel / pinch / buttons to zoom, drag to pan */
   function openMap(src,name){const md=modal(`<div class="mapv"><div class="mapv-bar"><b>${esc(name)}</b><span><button class="btn small" data-z="-" aria-label="Zoom out">−</button><button class="btn small" data-z="fit">Fit</button><button class="btn small" data-z="+" aria-label="Zoom in">+</button><button class="btn ghost" data-close aria-label="Close">✕</button></span></div><div class="mapv-view"><img src="${src}" alt="${esc(name)}" draggable="false"></div></div>`,"map-modal");
     const v=md.el.querySelector(".mapv-view"),img=v.querySelector("img");let z=1;
@@ -66,37 +79,9 @@ const App=(()=>{
     h.oninput=e=>{if(e.target.dataset.mapname!=null){C.maps[+e.target.closest(".map-card").dataset.i].name=e.target.value;commit()}};
     h.onclick=e=>{const r=e.target.closest(".map-card");if(!r)return;const i=+r.dataset.i,m=C.maps[i];
       if(e.target.dataset.open!=null)openMap(m.img,m.name||"Map");
-      else if(e.target.dataset.goworld){e.preventDefault();UI.tab="roster";UI.rosterSub="worlds";saveUI();render();flash(`[data-world="${e.target.dataset.goworld}"]`)}
+      else if(e.target.dataset.goworld){e.preventDefault();UI.tab="worlds";saveUI();render();flash(`[data-world="${e.target.dataset.goworld}"]`)}
       else if(e.target.dataset.mapup!=null&&i>0){[C.maps[i-1],C.maps[i]]=[C.maps[i],C.maps[i-1]];commit();renderMaps()}
       else if(e.target.dataset.mapdel!=null){if(!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent="Remove? Click again";return}C.maps.splice(i,1);commit();renderMaps();toast("Map removed · Ctrl+Z to undo")}}}
-  /* ---------- table mode ---------- */
-  function renderTable(){
-    const el=$("#tableView");el.innerHTML="";el.className="tm-layout";
-    el.appendChild(PCs.tableSection());
-    const side=document.createElement("aside");side.className="tm-side";el.appendChild(side);
-    const closed=UI.tmClosed||(UI.tmClosed=[]);
-    const live=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
-    const col=(title,inner)=>{const p=document.createElement("details");p.className="panel side-panel";p.open=!closed.includes(title);p.innerHTML=`<summary><h2>${title}</h2></summary>`;
-      p.ontoggle=()=>{const i=closed.indexOf(title);if(p.open&&i>=0)closed.splice(i,1);else if(!p.open&&i<0)closed.push(title);saveUI()};
-      const b=document.createElement("div");b.className="side-body";if(typeof inner==="string")b.innerHTML=inner;else b.appendChild(inner);p.appendChild(b);side.appendChild(p);return b};
-    col("Guild standing",Standing.tablePanel());
-    const jobs=document.createElement("div");jobs.style.display="grid";jobs.style.gap="10px";
-    if(!live.length)jobs.innerHTML='<p class="muted">Keep or finalize jobs on the Job Board and they show up here.</p>';
-    live.forEach(h=>jobs.appendChild(Jobs.dmCard(h,true)));
-    col("Jobs in play",jobs);
-    const UT=Upgrades.tables(),g=C.guild,owned=UT.catalog.filter(u=>(g.owned[u.id]||0)>0);
-    col("The guild hall",`<div class="row"><b>Treasury:</b> ${g.treasury==null?"—":fmt(g.treasury)+" gp"}</div>
-      ${owned.length||g.uniques.length?`<ul style="margin:4px 0;padding-left:18px">${owned.map(u=>{const lv=g.owned[u.id],L=u.levels[lv-1],op=C.roster.find(m=>m.assign===u.id);return `<li><b>${esc(u.name)} ${Upgrades.ROMAN[lv-1]}</b>: ${esc(L.perk)}${op?` <span class="muted">(${esc(op.name)})</span>`:""}</li>`}).join("")}${g.uniques.map(u=>`<li><b>${esc(u.name)}</b>: ${esc(u.perk)}</li>`).join("")}</ul>`:'<p class="muted">No upgrades yet.</p>'}`);
-    const chapel=g.owned.chapel||0,disc=[0,.25,.5,.75][chapel]||0;
-    const rv=col("Revival fee",`<label class="inline">Character level <input id="rvLvl" type="number" min="1" max="20" value="${S.partyLevel}"></label><div class="row" id="rvOut"></div><p class="hint">${S.revive} gp × level${chapel?`, −${disc*100}% from the Root Chapel ${Upgrades.ROMAN[chapel-1]}`:""}. Death in the worlds is normal D&D.</p>`);
-    const upd=()=>{const l=Math.max(1,+rv.querySelector("#rvLvl").value||1);rv.querySelector("#rvOut").innerHTML=`<b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span>`};
-    rv.querySelector("#rvLvl").oninput=upd;upd();
-    col("NPCs in play",NPCs.tableEl());
-    col("Also in the hall",`<table class="ref">${Roster.sorted().filter(m=>m.kind!=="Active PC").map(m=>`<tr><td><b>${esc(m.name)}</b> <span class="muted">${esc(m.kind)} · ${esc(m.status||"")}</span>${m.assign?`<br><i class="muted">Operating ${esc(Roster.assignName(m))}</i>`:""}</td><td style="color:var(--ink);text-align:left;white-space:normal">${(m.skills||[]).map(s=>`${esc(s.s)} (${Roster.gradeOf(m,s)})`).join(", ")}</td></tr>`).join("")}</table>`);
-    col("Shops in play",Shops.tableHTML());
-    col("Price reference",`<p class="hint" style="margin-bottom:6px">${esc(prices().rule||"")}</p>${priceHTML()}`);
-  }
-
   /* price rows like ["Inn, one night (modest / comfortable)","5 sp / 8 sp"] → label each price instead of matching slashes by eye */
   function priceItems([name,val]){const V=String(val).split(/\s+\/\s+/),unit=(V[V.length-1].match(/\s(cp|sp|gp|pp)(\/\w+)?$/)||[""])[0];
     const vals=V.map(v=>/\d$/.test(v.trim())&&unit?v.trim()+unit:v.trim());
@@ -168,7 +153,7 @@ const App=(()=>{
     $("#pNoticeCount").textContent=`(${finals} marked final)`;
     $("#printGo").textContent=FRAMED?"Download printable":"Print";
     const body=printBody(true);if(!body)$("#pPages").textContent="";
-    $("#preview").innerHTML=body?`<style>${printCSS().replace(/@media print\{[^}]*\}\}?/g,"")}</style>${body}`:'<p class="muted" style="color:#5a3e1e">Nothing selected yet. Mark jobs final on the Job Board, buy upgrades, or tick a section above.</p>';
+    $("#preview").innerHTML=body?`<style>${printCSS().replace(/@media print\{[^}]*\}\}?/g,"")}</style>${body}`:'<p class="muted" style="color:#5a3e1e">Nothing selected yet. Mark jobs final on the Quests tab, buy upgrades, or tick a section above.</p>';
   }
 
   /* ---------- settings ---------- */
@@ -183,7 +168,7 @@ const App=(()=>{
     $("#lastSaved").textContent=C.savedAt?`Last saved to file: ${new Date(C.savedAt).toLocaleString()}`:"Not saved to a file yet.";
     $("#linkedFile").innerHTML=FS_OK?(fileHandle?`Linked file: <b>${esc(fileHandle.name)}</b>. Save and Ctrl+S overwrite it.`:'<span class="muted">No linked file yet: the next Save asks where to keep it, then updates that same file.</span>'):'<span class="muted">This browser downloads a new dated file on each save (Chrome or Edge can update one file in place).</span>';
     const ss=$("#syncSettings");ss.innerHTML=Sync.settingsHTML();Sync.bindSettings(ss);
-    const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
+    const fb=$("#fbSettings");fb.innerHTML=Feedback.settingsHTML();Feedback.bindSettings(fb);const cs=$("#cpSettings");cs.innerHTML=Standing.settingsHTML();Standing.bindSettings(cs);
     $("#unlinkFile").hidden=!fileHandle;$("#saveAsNew").hidden=!FS_OK;renderBackups();
     loadTblEditor();
   }
@@ -209,11 +194,15 @@ const App=(()=>{
   }
 
   function bind(){
-    $("#mainNav").onclick=e=>{const t=e.target.closest("[data-tab]")?.dataset.tab;if(!t)return;const same=UI.tab===t;UI.tab=t;saveUI();render();if(!same)window.scrollTo(0,0)};
-    $("#tmToggle").onclick=()=>{UI.tableMode=!UI.tableMode;UI.tab=UI.tableMode?"table":"jobs";saveUI();render()};
-    $("#saveCamp").onclick=$("#bannerSave").onclick=()=>saveCampaign();
+    const goTab=t=>{const same=UI.tab===t;UI.tab=t;saveUI();render();Usage.tab(UI.tab);if(!same)window.scrollTo(0,0)};
+    $("#mainNav").onclick=e=>{const t=e.target.closest("[data-tab]")?.dataset.tab;if(!t)return;goTab(GROUPS[t]?(UI.lastSub?.[t]&&GROUPS[t].includes(UI.lastSub[t])?UI.lastSub[t]:GROUPS[t][0]):t)};
+    $("#subNav").onclick=e=>{const t=e.target.closest("[data-sub]")?.dataset.sub;if(t)goTab(t)};
+    $("#saveCamp").onclick=()=>saveCampaign();
+    $("#bannerAct").onclick=e=>e.target.dataset.act==="sync"?Sync.pull(true):saveCampaign();
+    $("#bannerMin").onclick=()=>{Alerts.minimize();toast("Hidden. The red ⚠ next to Save stays until it's fixed")};
+    $("#saveState").onclick=()=>{if(Alerts.any()){Alerts.expand()}else if(dirty)saveCampaign();else Sync.pull(true)};
+    $("#fbBtn").onclick=()=>Feedback.open();
     $("#undoBtn").onclick=undo;
-    $("#loadCamp").onclick=openCampaign;
     $("#saveAsNew").onclick=()=>saveCampaign(true);$("#unlinkFile").onclick=unlinkFile;
     $("#fileIn").onchange=e=>{const f=e.target.files[0];if(f)loadCampaignFile(f);e.target.value=""};
     $("#tab-print").onchange=e=>{const k=e.target.dataset.p;if(!k)return;UI.print[k]=e.target.checked;saveUI();renderPrint()};
@@ -249,6 +238,7 @@ const App=(()=>{
     store:'<path d="M3 9l1.5-5h15L21 9M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/>',
     print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
     map:'<path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+    home:'<path d="M3 11 12 3l9 8"/><path d="M5 10v11h5v-6h4v6h5V10"/>',chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>',
     gear:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'};
   function icons(){$$("[data-ico]").forEach(el=>{if(!el.querySelector("svg.ico"))el.insertAdjacentHTML("afterbegin",`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[el.dataset.ico]||""}</svg>`)})}
   const MQ=window.matchMedia("(max-width: 760px), (pointer: coarse) and (max-height: 500px)");
@@ -256,29 +246,29 @@ const App=(()=>{
     $$("#layoutSeg button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));const n=$("#layoutNow");if(n)n.textContent=`Showing: ${phone?"Phone":"Desktop"}`}
   /* ---------- go to + quick search ---------- */
   function flash(sel){requestAnimationFrame(()=>{const el=document.querySelector(sel);if(!el)return;el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")})}
-  function go(tab,sel,prep){if(UI.tableMode&&!TABLE_TABS.includes(tab))UI.tableMode=false;UI.tab=tab;if(prep)prep();saveUI();render();flash(sel)}
+  function go(tab,sel,prep){UI.tab=tab;if(prep)prep();saveUI();render();flash(sel)}
   function index(){const R=[];
     C.jobs.forEach(h=>R.push({k:"Job",n:Jobs.hookTitle(h),d:`${h.objective} · ${h.patron.name}${h.final?" · Final":h.kept?" · Kept":""}`,
       go:()=>go("jobs",`[data-job="${h.id}"]`,()=>{UI.jobView="dm";Jobs.setOpen(h,true);Jobs.initControls()})}));
     C.roster.forEach(m=>{const mem=NPCs.isMember(m),sub=mem?"members":m.seat?"council":"npcs";
       R.push({k:mem?m.kind:m.seat?`${m.seat} Seat`:"NPC",n:m.name||"(unnamed)",d:[m.title||m.occupation||m.role,m.ancestry,m.guild].filter(Boolean).join(" · "),
-        go:()=>go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=sub;NPCs.reset()})})});
+        go:()=>go(sub,mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>NPCs.reset())})});
     C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
     Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
-    (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("roster",`[data-world="${w.id}"]`,()=>{UI.rosterSub="worlds"})}));
+    (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("worlds",`[data-world="${w.id}"]`)}));
     C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
-    [["jobs","Job Board"],["shop","Guild Upgrades"],["roster","Roster"],["market","Shop Generator"],["print","Print"],["settings","Settings & Tables"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
+    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["standing","Guild · Standing"],["npcs","NPCs"],["council","NPCs · The Council"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
   function qsOpen(){$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}
-  function qsClose(){$("#qs").hidden=true}
+  function qsClose(){const q=$("#qsIn").value.trim();if(!$("#qs").hidden&&q&&!qsClose.picked)Usage.search(q,"");qsClose.picked=false;$("#qs").hidden=true}
   function qsDraw(){const q=$("#qsIn").value.toLowerCase().trim(),w=q.split(/\s+/).filter(Boolean);
     let L=w.length?qsItems.filter(r=>{const s=(r.n+" "+r.d+" "+r.k).toLowerCase();return w.every(x=>s.includes(x))}):qsItems.filter(r=>r.k==="Tab"||r.k==="Job"&&/Final|Kept/.test(r.d));
     if(q)L.sort((a,b)=>(b.n.toLowerCase().startsWith(q)-a.n.toLowerCase().startsWith(q))||(b.n.toLowerCase().includes(q)-a.n.toLowerCase().includes(q)));
     L=L.slice(0,40);qsSel=Math.min(qsSel,Math.max(0,L.length-1));$("#qsRes")._L=L;
     $("#qsRes").innerHTML=L.length?L.map((r,i)=>`<div class="qs-item${i===qsSel?" on":""}" data-i="${i}"><span class="badge">${esc(r.k)}</span> <b>${esc(r.n)}</b> <span class="muted">${esc(r.d)}</span></div>`).join(""):'<p class="muted" style="padding:8px 12px">Nothing matches.</p>';
     $("#qsRes .qs-item.on")?.scrollIntoView({block:"nearest"})}
-  function qsPick(i){const r=$("#qsRes")._L[i];if(!r)return;qsClose();r.go()}
+  function qsPick(i){const r=$("#qsRes")._L[i];if(!r)return;const q=$("#qsIn").value.trim();if(q)Usage.search(q,r.k+": "+r.n);qsClose.picked=true;qsClose();r.go()}
   function bindSearch(){
     $("#qsBtn").onclick=qsOpen;
     $("#qs").onclick=e=>{if(e.target.id==="qs")qsClose();const it=e.target.closest(".qs-item");if(it)qsPick(+it.dataset.i)};
@@ -293,8 +283,9 @@ const App=(()=>{
     Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();
     icons();layout();MQ.addEventListener?.("change",layout);$("#layoutSeg").onclick=e=>{const l=e.target.dataset.l;if(!l)return;UI.layout=l;saveUI();layout()};
     $("#dmBtn").onclick=()=>isDM()?previewPlayer():unlocked()?backToDM():dmGate();
-    $("#hdrMore").onclick=e=>{const p=e.target.dataset.proxy;if(!p)return;$("#hdrMore").open=false;$("#"+p).click()};
-    $("#hdrMore summary").addEventListener("click",()=>{$("#hdrSync").textContent=Sync.status()||"";const t=$("#hdrMore [data-proxy=tmToggle]");t.textContent=UI.tableMode?"Leave Table Mode":"Table Mode"});$("#syncBtn").onclick=()=>Sync.pull(true);
+    $("#hdrMore").onclick=e=>{const b=e.target.closest("[data-go],[data-act]");if(!b)return;$("#hdrMore").open=false;const g=b.dataset.go,a=b.dataset.act;Usage.event("menu:"+(g||a));
+      if(g){UI.tab=g;saveUI();render();window.scrollTo(0,0)}else if(a==="load")openCampaign();else if(a==="sync")Sync.pull(true);else if(a==="feedback")Feedback.open();else if(a==="preview")previewPlayer();else if(a==="dm")$("#dmBtn").click()};
+    $("#hdrMore summary").addEventListener("click",()=>{$("#hdrSync").textContent=Sync.status()||""});
     $("#pwForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(f.get("pw")!==f.get("pw2")){toast("Passwords don't match");return}S.dmHash=await hashPw(f.get("pw"));lsSet("ygh.dm",S.dmHash);commit();e.target.reset();toast("Password changed. Save so it travels with the campaign")};
     $("#lockNow").onclick=lockDM;
     Jobs.bind();Upgrades.bind();Roster.bind();bind();bindSearch();banner();undoBtn();render();Sync.start();Updater.start();
@@ -304,6 +295,6 @@ const App=(()=>{
       render();
     }
   }
-  return {render,reloadAll,boot,flash,openMap};
+  return {render,reloadAll,boot,flash,openMap,go,priceHTML};
 })();
 App.boot();

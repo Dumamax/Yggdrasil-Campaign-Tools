@@ -1,5 +1,5 @@
-/* ===== Player View / DM View + GitHub sync =====
-   Player View (default): read-only handouts, no editing, no secrets on screen. DM View: unlocked per browser with the DM password
+/* ===== Player View / DM Mode + GitHub sync =====
+   Player View (default): read-only handouts, no editing, no secrets on screen. DM Mode: unlocked per browser with the DM password
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
@@ -22,8 +22,8 @@ async function hashPw(pw){const s="ygh-dm:"+pw;
   catch(e){let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return "d"+h.toString(16)}}
 const unlocked=()=>!!S.dmHash&&lsGet("ygh.dm",null)===S.dmHash;
 const isDM=()=>unlocked()&&!UI.preview;
-/* Player View from DM View is just a preview: this browser stays unlocked, so DM View comes back without the password */
-function previewPlayer(){UI.preview=true;UI.tab="p-board";saveUI();App.render();toast("Player View (DM View is one tap away)")}
+/* Player View from DM Mode is just a preview: this browser stays unlocked, so DM Mode comes back without the password */
+function previewPlayer(){UI.preview=true;UI.tab="p-board";saveUI();App.render();toast("Player View (DM Mode is one tap away)")}
 function backToDM(){UI.preview=false;UI.tab="jobs";saveUI();App.render()}
 function lockDM(){lsSet("ygh.dm",null);UI.preview=false;UI.tab="p-board";saveUI();App.render();toast("Locked: this browser will ask for the password again")}
 
@@ -36,15 +36,15 @@ function ask(title,msg,buttons){return new Promise(res=>{const m=modal(`<h2>${es
 
 function dmGate(){
   const first=!S.dmHash;
-  const m=modal(`<h2>${first?"Set a DM password":"DM View"}</h2>
-    <p class="muted">${first?"DM View shows secrets and lets you edit everything. Pick a password to keep players from wandering in; this browser stays unlocked until you lock it.":"Enter the DM password. This browser stays unlocked until you switch back to Player View."}</p>
+  const m=modal(`<h2>${first?"Set a DM password":"DM Mode"}</h2>
+    <p class="muted">${first?"DM Mode shows secrets and lets you edit everything. Pick a password to keep players from wandering in; this browser stays unlocked until you lock it.":"Enter the DM password. This browser stays unlocked until you switch back to Player View."}</p>
     <form><input type="password" name="pw" placeholder="Password" autocomplete="current-password" required>${first?'<input type="password" name="pw2" placeholder="Repeat password" required>':""}
     <div class="actions"><button class="btn primary">${first?"Set password & unlock":"Unlock"}</button><button type="button" class="btn ghost" data-x>Cancel</button></div><p class="muted" id="gateMsg"></p></form>`);
   m.el.querySelector("[data-x]").onclick=m.close;
   m.el.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),pw=f.get("pw");
     if(first){if(pw!==f.get("pw2")){$("#gateMsg").textContent="Passwords don't match.";return}S.dmHash=await hashPw(pw);commit()}
     else if(await hashPw(pw)!==S.dmHash){$("#gateMsg").textContent="That's not it.";e.target.pw.select();return}
-    lsSet("ygh.dm",S.dmHash);m.close();UI.preview=false;UI.tab="jobs";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM View unlocked")}}
+    lsSet("ygh.dm",S.dmHash);m.close();UI.preview=false;UI.tab="home";saveUI();App.render();toast(first?"Password set. Save so it travels with the campaign":"DM Mode unlocked")}}
 
 const Sync=(()=>{
   const cfg=()=>Object.assign({},SYNC_DEF,lsGet("ygh.sync",{}));
@@ -55,7 +55,11 @@ const Sync=(()=>{
   const enc=s=>{const b=new TextEncoder().encode(s);let o="";for(let i=0;i<b.length;i+=0x8000)o+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(o)};
   const dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
   const canPush=()=>isDM()&&!!token();
-  function setStatus(s){if(s==="Up to date"&&C.savedAt)s+=` · save from ${whenStr(C.savedAt)}`;status=s;const b=$("#syncBtn");if(b){b.title=s+" (click to check now)";b.querySelector(".lbl").textContent=s}}
+  function setStatus(s){if(s==="Up to date"&&C.savedAt)s+=` · save from ${whenStr(C.savedAt)}`;status=s;const h=$("#hdrSync");if(h)h.textContent=s;
+    if(/^(Offline|Can't reach GitHub)/.test(s))Alerts.set("sync",(s.startsWith("Offline")?"You're offline":"Can't reach GitHub")+". Changes stay safe in this browser and save once the connection is back.","sync");
+    else if(/^Picture upload paused/.test(s))Alerts.set("img","Pictures haven't finished uploading to GitHub (retrying every minute). Keep the app open until this clears.","sync");
+    else if(/^(Up to date|Saved to GitHub|Unsaved changes|Your copy differs)/.test(s))Alerts.clear("sync");
+    banner()}
   async function fetchRemote(skipIfSha){const r=await fetch(api(true),{headers:hdr(),cache:"no-cache"});
     if(r.status===404)return {missing:true};if(!r.ok)throw new Error(r.status===401?"GitHub token was refused":r.status===403||r.status===429?"GitHub is busy (too many checks from this network); retrying shortly":"GitHub error "+r.status);
     const j=await r.json();if(skipIfSha&&j.sha===skipIfSha)return {sha:j.sha,same:true};let text;
@@ -158,7 +162,7 @@ const Sync=(()=>{
         const tree=await uploadFiles(files,(k,N)=>`Uploading picture ${i} of ${list.length}${N>1?` (${Math.round(100*(k-1)/N)}%)`:""}…`);
         setStatus(`Uploading picture ${i} of ${list.length}…`);await commitFiles(tree,`Add picture ${n.split(".")[0].slice(0,8)}`);
         files.forEach(f=>have.add(f[0]));const s=lsGet("ygh.blobs",{});files.forEach(f=>delete s[f[0]]);lsSet("ygh.blobs",s)}
-      setStatus(keep&&!/^Uploading picture/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
+      Alerts.clear("img");setStatus(keep&&!/^(Uploading picture|Picture upload)/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
       .catch(e=>{setStatus("Picture upload paused (retrying)");clearTimeout(imgT);imgT=setTimeout(syncImages,60e3)})
       .finally(()=>{imgJob=null});
     return imgJob}
