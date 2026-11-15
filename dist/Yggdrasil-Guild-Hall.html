@@ -657,6 +657,17 @@ body:not(.mobile) .fb-m{display:none!important}
 body.mobile .bx-hide{display:none}body.mobile .sb-grid{grid-template-columns:1fr}body.mobile #encList{grid-template-columns:minmax(0,1fr)}
 .bx-controls>label{display:flex;align-items:center;gap:5px;white-space:nowrap}.bx-controls>label select{width:auto}
 .dice-count{gap:4px}.dice-count .btn{min-width:30px;padding:2px 6px}.dice-count .muted{font-size:13px;margin-right:4px}
+/* ---- Home free board ---- */
+.home-board{position:relative;min-height:300px}
+.home-board>.tile{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;margin:0;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.home-board .tile-head{cursor:grab;touch-action:none;user-select:none}.home-board .tile.moving{box-shadow:0 14px 34px rgba(0,0,0,.6);outline:1px solid var(--gold)}
+.home-board .tile.moving .tile-head{cursor:grabbing}
+.tile-body{flex:1;min-height:0;overflow:auto}
+.tile-rs{position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 50%,var(--line) 50%,var(--line) 60%,transparent 60%,transparent 70%,var(--line) 70%,var(--line) 80%,transparent 80%)}
+.tile-rs:hover{background:linear-gradient(135deg,transparent 50%,var(--gold) 50%,var(--gold) 60%,transparent 60%,transparent 70%,var(--gold) 70%,var(--gold) 80%,transparent 80%)}
+.init-in{width:58px;padding:2px 4px;font-weight:700}table.init tr.on .init-in{color:var(--gold)}
+body.mobile .home-board{height:auto!important;display:grid;gap:12px}
+body.mobile .home-board>.tile{position:static;width:auto!important;height:auto!important}body.mobile .tile-rs{display:none}body.mobile .home-board .tile-head{cursor:default}
 
 .notice{position:relative;background:
   radial-gradient(ellipse at 20% 15%,rgba(255,255,255,.35),transparent 55%),
@@ -1119,7 +1130,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 15 00:46";
+const BUILD="Nov 15 00:54";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -6693,7 +6704,7 @@ const PCs=(()=>{
     if(x.portrait)o.portrait=String(x.portrait);if(x.bodyImage||x.body)o.body=String(x.bodyImage||x.body);
     return Object.keys(o).length?o:null}
 
-  return {crop,cropShrink,openBig,shrink,tableSection,editorHTML,bindEditor,fromImport,list};
+  return {init,crop,cropShrink,openBig,shrink,tableSection,editorHTML,bindEditor,fromImport,list};
 })();
 
 /* Shop Generator default tables (prices in gp; 0.1 = 1 sp, 0.01 = 1 cp) */
@@ -7905,7 +7916,7 @@ Return ONLY JSON in this shape: ${SHAPE}`,"Homebrew")}}
 .sb-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sb-lic{font-size:10px;color:#7a6650;margin-top:10px}
 .pr-sb .sb-block{break-inside:avoid;page-break-inside:avoid}`;
   document.head.insertAdjacentHTML("beforeend",`<style>${SB_CSS}</style>`);
-  return {load,get,all,isSRD,statHTML,render,open,encTile,encAct,encCond,syncLive,printHTML,PRINT_CSS:SB_CSS,loaded:()=>!!SRD,mine}})();
+  return {initOf,load,get,all,isSRD,statHTML,render,open,encTile,encAct,encCond,syncLive,printHTML,PRINT_CSS:SB_CSS,loaded:()=>!!SRD,mine}})();
 
 /* ================= HOME: the DM's pinned page (pins + widgets), feedback notes, usage counts =================
    C.home.items = [{id,type,ref?,size:"s"|"m"|"l",locked?,text?,state?}]. Pinned NPCs/members mirror m.pinned (one source of truth
@@ -7928,7 +7939,7 @@ const Home=(()=>{
     prices:{g:"Reference",n:"Price reference",d:"What things cost",size:"m"},
     revival:{g:"Reference",n:"Revival fee",d:"The Root Chapel's price by level",size:"s"}};
   const H=()=>C.home,items=()=>H().items;
-  const gen={},timers={},rolls={},dcount={};let arrange=false,dragId=null;
+  const gen={},timers={},rolls={},dcount={};const W0={s:300,m:500,l:780},GAP=14;
   const byRef=(type,ref)=>items().find(i=>i.type===type&&i.ref===ref);
   const isPinned=(type,ref)=>type==="npc"?!!C.roster.find(m=>m.id===ref)?.pinned:!!byRef(type,ref);
   function add(type,ref,extra){const it=Object.assign({id:uid(),type,size:ref?(type==="map"?"m":type==="job"?"m":"m"):(WIDGETS[type]?.size||"m")},ref?{ref}:{},extra||{});items().push(it);return it}
@@ -7943,20 +7954,54 @@ const Home=(()=>{
       if(gone)L.splice(i,1)}}
 
   /* ---------- render ---------- */
+  /* free board: each item has its own x/y/w (and optional h) in px and a z order; moving or resizing brings it to the top.
+     Positions are clamped to the board's width so nothing can be dragged off-screen; the board grows downward to fit. Phone layout stacks them. */
+  const phone=()=>document.body.classList.contains("mobile");
   function render(){const el=$("#homeView");if(!el)return;sync();
     const L=items();
     el.innerHTML=`<div class="controls home-bar"><button class="btn primary" data-h="add">＋ Add widget</button>
-      <button class="btn${arrange?" on":""}" data-h="arrange" title="Move and resize what's on Home">${arrange?"Done arranging":"Arrange"}</button>
+      <button class="btn" data-h="tidy" title="Line everything up neatly, top to bottom">Tidy up</button>
       <button class="btn ghost" data-h="clear" title="Remove everything that isn't locked 🔒">Clear unlocked pins</button>
-      <span class="muted home-tip">Pin things here with 📌 on any card. Lock 🔒 what should stay between sessions.</span></div>
-      ${L.length?`<div class="home-grid${arrange?" arranging":""}"></div>`:`<div class="home-empty"><h2>Your table, your way</h2><p>Pin the NPCs, quest, map and shops you'll need with 📌 on their cards, then add tools like dice or a notepad with <b>＋ Add widget</b>.</p></div>`}`;
-    const g=el.querySelector(".home-grid");if(g)L.forEach(it=>{try{g.appendChild(tile(it))}catch(e){console.error(e)}});
+      <span class="muted home-tip">Drag a title bar to move, the corner to resize. Pin things with 📌 on any card; lock 🔒 what should stay between sessions.</span></div>
+      ${L.length?`<div class="home-board"></div>`:`<div class="home-empty"><h2>Your table, your way</h2><p>Pin the NPCs, quest, map and shops you'll need with 📌 on their cards, then add tools like dice or a notepad with <b>＋ Add widget</b>.</p></div>`}`;
+    const g=el.querySelector(".home-board");
+    if(g){const order=phone()?[...L].sort((a,b)=>(a.y??1e9)-(b.y??1e9)||(a.x||0)-(b.x||0)):L;
+      order.forEach(it=>{try{g.appendChild(tile(it))}catch(e){console.error(e)}});if(!phone())layout(g)}
     el.onclick=onClick;el.oninput=onInput;el.onchange=onChange;
-    if(g){g.ondragstart=e=>{const t=e.target.closest(".tile");if(!t||!arrange)return;dragId=t.dataset.id;t.classList.add("dragging")};
-      g.ondragover=e=>{if(dragId)e.preventDefault()};
-      g.ondrop=e=>{e.preventDefault();const t=e.target.closest(".tile");if(!t||!dragId||t.dataset.id===dragId){dragId=null;return}
-        const a=L.findIndex(i=>i.id===dragId),it=L.splice(a,1)[0];L.splice(L.findIndex(i=>i.id===t.dataset.id),0,it);dragId=null;commit();render()};
-      g.ondragend=()=>{dragId=null}}}
+    if(g&&!phone()){g.onpointerdown=startDrag;g.ondblclick=e=>{if(!e.target.closest(".tile-rs"))return;const it=items().find(i=>i.id===e.target.closest(".tile").dataset.id);if(it){it.h=null;commit();render()}}}}
+  let rzT=null;addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(UI.tab==="home"&&isDM())render()},200)});
+  const BW=g=>Math.max(320,g.clientWidth);
+  function place(g,it,d){const bw=BW(g),w=Math.min(it.w||W0[it.size||"m"],bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";
+    d.style.left=Math.max(0,Math.min(it.x||0,bw-w))+"px";d.style.top=Math.max(0,it.y||0)+"px";d.style.zIndex=it.z||0}
+  function rects(g,skip){return [...g.children].filter(t=>!skip||!skip.has(t.dataset.id)).map(t=>({x:t.offsetLeft,y:t.offsetTop,w:t.offsetWidth,h:t.offsetHeight}))}
+  /* drop placement: the spot where the tile can sit highest, leftmost on ties */
+  function spot(R,w,bw){let best=null;for(let x=0;x<=Math.max(0,bw-w);x+=Math.max(20,Math.floor((bw-w)/24)||20)){
+      const y=R.filter(r=>r.x<x+w+GAP&&x<r.x+r.w+GAP).reduce((m,r)=>Math.max(m,r.y+r.h+GAP),0);if(!best||y<best.y)best={x,y}}
+    return best||{x:0,y:0}}
+  function layout(g,all){const bw=BW(g),L=items(),byId=id=>g.querySelector(`.tile[data-id="${id}"]`);let ch=false;
+    const fresh=new Set(L.filter(it=>all||it.x==null||it.y==null).map(it=>it.id));
+    L.forEach(it=>{if(!it.w){it.w=W0[it.size||"m"];ch=true}if(!fresh.has(it.id))place(g,it,byId(it.id))});
+    const R=rects(g,fresh);
+    L.filter(it=>fresh.has(it.id)).forEach(it=>{const d=byId(it.id),w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";const p=spot(R,w,bw);it.x=p.x;it.y=p.y;place(g,it,d);R.push({x:p.x,y:p.y,w,h:d.offsetHeight});ch=true});
+    grow(g);if(ch)commit()}
+  function grow(g){const b=[...g.children].reduce((m,t)=>Math.max(m,t.offsetTop+t.offsetHeight),0);g.style.height=(b+40)+"px"}
+  const topZ=()=>items().reduce((m,i)=>Math.max(m,i.z||0),0)+1;
+  function startDrag(e){if(e.button>0)return;const t=e.target.closest(".tile");if(!t)return;const rs=e.target.closest(".tile-rs"),hd=e.target.closest(".tile-head");
+    if(!rs&&(!hd||e.target.closest("button,select,input,a")))return;
+    const it=items().find(i=>i.id===t.dataset.id);if(!it)return;const g=t.parentElement,bw=BW(g);e.preventDefault();
+    const sx=e.clientX,sy=e.clientY,x0=t.offsetLeft,y0=t.offsetTop,w0=t.offsetWidth,h0=t.offsetHeight;let moved=false;
+    it.z=topZ();t.style.zIndex=it.z;t.classList.add("moving");try{t.setPointerCapture(e.pointerId)}catch(_){}
+    let scrollT=null,lastY=sy;
+    const move=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy+(window.scrollY-sy0);lastY=ev.clientY;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;
+      if(rs){const w=Math.max(220,Math.min(bw-x0,w0+dx)),h=Math.max(110,h0+dy);t.style.width=w+"px";t.style.height=h+"px"}
+      else{t.style.left=Math.max(0,Math.min(bw-w0,x0+dx))+"px";t.style.top=Math.max(0,y0+dy)+"px"}
+      if(t.offsetTop+t.offsetHeight+40>g.offsetHeight)g.style.height=(t.offsetTop+t.offsetHeight+40)+"px"};
+    const sy0=window.scrollY;
+    scrollT=setInterval(()=>{if(lastY>innerHeight-50)window.scrollBy(0,14);else if(lastY<90&&window.scrollY>0)window.scrollBy(0,-14)},30);
+    const up=()=>{clearInterval(scrollT);t.removeEventListener("pointermove",move);t.removeEventListener("pointerup",up);t.removeEventListener("pointercancel",up);t.classList.remove("moving");
+      if(moved){if(rs){it.w=t.offsetWidth;it.h=t.offsetHeight}else{it.x=t.offsetLeft;it.y=t.offsetTop}Usage.event(rs?"home:resize":"home:move")}
+      grow(g);commit()};
+    t.addEventListener("pointermove",move);t.addEventListener("pointerup",up);t.addEventListener("pointercancel",up)}
   function title(it){if(!it.ref)return WIDGETS[it.type]?.n||it.type;
     if(it.type==="npc")return C.roster.find(m=>m.id===it.ref)?.name||"Person";
     if(it.type==="job"){const h=C.jobs.find(x=>x.id===it.ref);return h?Jobs.hookTitle(h):"Quest"}
@@ -7964,14 +8009,12 @@ const Home=(()=>{
     if(it.type==="map")return C.maps.find(m=>m.id===it.ref)?.name||"Map";
     if(it.type==="enc")return C.encounters.find(x=>x.id===it.ref)?.name||"Encounter";
     if(it.type==="mon")return Bestiary.get(it.ref)?.name||"Monster";return ""}
-  function tile(it){const d=document.createElement("div");d.className=`panel tile size-${it.size||"m"}${it.locked?" locked":""}`;d.dataset.id=it.id;if(it.ref)d.dataset.ref=it.ref;if(arrange)d.draggable=true;
+  function tile(it){const d=document.createElement("div");d.className=`panel tile${it.locked?" locked":""}`;d.dataset.id=it.id;if(it.ref)d.dataset.ref=it.ref;
     const kind=it.ref?PIN_TYPES[it.type]:WIDGETS[it.type]?.g.replace(/s$/,"")||"";
     d.innerHTML=`<div class="tile-head"><span class="tile-kind">${esc(kind)}</span><h3>${esc(title(it))}</h3><span class="tile-ctl">
-      ${arrange?`<button class="btn small ghost" data-t="left" title="Move earlier">◀</button><button class="btn small ghost" data-t="right" title="Move later">▶</button>
-      <select data-t="size" title="Size">${[["s","Small"],["m","Medium"],["l","Wide"]].map(([k,l])=>`<option value="${k}"${(it.size||"m")===k?" selected":""}>${l}</option>`).join("")}</select>`:""}
       ${it.ref?`<button class="btn small ghost" data-t="open" title="Open where it lives">↗</button>`:""}
       <button class="btn small ghost lockbtn${it.locked?" on":""}" data-t="lock" title="${it.locked?"Locked: stays when you clear pins (click to unlock)":"Lock so Clear unlocked pins keeps it"}">${it.locked?"🔒":"🔓"}</button>
-      <button class="btn small ghost" data-t="rm" title="Remove from Home">✕</button></span></div><div class="tile-body"></div>`;
+      <button class="btn small ghost" data-t="rm" title="Remove from Home">✕</button></span></div><div class="tile-body"></div><div class="tile-rs" title="Drag to resize; double-click to fit the height"></div>`;
     const b=d.querySelector(".tile-body"),c=body(it);if(typeof c==="string")b.innerHTML=c;else if(c)b.appendChild(c);return d}
 
   function body(it){
@@ -7999,8 +8042,8 @@ const Home=(()=>{
           <div class="actions"><button class="btn small primary" data-w="tgo">${t.end?"Pause":"Start"}</button><button class="btn small" data-w="treset">Reset</button></div>`}
       case "init":{const st=it.state||(it.state={rows:[],turn:0,round:1});const R=st.rows;
         return `<div class="init-top"><b>Round ${st.round}</b><button class="btn small primary" data-w="inext">Next turn ▶</button><button class="btn small ghost" data-w="iclear">Clear</button></div>
-          <table class="ref init">${R.map((r,i)=>`<tr class="${i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><b>${r.i}</b></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
-          <form class="dice-row" data-w="iadd"><input name="n" placeholder="Name" style="flex:1;min-width:90px"><input name="i" type="number" placeholder="Init" style="width:64px"><button class="btn small">Add</button></form>`}
+          <table class="ref init">${R.map((r,i)=>`<tr class="${i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><input class="init-in" type="number" data-w="iset" data-v="${i}" value="${r.i}"></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
+          <form class="dice-row" data-w="iadd">${whoSel(st)}<input name="n" placeholder="Name" hidden style="flex:1;min-width:90px"><input name="i" type="number" placeholder="Roll" title="Leave blank to roll d20 + their initiative bonus" style="width:64px"><button class="btn small">Add</button></form>`}
       case "party":return PCs.tableSection();
       case "quests":{const w=document.createElement("div");w.className="tile-stack";const L=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
         if(!L.length)w.innerHTML='<p class="muted">Keep or finalize quests on the Quests tab and they show up here.</p>';L.forEach(h=>w.appendChild(Jobs.dmCard(h,true)));return w}
@@ -8014,6 +8057,13 @@ const Home=(()=>{
           <div class="row"><b>Fee:</b> <span style="color:var(--gold);font-size:20px">${fmt(Math.round(S.revive*l*(1-disc)))} gp</span></div><p class="muted" style="font-size:14px">${S.revive} gp × level${chapel?`, −${disc*100}% from the Root Chapel ${Upgrades.ROMAN[chapel-1]}`:""}.</p>`}
     }
     return `<p class="muted">This widget isn't available in this version.</p>`}
+  /* who can join initiative: party members, pinned monsters, and live creatures in pinned encounters */
+  function candidates(){const L=[];PCs.list().forEach(m=>L.push({k:"pc:"+m.id,n:m.name,b:PCs.init(m),g:"Party"}));
+    items().forEach(i=>{if(i.type==="mon"){const m=Bestiary.get(i.ref);if(m)L.push({k:"mon:"+m.id,n:m.name,b:Bestiary.initOf(m),g:"Monsters"})}
+      if(i.type==="enc"){const en=C.encounters.find(x=>x.id===i.ref);(en?.live?.cr||[]).filter(c=>c.hp>0).forEach(c=>{const m=Bestiary.get(c.mid);L.push({k:"cr:"+en.id+":"+c.k,n:c.label,b:m?Bestiary.initOf(m):0,g:"Monsters"})})}});return L}
+  function whoSel(st){const have=new Set(st.rows.map(r=>r.n)),L=candidates().filter(c=>!have.has(c.n)),grp=g=>L.filter(c=>c.g===g);
+    return `<select name="who" data-w="iwho" style="flex:1;min-width:130px"><option value="">Add to the order…</option>${["Party","Monsters"].map(g=>grp(g).length?`<optgroup label="${g}">${grp(g).map(c=>`<option value="${esc(c.k)}">${esc(c.n)} (${c.b>=0?"+":""}${c.b})</option>`).join("")}</optgroup>`:"").join("")}<option value="custom">Someone else (type a name)</option></select>`}
+  function isort(st,cur){st.rows.sort((a,b)=>b.i-a.i);const t=st.rows.findIndex(r=>r.n===cur);st.turn=t>=0?t:0}
   function shopHTML(s){return `<div class="badges"><span class="badge gold">${esc(s.typeLabel||s.type)}</span><span class="badge">${esc(s.place||"")}</span><span class="badge">${esc(s.wealth||"")}</span></div>
     ${(s.staff||[]).map(p=>`<div class="row"><b>${esc(p.name)}</b>, ${esc(p.role)}${p.personality?` <span class="muted">· ${esc(p.personality)}</span>`:""}</div>`).join("")}
     <table class="ref stock">${(s.stock||[]).map(i=>`<tr><td>${esc(i.name)}${i.rarity?` <span class="badge leaf">${esc(i.rarity)}</span>`:""}</td><td>${Shops.coins(i.price)}</td></tr>`).join("")}</table>
@@ -8035,7 +8085,7 @@ const Home=(()=>{
   async function onClick(e){
     const h=e.target.closest("[data-h]")?.dataset.h;
     if(h==="add")return picker();
-    if(h==="arrange"){arrange=!arrange;return render()}
+    if(h==="tidy"){const g=$(".home-board");if(g){items().forEach(i=>{i.h=null;i.z=1});render();layout($(".home-board"),true);toast("Tidied up · Ctrl+Z to undo")}return}
     if(h==="clear"){const b=e.target.closest("[data-h]");const n=items().filter(i=>!i.locked).length;if(!n){toast("Everything here is locked");return}
       if(!b.dataset.sure){b.dataset.sure=1;b.textContent=`Remove ${n} unlocked? Click again`;return}
       items().filter(i=>!i.locked).forEach(i=>{if(i.type==="npc"){const m=C.roster.find(x=>x.id===i.ref);if(m)m.pinned=false}});
@@ -8044,8 +8094,6 @@ const Home=(()=>{
     const t=e.target.closest("[data-t]")?.dataset.t;
     if(t==="lock"){it.locked=!it.locked;commit();return render()}
     if(t==="rm"){if(it.type==="npc"){const m=C.roster.find(x=>x.id===it.ref);if(m)m.pinned=false}L.splice(i,1);commit();render();toast("Removed from Home · Ctrl+Z to undo");return}
-    if(t==="left"&&i>0){[L[i-1],L[i]]=[L[i],L[i-1]];commit();return render()}
-    if(t==="right"&&i<L.length-1){[L[i+1],L[i]]=[L[i],L[i+1]];commit();return render()}
     if(t==="open")return openRef(it);
     const mon=e.target.closest("a[data-mon]");if(mon){e.preventDefault();return Bestiary.open(mon.dataset.mon)}
     const w=e.target.closest("[data-w]");if(!w||w.tagName==="INPUT"||w.tagName==="TEXTAREA"||w.tagName==="FORM")return;const a=w.dataset.w,v=w.dataset.v;
@@ -8070,11 +8118,16 @@ const Home=(()=>{
   function onInput(e){const it=find(e);if(!it)return;const w=e.target.dataset.w;
     if(w==="notes"||w==="expr"){it.text=e.target.value;if(w==="notes"){clearTimeout(noteT);noteT=setTimeout(commit,700)}}}
   function onChange(e){const it=find(e);if(!it)return;
-    if(e.target.dataset.t==="size"){it.size=e.target.value;commit();return render()}
+    if(e.target.dataset.w==="iwho"){const f=e.target.form;f.n.hidden=e.target.value!=="custom";if(!f.n.hidden)f.n.focus();else f.i.focus();return}
+    if(e.target.dataset.w==="iset"){const st=it.state,cur=st.rows[st.turn]?.n;st.rows[+e.target.dataset.v].i=+e.target.value||0;isort(st,cur);commit();return render()}
     if(e.target.dataset.w==="cond"&&it.type==="enc"){const en=C.encounters.find(x=>x.id===it.ref);if(en){Bestiary.encCond(en,e);render()}return}
     if(e.target.dataset.w==="rvl"){it.text=e.target.value;commit();return render()}}
   document.addEventListener("submit",e=>{if(e.target.dataset?.w!=="iadd")return;e.preventDefault();const it=find(e);if(!it)return;const f=new FormData(e.target),n=String(f.get("n")||"").trim();
-    if(!n)return;it.state.rows.push({n,i:+f.get("i")||0});it.state.rows.sort((a,b)=>b.i-a.i);it.state.turn=0;commit();render();$(`.tile[data-id="${it.id}"] input[name=n]`)?.focus()});
+    const who=String(f.get("who")||""),c=candidates().find(x=>x.k===who),name=c?c.n:n;if(!name){toast("Pick someone, or choose “Someone else” and type a name");return}
+    const typed=String(f.get("i")??"").trim(),roll=typed===""?1+rnd(20):null,val=roll!=null?roll+(c?c.b:0):+typed;
+    const st=it.state,cur=st.rows[st.turn]?.n;st.rows.push({n:name,i:val});isort(st,cur);
+    if(who.startsWith("cr:")){const [,eid,...k]=who.split(":"),en=C.encounters.find(x=>x.id===eid),cr=en?.live?.cr.find(x=>x.k===k.join(":"));if(cr)cr.init=val}
+    commit();render();if(roll!=null)toast(`${name} rolled ${roll}${c&&c.b?` ${c.b>0?"+":"−"} ${Math.abs(c.b)}`:""} = ${val}`);$(`.tile[data-id="${it.id}"] select[name=who]`)?.focus()});
   document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset?.w==="amt"){e.preventDefault();e.target.closest(".cr-row")?.querySelector('[data-w="dmg"]')?.click()}if(e.key==="Enter"&&e.target.dataset?.w==="expr"){e.preventDefault();e.target.closest(".tile")?.querySelector('[data-v="expr"]')?.click()}});
   function openRef(it){if(it.type==="npc"){const m=C.roster.find(x=>x.id===it.ref);if(!m)return;const mem=NPCs.isMember(m);App.go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=mem?"members":m.seat?"council":"npcs";NPCs.reset()})}
     else if(it.type==="job"){const h=C.jobs.find(x=>x.id===it.ref);if(h)App.go("jobs",`[data-job="${h.id}"]`,()=>{UI.jobView="dm";Jobs.setOpen(h,true);Jobs.initControls()})}

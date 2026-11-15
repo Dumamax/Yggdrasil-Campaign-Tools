@@ -647,3 +647,14 @@ body:not(.mobile) .fb-m{display:none!important}
 body.mobile .bx-hide{display:none}body.mobile .sb-grid{grid-template-columns:1fr}body.mobile #encList{grid-template-columns:minmax(0,1fr)}
 .bx-controls>label{display:flex;align-items:center;gap:5px;white-space:nowrap}.bx-controls>label select{width:auto}
 .dice-count{gap:4px}.dice-count .btn{min-width:30px;padding:2px 6px}.dice-count .muted{font-size:13px;margin-right:4px}
+/* ---- Home free board ---- */
+.home-board{position:relative;min-height:300px}
+.home-board>.tile{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;margin:0;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.home-board .tile-head{cursor:grab;touch-action:none;user-select:none}.home-board .tile.moving{box-shadow:0 14px 34px rgba(0,0,0,.6);outline:1px solid var(--gold)}
+.home-board .tile.moving .tile-head{cursor:grabbing}
+.tile-body{flex:1;min-height:0;overflow:auto}
+.tile-rs{position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 50%,var(--line) 50%,var(--line) 60%,transparent 60%,transparent 70%,var(--line) 70%,var(--line) 80%,transparent 80%)}
+.tile-rs:hover{background:linear-gradient(135deg,transparent 50%,var(--gold) 50%,var(--gold) 60%,transparent 60%,transparent 70%,var(--gold) 70%,var(--gold) 80%,transparent 80%)}
+.init-in{width:58px;padding:2px 4px;font-weight:700}table.init tr.on .init-in{color:var(--gold)}
+body.mobile .home-board{height:auto!important;display:grid;gap:12px}
+body.mobile .home-board>.tile{position:static;width:auto!important;height:auto!important}body.mobile .tile-rs{display:none}body.mobile .home-board .tile-head{cursor:default}

@@ -244,4 +244,4 @@ Return ONLY JSON in this shape: ${SHAPE}`,"Homebrew")}}
 .sb-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sb-lic{font-size:10px;color:#7a6650;margin-top:10px}
 .pr-sb .sb-block{break-inside:avoid;page-break-inside:avoid}`;
   document.head.insertAdjacentHTML("beforeend",`<style>${SB_CSS}</style>`);
-  return {load,get,all,isSRD,statHTML,render,open,encTile,encAct,encCond,syncLive,printHTML,PRINT_CSS:SB_CSS,loaded:()=>!!SRD,mine}})();
+  return {initOf,load,get,all,isSRD,statHTML,render,open,encTile,encAct,encCond,syncLive,printHTML,PRINT_CSS:SB_CSS,loaded:()=>!!SRD,mine}})();
