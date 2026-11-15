@@ -623,3 +623,26 @@ details.adv{margin-top:6px}details.adv>summary{cursor:pointer;font:700 18px "Cin
 details.usage{margin:6px 0}.usage-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .hint-q.in-h{margin:0 0 0 8px;width:20px;height:20px;font-size:12px}
 body:not(.mobile) .fb-m{display:none!important}
+/* ---- bestiary + encounters ---- */
+.enc-panel{margin-bottom:14px}.enc-head{display:flex;align-items:center;gap:10px}.enc-head h2{margin:0;flex:1}
+#encList{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:10px}
+.enc-card{display:grid;gap:8px}.enc-name{font:700 16px "Cinzel",serif;flex:1;min-width:0}
+.bx-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.bx-row>label{flex:1;min-width:90px;display:grid;gap:2px}.bx-row input,.bx-row select{width:100%}
+.enc-g{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px dotted var(--line)}.enc-g a{color:var(--ink);flex:1}
+.enc-n{display:flex;align-items:center;gap:6px}.enc-diff{white-space:normal;text-align:left;line-height:1.35;padding:4px 8px;display:block}
+.badge.leaf{border-color:var(--leaf);color:var(--leaf)}
+.bx-controls{align-items:end}.bx-new .menu{min-width:240px}
+.bx-table tr[data-mon]{cursor:pointer}.bx-table tr[data-mon]:hover td{background:#2f2920}
+.bx-lic{font-size:12px;margin-top:10px}
+.bx-modal-w{max-width:640px;max-height:90vh;overflow:auto}.bx-acts{flex-wrap:wrap;margin-top:10px}.bx-acts select{max-width:220px}
+.bx-edit{max-width:720px;max-height:90vh;overflow:auto}.bx-form{display:grid;gap:8px}.bx-form textarea{width:100%}.bx-form label{display:grid;gap:2px}
+.enc-top{margin-bottom:6px}.enc-live{display:grid;gap:8px}
+.cr-row{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel2)}.cr-row.dead{opacity:.5}.cr-row.dead b{text-decoration:line-through}
+.cr-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.cr-top a{color:var(--ink)}
+.cr-hp{display:flex;gap:6px;align-items:center;margin:5px 0}.cr-hp input{width:62px}
+.hpbar{flex:1;position:relative;height:22px;background:#1a1612;border:1px solid var(--line);border-radius:5px;overflow:hidden;min-width:90px}
+.hpbar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#3e6a2a,#7fa86a)}.hpbar.bl i{background:linear-gradient(90deg,#8a3a1f,#c4624f)}
+.hpbar span{position:relative;display:block;text-align:center;font:600 13px/20px "Crimson Pro",serif;color:#fff;text-shadow:0 1px 2px #000}
+.cr-cond{display:flex;flex-wrap:wrap;gap:4px;align-items:center}.cr-cond .badge{cursor:pointer}.cr-cond select{font-size:13px;padding:1px 4px}
+body.mobile .bx-hide{display:none}body.mobile .sb-grid{grid-template-columns:1fr}body.mobile #encList{grid-template-columns:minmax(0,1fr)}
+.bx-controls>label{display:flex;align-items:center;gap:5px;white-space:nowrap}.bx-controls>label select{width:auto}

@@ -1,8 +1,8 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
   /* DM nav: six groups; some hold sub-tabs (shown in #subNav). Members/NPCs/Council/Worlds all render in tab-roster. */
-  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members","standing"],npcs:["npcs","council"],market:["market"],world:["maps","worlds"]};
-  const SUBS={shop:"Hall",members:"Members",standing:"Standing",npcs:"NPCs",council:"The Council",maps:"Maps",worlds:"Worlds"};
+  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members","standing"],npcs:["npcs","council","bestiary"],market:["market"],world:["maps","worlds"]};
+  const SUBS={shop:"Hall",members:"Members",standing:"Standing",npcs:"NPCs",council:"The Council",bestiary:"Bestiary",maps:"Maps",worlds:"Worlds"};
   const ROSTER_SUBS=["members","npcs","council","worlds"],EXTRA=["print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-map"];
   const DM_TABS=[...Object.values(GROUPS).flat(),...EXTRA];
   const groupOf=t=>Object.keys(GROUPS).find(g=>GROUPS[g].includes(t));
@@ -26,7 +26,7 @@ const App=(()=>{
   function renderStanding(){const L=C.guild.cp.log||[];
     $("#standingView").innerHTML=`<div class="panel"><h2>Rank ladder</h2>${Standing.ladderHTML()}</div>
       <div class="panel"><h2>History</h2>${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td>${new Date(e.t).toLocaleDateString()}</td><td><b>${esc(e.kind)}</b> ${esc(e.label||"")}</td><td>${e.pts>0?"+":""}${fmt(e.pts)}</td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Completing quests and great deeds adds points here.</p>'}</div>`}
-  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,standing:renderStanding,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
+  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,standing:renderStanding,bestiary:Bestiary.render,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -104,13 +104,14 @@ const App=(()=>{
     if(p.standing)add("standing","Guild Standing",Standing.printHTML());
     if(p.roster)add("roster","Roster sheet (DM)",Roster.printHTML(),true);
     if(p.npcs)add("npcs","NPC cheat sheet (DM)",NPCs.cheatHTML(),true);
+    if(p.stat)add("stat","Stat blocks (DM)",Bestiary.printHTML(),true);
     return L}
   function measure(L){const m=document.createElement("div");m.style.cssText=`position:absolute;left:-99999px;top:0;width:${PAGE_W}px;visibility:hidden`;
     m.className=UI.print.ink?"ink":"";m.innerHTML=`<style>${printCSS()}</style>`+L.map(s=>`<div class="pr-sec">${s.html}</div>`).join("");document.body.appendChild(m);
     const secs=[...m.querySelectorAll(".pr-sec")];L.forEach((s,i)=>s.pages=paginate(secs[i]));m.remove();return L}
   /* simulate page breaks: blocks that must not split get pushed whole to the next page */
   function paginate(sec){const top0=sec.getBoundingClientRect().top,H=PAGE_H-(sec.querySelector(".pr-sheet")?52:0);
-    const atoms=[...sec.querySelectorAll(".pr-notice,.pr-shop,.pr-card,.npc-c,.cn-seat,.peddlers,.pr tbody,.pr-roster tr")].map(e=>{const r=e.getBoundingClientRect();return [r.top-top0,r.bottom-top0]}).sort((a,b)=>a[0]-b[0]);
+    const atoms=[...sec.querySelectorAll(".pr-notice,.pr-shop,.pr-card,.npc-c,.cn-seat,.peddlers,.pr tbody,.pr-roster tr,.sb-block")].map(e=>{const r=e.getBoundingClientRect();return [r.top-top0,r.bottom-top0]}).sort((a,b)=>a[0]-b[0]);
     let pages=1,start=0;
     for(const [t,b] of atoms){if(b-start>H){if(t>start+1){start=t;pages++}while(b-start>H){start+=H;pages++}}}
     while(sec.scrollHeight-start>H+2){start+=H;pages++}
@@ -122,11 +123,11 @@ const App=(()=>{
       if(UI.print.duplex&&s.pages%2&&s!==L[L.length-1]){out+=blank;total++}});
     if(preview)$("#pPages").textContent=`About ${total} page${total>1?"s":""}${UI.print.duplex?` (${Math.ceil(total/2)} sheets)`:""}. Letter size; ${UI.print.ink?"black & white, no backgrounds.":"turn on \"Background graphics\" in the print dialog for the parchment."}`;
     return UI.print.ink?`<div class="ink">${out}</div>`:out}
-  const printCSS=()=>PRINT_BASE+Standing.PRINT_CSS+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS;
+  const printCSS=()=>PRINT_BASE+Standing.PRINT_CSS+Jobs.PRINT_CSS+Upgrades.PRINT_CSS+Shops.PRINT_CSS+NPCs.PRINT_CSS+Bestiary.PRINT_CSS;
   const PRINT_BASE=`@page{size:letter;margin:.5in}
 .pr-sec{break-before:page;page-break-before:always}.pr-sec:first-child{break-before:auto;page-break-before:auto}
 .pr-blank{height:9.5in;display:flex;align-items:center;justify-content:center;font:italic 12px Georgia,serif;color:#9a8a70}
-.pr-notice,.pr-shop,.pr-card,.npc-c,.cn-seat,.peddlers,.pr tbody,.pr tr{break-inside:avoid;page-break-inside:avoid}
+.pr-notice,.pr-shop,.pr-card,.npc-c,.cn-seat,.peddlers,.pr tbody,.pr tr,.sb-block{break-inside:avoid;page-break-inside:avoid}
 .pr h1,.pr h2,.prsub{break-after:avoid;page-break-after:avoid}
 @media screen{.preview .pr-sec{position:relative;padding-top:26px}.preview .pr-sec+.pr-sec{margin-top:22px;border-top:2px dashed #b89a6a}
 .preview .pr-sec::before{content:attr(data-label);position:absolute;top:5px;left:0;font:600 12px "Cinzel",serif;letter-spacing:.06em;color:#8a6a3a}
@@ -256,11 +257,13 @@ const App=(()=>{
     C.shops.forEach(s=>R.push({k:"Shop",n:s.name,d:`${s.typeLabel||s.type} · ${s.place}${s.kept?" · Kept":""}`,go:()=>go("market",`[data-id="${s.id}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")})}));
     Upgrades.tables().catalog.forEach(u=>R.push({k:"Upgrade",n:u.name,d:`${u.cat} · ${u.levels.map(L=>L.name).join(" → ")}`,go:()=>go("shop",`[data-upg="${u.id}"]`,()=>{UI.shopCat="All";UI.shopView="dm"})}));
     (C.worlds||[]).forEach(w=>R.push({k:"World",n:w.name,d:`${w.gate} · ${w.genre||""} · ${w.status||""}`,go:()=>go("worlds",`[data-world="${w.id}"]`)}));
+    Bestiary.all().forEach(m=>R.push({k:"Monster",n:m.name,d:`CR ${m.cr||"?"} · ${m.type||""} · ${m.src||"Homebrew"}`,go:()=>{go("bestiary","main");Bestiary.open(m.id)}}));
+    C.encounters.forEach(en=>R.push({k:"Encounter",n:en.name,d:en.groups.map(g=>`${g.n}× ${Bestiary.get(g.mid)?.name||"?"}`).join(", "),go:()=>go("bestiary",`[data-enc="${en.id}"]`)}));
     C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
-    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["standing","Guild · Standing"],["npcs","NPCs"],["council","NPCs · The Council"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
+    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["standing","Guild · Standing"],["npcs","NPCs"],["council","NPCs · The Council"],["bestiary","NPCs · Bestiary"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
-  function qsOpen(){$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}
+  function qsOpen(){if(!Bestiary.loaded())Bestiary.load().catch(()=>{});$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}
   function qsClose(){const q=$("#qsIn").value.trim();if(!$("#qs").hidden&&q&&!qsClose.picked)Usage.search(q,"");qsClose.picked=false;$("#qs").hidden=true}
   function qsDraw(){const q=$("#qsIn").value.toLowerCase().trim(),w=q.split(/\s+/).filter(Boolean);
     let L=w.length?qsItems.filter(r=>{const s=(r.n+" "+r.d+" "+r.k).toLowerCase();return w.every(x=>s.includes(x))}):qsItems.filter(r=>r.k==="Tab"||r.k==="Job"&&/Final|Kept/.test(r.d));

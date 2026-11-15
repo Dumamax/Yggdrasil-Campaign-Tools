@@ -2,7 +2,7 @@
    C.home.items = [{id,type,ref?,size:"s"|"m"|"l",locked?,text?,state?}]. Pinned NPCs/members mirror m.pinned (one source of truth
    for the NPC cheat sheet too). Widgets are types without a ref. Generator results and timers live only on this device. */
 const Home=(()=>{
-  const PIN_TYPES={npc:"Person",job:"Quest",shop:"Shop",map:"Map"};
+  const PIN_TYPES={npc:"Person",job:"Quest",shop:"Shop",map:"Map",mon:"Monster",enc:"Encounter"};
   const WIDGETS={
     "gen-npc":{g:"Generators",n:"NPC generator",d:"Roll a full NPC; save or pin the keepers",size:"m"},
     "gen-name":{g:"Generators",n:"Name generator",d:"Six fresh names; tap one to copy it",size:"s"},
@@ -30,7 +30,7 @@ const Home=(()=>{
   function sync(){const L=items();
     C.roster.filter(m=>m.pinned&&!byRef("npc",m.id)).forEach(m=>add("npc",m.id));
     for(let i=L.length-1;i>=0;i--){const it=L[i];if(!it.ref)continue;
-      const gone=it.type==="npc"?!C.roster.find(m=>m.id===it.ref&&m.pinned):it.type==="job"?!C.jobs.find(h=>h.id===it.ref):it.type==="shop"?!C.shops.find(s=>s.id===it.ref):it.type==="map"?!C.maps.find(m=>m.id===it.ref):true;
+      const gone=it.type==="npc"?!C.roster.find(m=>m.id===it.ref&&m.pinned):it.type==="job"?!C.jobs.find(h=>h.id===it.ref):it.type==="shop"?!C.shops.find(s=>s.id===it.ref):it.type==="map"?!C.maps.find(m=>m.id===it.ref):it.type==="enc"?!C.encounters.find(x=>x.id===it.ref):it.type==="mon"?!(Bestiary.isSRD(it.ref)||C.monsters.find(x=>x.id===it.ref)):true;
       if(gone)L.splice(i,1)}}
 
   /* ---------- render ---------- */
@@ -52,8 +52,10 @@ const Home=(()=>{
     if(it.type==="npc")return C.roster.find(m=>m.id===it.ref)?.name||"Person";
     if(it.type==="job"){const h=C.jobs.find(x=>x.id===it.ref);return h?Jobs.hookTitle(h):"Quest"}
     if(it.type==="shop")return C.shops.find(s=>s.id===it.ref)?.name||"Shop";
-    if(it.type==="map")return C.maps.find(m=>m.id===it.ref)?.name||"Map";return ""}
-  function tile(it){const d=document.createElement("div");d.className=`panel tile size-${it.size||"m"}${it.locked?" locked":""}`;d.dataset.id=it.id;if(arrange)d.draggable=true;
+    if(it.type==="map")return C.maps.find(m=>m.id===it.ref)?.name||"Map";
+    if(it.type==="enc")return C.encounters.find(x=>x.id===it.ref)?.name||"Encounter";
+    if(it.type==="mon")return Bestiary.get(it.ref)?.name||"Monster";return ""}
+  function tile(it){const d=document.createElement("div");d.className=`panel tile size-${it.size||"m"}${it.locked?" locked":""}`;d.dataset.id=it.id;if(it.ref)d.dataset.ref=it.ref;if(arrange)d.draggable=true;
     const kind=it.ref?PIN_TYPES[it.type]:WIDGETS[it.type]?.g.replace(/s$/,"")||"";
     d.innerHTML=`<div class="tile-head"><span class="tile-kind">${esc(kind)}</span><h3>${esc(title(it))}</h3><span class="tile-ctl">
       ${arrange?`<button class="btn small ghost" data-t="left" title="Move earlier">◀</button><button class="btn small ghost" data-t="right" title="Move later">▶</button>
@@ -71,6 +73,8 @@ const Home=(()=>{
       case "job":{const h=C.jobs.find(x=>x.id===it.ref);return h?Jobs.dmCard(h,true):""}
       case "shop":{const s=C.shops.find(x=>x.id===it.ref);return s?shopHTML(s):""}
       case "map":{const m=C.maps.find(x=>x.id===it.ref);return m?`<img class="tile-map" src="${m.img}" alt="${esc(m.name||"Map")}" data-w="map" title="Open full screen">`:""}
+      case "mon":{const m=Bestiary.get(it.ref);if(!m&&Bestiary.isSRD(it.ref)){Bestiary.load().then(()=>{if(UI.tab==="home")render()}).catch(e=>toast(e.message));return '<p class="muted">Loading…</p>'}return Bestiary.statHTML(m,{compact:true})}
+      case "enc":{const en=C.encounters.find(x=>x.id===it.ref);if(!en)return "";if(!Bestiary.loaded()&&en.groups.some(g=>Bestiary.isSRD(g.mid)))Bestiary.load().then(()=>{if(UI.tab==="home")render()}).catch(()=>{});return Bestiary.encTile(en)}
       case "gen-npc":{const m=gen[it.id];return `<div class="actions"><button class="btn primary small" data-w="roll">${m?"↻ Reroll":"Roll an NPC"}</button>${m?'<button class="btn small" data-w="savenpc">Save to NPCs</button><button class="btn small" data-w="pinnpc">📌 Save &amp; pin</button>':""}</div>`+
         (m?`<h4 class="gen-name">${esc(m.name)}</h4>${NPCs.badges(m)}${NPCs.profileHTML(m)}`:"")}
       case "gen-name":{const L=gen[it.id]||(gen[it.id]=names());return `<div class="name-list">${L.map(n=>`<button class="btn small ghost" data-w="copy" data-v="${esc(n)}" title="Copy">${esc(n)}</button>`).join("")}</div><div class="actions"><button class="btn small primary" data-w="roll">↻ New names</button></div>`}
@@ -133,7 +137,9 @@ const Home=(()=>{
     if(t==="left"&&i>0){[L[i-1],L[i]]=[L[i],L[i-1]];commit();return render()}
     if(t==="right"&&i<L.length-1){[L[i+1],L[i]]=[L[i],L[i+1]];commit();return render()}
     if(t==="open")return openRef(it);
+    const mon=e.target.closest("a[data-mon]");if(mon){e.preventDefault();return Bestiary.open(mon.dataset.mon)}
     const w=e.target.closest("[data-w]");if(!w||w.tagName==="INPUT"||w.tagName==="TEXTAREA"||w.tagName==="FORM")return;const a=w.dataset.w,v=w.dataset.v;
+    if(it.type==="enc"){const en=C.encounters.find(x=>x.id===it.ref);if(en&&Bestiary.encAct(en,a,e))render();return}
     if(a==="bigview"){const m=C.roster.find(x=>x.id===it.ref);if(m)(m.pc?PCs:NPCs).openBig(m);return}
     if(a==="map"){const m=C.maps.find(x=>x.id===it.ref);if(m)App.openMap(m.img,m.name||"Map");return}
     if(a==="roll"){gen[it.id]=it.type==="gen-npc"?NPCs.generate():it.type==="gen-shop"?Shops.newShop():names();Usage.event("gen:"+it.type);return render()}
@@ -154,17 +160,20 @@ const Home=(()=>{
     if(w==="notes"||w==="expr"){it.text=e.target.value;if(w==="notes"){clearTimeout(noteT);noteT=setTimeout(commit,700)}}}
   function onChange(e){const it=find(e);if(!it)return;
     if(e.target.dataset.t==="size"){it.size=e.target.value;commit();return render()}
+    if(e.target.dataset.w==="cond"&&it.type==="enc"){const en=C.encounters.find(x=>x.id===it.ref);if(en){Bestiary.encCond(en,e);render()}return}
     if(e.target.dataset.w==="rvl"){it.text=e.target.value;commit();return render()}}
   document.addEventListener("submit",e=>{if(e.target.dataset?.w!=="iadd")return;e.preventDefault();const it=find(e);if(!it)return;const f=new FormData(e.target),n=String(f.get("n")||"").trim();
     if(!n)return;it.state.rows.push({n,i:+f.get("i")||0});it.state.rows.sort((a,b)=>b.i-a.i);it.state.turn=0;commit();render();$(`.tile[data-id="${it.id}"] input[name=n]`)?.focus()});
-  document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset?.w==="expr"){e.preventDefault();e.target.closest(".tile")?.querySelector('[data-v="expr"]')?.click()}});
+  document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset?.w==="amt"){e.preventDefault();e.target.closest(".cr-row")?.querySelector('[data-w="dmg"]')?.click()}if(e.key==="Enter"&&e.target.dataset?.w==="expr"){e.preventDefault();e.target.closest(".tile")?.querySelector('[data-v="expr"]')?.click()}});
   function openRef(it){if(it.type==="npc"){const m=C.roster.find(x=>x.id===it.ref);if(!m)return;const mem=NPCs.isMember(m);App.go("roster",mem?`[data-member="${m.id}"]`:`[data-npc="${m.id}"]`,()=>{UI.rosterSub=mem?"members":m.seat?"council":"npcs";NPCs.reset()})}
     else if(it.type==="job"){const h=C.jobs.find(x=>x.id===it.ref);if(h)App.go("jobs",`[data-job="${h.id}"]`,()=>{UI.jobView="dm";Jobs.setOpen(h,true);Jobs.initControls()})}
     else if(it.type==="shop")App.go("market",`[data-id="${it.ref}"]`,()=>{UI.mkt&&(UI.mkt.view="dm")});
-    else if(it.type==="map")App.go("maps",`.map-card`)}
+    else if(it.type==="map")App.go("maps",`.map-card`);
+    else if(it.type==="enc")App.go("bestiary",`[data-enc="${it.ref}"]`);
+    else if(it.type==="mon"){App.go("bestiary","main");Bestiary.open(it.ref)}}
   function picker(){const groups={};Object.entries(WIDGETS).forEach(([k,w])=>(groups[w.g]||(groups[w.g]=[])).push([k,w]));
     const md=modal(`<h2>Add to Home</h2><div class="picker">${Object.entries(groups).map(([g,L])=>`<h4>${esc(g)}</h4><div class="picker-grid">${L.map(([k,w])=>`<button class="btn" data-add="${k}"><b>${esc(w.n)}</b><span class="muted">${esc(w.d)}</span></button>`).join("")}</div>`).join("")}
-      <p class="muted" style="margin-top:10px">To pin a person, quest, shop or map, use the 📌 on its card.</p></div><div class="actions"><button class="btn ghost" data-close>Close</button></div>`,"home-picker");
+      <p class="muted" style="margin-top:10px">To pin a person, quest, shop or map, use the 📌 on its card. Monsters and encounters pin from NPCs → Bestiary.</p></div><div class="actions"><button class="btn ghost" data-close>Close</button></div>`,"home-picker");
     md.el.onclick=e=>{if(e.target.closest("[data-close]"))return md.close();const k=e.target.closest("[data-add]")?.dataset.add;if(!k)return;add(k);Usage.event("widget:"+k);commit();md.close();render();
       setTimeout(()=>{const t=$$(".tile");t[t.length-1]?.scrollIntoView({behavior:"smooth",block:"center"})},50)}}
 
@@ -195,7 +204,7 @@ const Usage=(()=>{
 
 /* ---------- feedback notes: the DM taps "Feedback" whenever something is confusing; notes travel with the campaign ---------- */
 const Feedback=(()=>{
-  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",standing:"Guild · Standing",npcs:"NPCs",council:"NPCs · Council",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
+  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",standing:"Guild · Standing",npcs:"NPCs",council:"NPCs · Council",bestiary:"NPCs · Bestiary",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
   const tabName=t=>TAB_NAMES[t]||t;
   function open(){const md=modal(`<h2>What was confusing or annoying?</h2><p class="muted">A quick note is plenty. It's saved with where you are now (${esc(tabName(UI.tab))}).</p>
       <form id="fbForm"><textarea name="t" rows="4" style="width:100%" placeholder="e.g. I couldn't find where to change an NPC's attitude" required></textarea>
