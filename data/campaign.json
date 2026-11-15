@@ -1,7 +1,7 @@
 {
  "app": "yggdrasil-guild-hall",
- "schema": 7,
- "savedAt": "2026-11-15T01:22:05.595Z",
+ "schema": 9,
+ "savedAt": "2026-11-15T08:30:33.448Z",
  "settings": {
   "cp": {
    "name": "Contribution Points",
@@ -352,7 +352,10 @@
  "shops": [],
  "guild": {
   "treasury": null,
-  "owned": {},
+  "owned": {
+   "common-room": 1,
+   "rumors": 1
+  },
   "addons": {},
   "offers": [
    {
@@ -460,7 +463,7 @@
    "assign": "",
    "notes": "",
    "rival": false,
-   "pinned": true,
+   "pinned": false,
    "seat": "Iron",
    "name": "Marigold \"Goldie\" Thrushwhistle",
    "ancestry": "halfling",
@@ -1198,6 +1201,51 @@
    "alchemist"
   ]
  },
+ "home": {
+  "items": []
+ },
+ "feedback": [],
+ "usage": {
+  "74k49c": {
+   "label": "Computer",
+   "at": 1794731433449,
+   "since": 1794728609411,
+   "tabs": {
+    "home": 4,
+    "npcs": 8,
+    "council": 5,
+    "bestiary": 5,
+    "jobs": 3,
+    "shop": 6,
+    "members": 7,
+    "standing": 4,
+    "market": 1
+   },
+   "events": {
+    "widget:gen-name": 1,
+    "gen:gen-name": 5,
+    "widget:gen-npc": 1,
+    "gen:gen-npc": 2,
+    "widget:dice": 1,
+    "widget:timer": 1,
+    "widget:init": 1,
+    "widget:party": 1,
+    "home:move": 22,
+    "home:resize": 17,
+    "widget:quests": 1,
+    "widget:npcsplay": 1,
+    "monster:open": 2,
+    "widget:standing": 1,
+    "widget:revival": 1,
+    "widget:prices": 1,
+    "menu:settings": 1,
+    "menu:load": 1
+   },
+   "search": []
+  }
+ },
+ "monsters": [],
+ "encounters": [],
  "councilSeeded": true,
  "maps": [
   {
