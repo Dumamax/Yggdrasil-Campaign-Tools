@@ -1,7 +1,7 @@
 {
  "app": "yggdrasil-guild-hall",
  "schema": 7,
- "savedAt": "2026-11-15T01:18:22.988Z",
+ "savedAt": "2026-11-15T01:20:12.780Z",
  "settings": {
   "cp": {
    "name": "Contribution Points",
@@ -1207,7 +1207,7 @@
   },
   {
    "id": "ir9zi0su",
-   "hidden": true,
+   "hidden": false,
    "name": "Pinboard Plaza",
    "img": "ghimg:b715bb7e269a70c5892fe0c6.jpg#8"
   },
