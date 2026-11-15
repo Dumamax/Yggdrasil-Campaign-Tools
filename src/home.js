@@ -19,7 +19,7 @@ const Home=(()=>{
     prices:{g:"Reference",n:"Price reference",d:"What things cost",size:"m"},
     revival:{g:"Reference",n:"Revival fee",d:"The Root Chapel's price by level",size:"s"}};
   const H=()=>C.home,items=()=>H().items;
-  const gen={},timers={},rolls={};let arrange=false,dragId=null;
+  const gen={},timers={},rolls={},dcount={};let arrange=false,dragId=null;
   const byRef=(type,ref)=>items().find(i=>i.type===type&&i.ref===ref);
   const isPinned=(type,ref)=>type==="npc"?!!C.roster.find(m=>m.id===ref)?.pinned:!!byRef(type,ref);
   function add(type,ref,extra){const it=Object.assign({id:uid(),type,size:ref?(type==="map"?"m":type==="job"?"m":"m"):(WIDGETS[type]?.size||"m")},ref?{ref}:{},extra||{});items().push(it);return it}
@@ -79,7 +79,8 @@ const Home=(()=>{
         (m?`<h4 class="gen-name">${esc(m.name)}</h4>${NPCs.badges(m)}${NPCs.profileHTML(m)}`:"")}
       case "gen-name":{const L=gen[it.id]||(gen[it.id]=names());return `<div class="name-list">${L.map(n=>`<button class="btn small ghost" data-w="copy" data-v="${esc(n)}" title="Copy">${esc(n)}</button>`).join("")}</div><div class="actions"><button class="btn small primary" data-w="roll">↻ New names</button></div>`}
       case "gen-shop":{const s=gen[it.id];return `<div class="actions"><button class="btn primary small" data-w="roll">${s?"↻ Reroll":"Roll a shop"}</button>${s?'<button class="btn small" data-w="saveshop">Save to Shops</button><button class="btn small" data-w="pinshop">📌 Save &amp; pin</button>':""}</div>`+(s?shopHTML(s):`<p class="muted">Uses the type, place and wealth last picked on the Shops tab (${esc(UI.mkt?.type||"any type")}).</p>`)}
-      case "dice":{const R=rolls[it.id]||[];return `<div class="dice-row">${[4,6,8,10,12,20,100].map(n=>`<button class="btn small" data-w="die" data-v="1d${n}">d${n}</button>`).join("")}</div>
+      case "dice":{const R=rolls[it.id]||[],cnt=dcount[it.id]||1;return `<div class="dice-row dice-count"><span class="muted">How many</span>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="btn small${n===cnt?" on":""}" data-w="dcount" data-v="${n}">${n}</button>`).join("")}</div>
+        <div class="dice-row">${[4,6,8,10,12,20,100].map(n=>`<button class="btn small" data-w="die" data-v="${cnt}d${n}">${cnt>1?cnt:""}d${n}</button>`).join("")}</div>
         <div class="dice-row"><button class="btn small" data-w="die" data-v="adv">d20 adv</button><button class="btn small" data-w="die" data-v="dis">d20 dis</button>
         <input data-w="expr" placeholder="2d6+3" value="${esc(it.text||"")}" style="width:90px"><button class="btn small primary" data-w="die" data-v="expr">Roll</button></div>
         <div class="dice-out">${R.map((r,i)=>`<div class="${i?"muted":"dice-top"}"><b>${r.total}</b> <span>${esc(r.label)}</span> <span class="muted">${esc(r.detail)}</span></div>`).join("")||'<span class="muted">Tap a die.</span>'}</div>`}
@@ -146,9 +147,10 @@ const Home=(()=>{
     if(a==="copy")return copyText(v);
     if(a==="savenpc"||a==="pinnpc"){const m=gen[it.id];if(!m)return;m.pinned=a==="pinnpc";C.roster.push(m);delete gen[it.id];commit();render();toast(`${m.name} saved to NPCs${m.pinned?" and pinned here":""}`);return}
     if(a==="saveshop"||a==="pinshop"){const s=gen[it.id];if(!s)return;s.kept=true;C.shops.unshift(s);if(a==="pinshop")add("shop",s.id);delete gen[it.id];commit();render();toast(`${s.name} saved to Shops${a==="pinshop"?" and pinned here":""}`);return}
+    if(a==="dcount"){dcount[it.id]=+v;return render()}
     if(a==="die"){const ex=v==="expr"?(it.text||"").trim():v;let r;
       if(v==="adv"||v==="dis"){const x=1+rnd(20),y=1+rnd(20);r={total:v==="adv"?Math.max(x,y):Math.min(x,y),label:v==="adv"?"d20 advantage":"d20 disadvantage",detail:`[${x}, ${y}]`}}else r=roll(ex);
-      if(!r){toast("Try something like 2d6+3");return}(rolls[it.id]||(rolls[it.id]=[])).unshift(r);rolls[it.id].length=Math.min(rolls[it.id].length,6);return render()}
+      if(!r){toast("Try something like 2d6+3");return}(rolls[it.id]||(rolls[it.id]=[])).unshift(r);rolls[it.id].length=Math.min(rolls[it.id].length,6);if(/^\d+d\d+$/.test(v))dcount[it.id]=1;return render()}
     if(a==="tset"){it.text=v;timers[it.id]={left:+v*60e3,end:0};commit();return render()}
     if(a==="tgo"){const tm=timers[it.id];if(tm.end){tm.left=Math.max(0,tm.end-Date.now());tm.end=0}else{if(!tm.left)tm.left=(+it.text||5)*60e3;tm.end=Date.now()+tm.left}return render()}
     if(a==="treset"){timers[it.id]={left:(+it.text||5)*60e3,end:0};return render()}
