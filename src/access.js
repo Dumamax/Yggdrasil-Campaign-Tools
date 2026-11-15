@@ -110,8 +110,17 @@ const Sync=(()=>{
     for(const v of found)imgs.set(await imgName(v),v);const base=rawBase();
     const json=JSON.stringify(obj,(k,v)=>isData(v)?REF+names.get(v):typeof v==="string"&&v.startsWith(base)?REF+v.slice(base.length).split("?")[0]:v,1);
     return {json,imgs}}
-  async function gh(path,opt={}){const r=await fetch(`https://api.github.com/repos/${cfg().repo}/${path}`,Object.assign({cache:"no-store"},opt,{headers:Object.assign(hdr(),opt.body?{"Content-Type":"application/json"}:{})}));
-    if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}const err=new Error((r.status===401?"GitHub refused the token (mistyped or expired)":r.status===403||r.status===404?`The token can't write to ${cfg().repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""));err.status=r.status;throw err}
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function gh(path,opt={},tries=4){let r,m="";
+    for(let a=0;;a++){
+      try{r=await fetch(`https://api.github.com/repos/${cfg().repo}/${path}`,Object.assign({cache:"no-store"},opt,{headers:Object.assign(hdr(),opt.body?{"Content-Type":"application/json"}:{})}))}
+      catch(e){if(a<tries-1){await sleep([2e3,6e3,15e3][a]||15e3);continue}const err=new Error(`Lost the connection to GitHub (${e.message})`);err.net=true;throw err}
+      if(r.ok)return r.json();
+      m="";try{m=(await r.json()).message||""}catch(e){}
+      const busy=r.status>=500||r.status===429||(r.status===403&&(r.headers.get("retry-after")||/secondary|abuse|rate limit/i.test(m)));
+      if(busy&&a<tries-1){await sleep(Math.max((+r.headers.get("retry-after")||0)*1e3,[3e3,10e3,30e3][a]||30e3));continue}
+      break}
+    {const err=new Error((r.status===401?"GitHub refused the token (mistyped or expired)":/secondary|abuse|rate limit/i.test(m)?"GitHub is limiting how fast saves can go; wait a minute and Save again":r.status===403||r.status===404?`The token can't write to ${cfg().repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""));err.status=r.status;throw err}
     return r.json()}
   async function push(retry=0){const c=cfg();
     /* someone else saved since we loaded? */
@@ -123,12 +132,19 @@ const Sync=(()=>{
       if(i!==1)return false;sha=meta.sha}
     const {json,imgs}=await pack(C);
     let have=new Set();try{const L=await gh(`contents/${IMGDIR.slice(0,-1)}?ref=${encodeURIComponent(c.branch)}`);if(Array.isArray(L))have=new Set(L.map(x=>x.name))}catch(e){if(e.status!==404)throw e}
-    const todo=[...imgs].filter(([n])=>!have.has(n)),tree=[];let k=0;
-    for(const [n,v] of todo){setStatus(`Saving to GitHub… image ${++k} of ${todo.length}`);const b=await gh("git/blobs",{method:"POST",body:JSON.stringify({content:v.slice(v.indexOf(",")+1),encoding:"base64"})});tree.push({path:IMGDIR+n,mode:"100644",type:"blob",sha:b.sha})}
+    const todo=[...imgs].filter(([n])=>!have.has(n)),tree=[],sent=lsGet("ygh.blobs",{});let k=0;
+    for(const [n,v] of todo){k++;let bs=sent[n];
+      if(!bs){setStatus(`Saving to GitHub… image ${k} of ${todo.length}`);
+        try{bs=(await gh("git/blobs",{method:"POST",body:JSON.stringify({content:v.slice(v.indexOf(",")+1),encoding:"base64"})})).sha}
+        catch(e){e.message=`Image ${k} of ${todo.length} didn't upload: ${e.message}. Images already sent are remembered, so Save again to continue`;throw e}
+        sent[n]=bs;lsSet("ygh.blobs",sent)}
+      tree.push({path:IMGDIR+n,mode:"100644",type:"blob",sha:bs})}
     setStatus("Saving to GitHub…");
     const cb=await gh("git/blobs",{method:"POST",body:JSON.stringify({content:json,encoding:"utf-8"})});tree.push({path:c.path,mode:"100644",type:"blob",sha:cb.sha});
     const head=await gh(`git/ref/heads/${encodeURIComponent(c.branch)}`),base=await gh(`git/commits/${head.object.sha}`);
-    const t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})});
+    let t;try{t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})})}
+    catch(e){if(e.status===422&&todo.length&&retry<2){lsSet("ygh.blobs",{});return push(retry+1)}throw e} // a remembered image blob expired on GitHub: send them again
+    lsSet("ygh.blobs",{});
     const cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message:`Save campaign · ${new Date().toLocaleString()}${todo.length?` (+${todo.length} image${todo.length>1?"s":""})`:""}`,tree:t.sha,parents:[head.object.sha]})});
     try{await gh(`git/refs/heads/${encodeURIComponent(c.branch)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}
     catch(e){if(e.status===422&&retry<2)return push(retry+1);throw e} // the branch moved meanwhile: redo on top of it
