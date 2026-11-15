@@ -58,7 +58,7 @@ const App=(()=>{
         ${w?`<a href="#" class="muted" data-goworld="${w.id}">→ ${esc(w.name)} in Worlds</a>`:""}
         <div class="actions"><button class="btn small ghost" data-mapup ${i?"":"disabled"} title="Move earlier">↑</button><span class="muted">${Math.round(m.img.length*0.75/1024)} KB</span><button class="btn small ghost danger" data-mapdel>Remove</button></div></div>`}).join("")}</div>`:'<p class="muted">No maps yet. Upload a map image to get started.</p>'}`;
     h.onchange=async e=>{const t=e.target;
-      if(t.id==="mapAdd"&&t.files.length){toast("Preparing map…");let n=0;for(const f of t.files){try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.85)});n++}catch(err){toast(`Couldn't read ${f.name}`)}}
+      if(t.id==="mapAdd"&&t.files.length){toast("Preparing map…");let n=0;for(const f of t.files){try{C.maps.push({id:uid(),hidden:true,name:f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," "),img:await PCs.shrink(f,2400,0.8,true)});n++}catch(err){toast(`Couldn't read ${f.name}`)}}
         if(n){commit();renderMaps();toast(`${n} map${n>1?"s":""} added, hidden from players until you tick "Players can see"`)}return}
       const r=t.closest(".map-card");if(!r)return;const m=C.maps[+r.dataset.i];
       if(t.dataset.mapvis!=null){m.hidden=!t.checked;commit();renderMaps();const live=Sync.soon();toast(m.hidden?`${m.name||"Map"} hidden from players${live?"; updating their screens":""}`:`${m.name||"Map"} visible to players ${live?"in a few seconds":"after you save"}`)}
