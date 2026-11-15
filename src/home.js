@@ -260,7 +260,7 @@ const Usage=(()=>{
 
 /* ---------- feedback notes: the DM taps "Feedback" whenever something is confusing; notes travel with the campaign ---------- */
 const Feedback=(()=>{
-  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",standing:"Guild · Standing",npcs:"NPCs",council:"NPCs · Council",bestiary:"NPCs · Bestiary",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
+  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",npcs:"NPCs",council:"NPCs · Council",bestiary:"NPCs · Bestiary",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
   const tabName=t=>TAB_NAMES[t]||t;
   function open(){const md=modal(`<h2>What was confusing or annoying?</h2><p class="muted">A quick note is plenty. It's saved with where you are now (${esc(tabName(UI.tab))}).</p>
       <form id="fbForm"><textarea name="t" rows="4" style="width:100%" placeholder="e.g. I couldn't find where to change an NPC's attitude" required></textarea>

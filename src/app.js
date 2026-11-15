@@ -1,15 +1,15 @@
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
   /* DM nav: six groups; some hold sub-tabs (shown in #subNav). Members/NPCs/Council/Worlds all render in tab-roster. */
-  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members","standing"],npcs:["npcs","council","bestiary"],market:["market"],world:["maps","worlds"]};
-  const SUBS={shop:"Hall",members:"Members",standing:"Standing",npcs:"NPCs",council:"The Council",bestiary:"Bestiary",maps:"Maps",worlds:"Worlds"};
+  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members"],npcs:["npcs","council","bestiary"],market:["market"],world:["maps","worlds"]};
+  const SUBS={shop:"Hall",members:"Members",npcs:"NPCs",council:"The Council",bestiary:"Bestiary",maps:"Maps",worlds:"Worlds"};
   const ROSTER_SUBS=["members","npcs","council","worlds"],EXTRA=["print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-map"];
   const DM_TABS=[...Object.values(GROUPS).flat(),...EXTRA];
   const groupOf=t=>Object.keys(GROUPS).find(g=>GROUPS[g].includes(t));
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function nav(){
     const pl=!isDM();
-    if(UI.tab==="roster")UI.tab=UI.rosterSub||"members";if(UI.tab==="table")UI.tab="home";if(UI.tab==="p-ledger"){UI.tab="p-guild";UI.pGuild="ledger"}
+    if(UI.tab==="roster")UI.tab=UI.rosterSub||"members";if(UI.tab==="table")UI.tab="home";if(UI.tab==="standing")UI.tab="shop";if(UI.tab==="p-ledger"){UI.tab="p-guild";UI.pGuild="ledger"}
     if(!(pl?PLAYER_TABS:DM_TABS).includes(UI.tab))UI.tab=pl?PLAYER_TABS[0]:"home";
     if(ROSTER_SUBS.includes(UI.tab))UI.rosterSub=UI.tab;
     const g=groupOf(UI.tab);if(g){UI.lastSub=UI.lastSub||{};UI.lastSub[g]=UI.tab}
@@ -23,10 +23,7 @@ const App=(()=>{
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
     banner();
   }
-  function renderStanding(){const L=C.guild.cp.log||[];
-    $("#standingView").innerHTML=`<div class="panel"><h2>Rank ladder</h2>${Standing.ladderHTML()}</div>
-      <div class="panel"><h2>History</h2>${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td>${new Date(e.t).toLocaleDateString()}</td><td><b>${esc(e.kind)}</b> ${esc(e.label||"")}</td><td>${e.pts>0?"+":""}${fmt(e.pts)}</td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Completing quests and great deeds adds points here.</p>'}</div>`}
-  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,standing:renderStanding,bestiary:Bestiary.render,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
+  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,bestiary:Bestiary.render,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -260,7 +257,7 @@ const App=(()=>{
     Bestiary.all().forEach(m=>R.push({k:"Monster",n:m.name,d:`CR ${m.cr||"?"} · ${m.type||""} · ${m.src||"Homebrew"}`,go:()=>{go("bestiary","main");Bestiary.open(m.id)}}));
     C.encounters.forEach(en=>R.push({k:"Encounter",n:en.name,d:en.groups.map(g=>`${g.n}× ${Bestiary.get(g.mid)?.name||"?"}`).join(", "),go:()=>go("bestiary",`[data-enc="${en.id}"]`)}));
     C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
-    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["standing","Guild · Standing"],["npcs","NPCs"],["council","NPCs · The Council"],["bestiary","NPCs · Bestiary"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
+    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["npcs","NPCs"],["council","NPCs · The Council"],["bestiary","NPCs · Bestiary"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
   function qsOpen(){if(!Bestiary.loaded())Bestiary.load().catch(()=>{});$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}

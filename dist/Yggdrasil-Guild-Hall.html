@@ -724,7 +724,6 @@ body.mobile .home-board>.tile{position:static;width:auto!important;height:auto!i
 <main>
   <section id="tab-p" hidden></section>
   <section id="tab-home" hidden><div id="homeView"></div></section>
-  <section id="tab-standing" hidden><div class="standing-host"></div><div id="standingView"></div></section>
   <section id="tab-jobs" hidden>
     <div class="standing-host"></div>
     <div class="controls">
@@ -1130,7 +1129,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 15 01:14";
+const BUILD="Nov 15 01:16";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -8180,7 +8179,7 @@ const Usage=(()=>{
 
 /* ---------- feedback notes: the DM taps "Feedback" whenever something is confusing; notes travel with the campaign ---------- */
 const Feedback=(()=>{
-  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",standing:"Guild · Standing",npcs:"NPCs",council:"NPCs · Council",bestiary:"NPCs · Bestiary",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
+  const TAB_NAMES={home:"Home",jobs:"Quests",shop:"Guild · Hall",members:"Guild · Members",npcs:"NPCs",council:"NPCs · Council",bestiary:"NPCs · Bestiary",market:"Shops",maps:"World · Maps",worlds:"World · Worlds",print:"Print",settings:"Settings"};
   const tabName=t=>TAB_NAMES[t]||t;
   function open(){const md=modal(`<h2>What was confusing or annoying?</h2><p class="muted">A quick note is plenty. It's saved with where you are now (${esc(tabName(UI.tab))}).</p>
       <form id="fbForm"><textarea name="t" rows="4" style="width:100%" placeholder="e.g. I couldn't find where to change an NPC's attitude" required></textarea>
@@ -8203,15 +8202,15 @@ const Feedback=(()=>{
 /* ================= APP SHELL: nav, table mode, print center, settings, boot ================= */
 const App=(()=>{
   /* DM nav: six groups; some hold sub-tabs (shown in #subNav). Members/NPCs/Council/Worlds all render in tab-roster. */
-  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members","standing"],npcs:["npcs","council","bestiary"],market:["market"],world:["maps","worlds"]};
-  const SUBS={shop:"Hall",members:"Members",standing:"Standing",npcs:"NPCs",council:"The Council",bestiary:"Bestiary",maps:"Maps",worlds:"Worlds"};
+  const GROUPS={home:["home"],jobs:["jobs"],guild:["shop","members"],npcs:["npcs","council","bestiary"],market:["market"],world:["maps","worlds"]};
+  const SUBS={shop:"Hall",members:"Members",npcs:"NPCs",council:"The Council",bestiary:"Bestiary",maps:"Maps",worlds:"Worlds"};
   const ROSTER_SUBS=["members","npcs","council","worlds"],EXTRA=["print","settings"],PLAYER_TABS=["p-board","p-party","p-guild","p-council","p-market","p-map"];
   const DM_TABS=[...Object.values(GROUPS).flat(),...EXTRA];
   const groupOf=t=>Object.keys(GROUPS).find(g=>GROUPS[g].includes(t));
   const prices=()=>C.tables.prices||DEFAULT_PRICES;
   function nav(){
     const pl=!isDM();
-    if(UI.tab==="roster")UI.tab=UI.rosterSub||"members";if(UI.tab==="table")UI.tab="home";if(UI.tab==="p-ledger"){UI.tab="p-guild";UI.pGuild="ledger"}
+    if(UI.tab==="roster")UI.tab=UI.rosterSub||"members";if(UI.tab==="table")UI.tab="home";if(UI.tab==="standing")UI.tab="shop";if(UI.tab==="p-ledger"){UI.tab="p-guild";UI.pGuild="ledger"}
     if(!(pl?PLAYER_TABS:DM_TABS).includes(UI.tab))UI.tab=pl?PLAYER_TABS[0]:"home";
     if(ROSTER_SUBS.includes(UI.tab))UI.rosterSub=UI.tab;
     const g=groupOf(UI.tab);if(g){UI.lastSub=UI.lastSub||{};UI.lastSub[g]=UI.tab}
@@ -8225,10 +8224,7 @@ const App=(()=>{
     $("#aiMode").textContent=AI.label();$("#aiMode").classList.toggle("on",AI.mode()!=="none");
     banner();
   }
-  function renderStanding(){const L=C.guild.cp.log||[];
-    $("#standingView").innerHTML=`<div class="panel"><h2>Rank ladder</h2>${Standing.ladderHTML()}</div>
-      <div class="panel"><h2>History</h2>${L.length?`<table class="ref">${L.slice(0,60).map(e=>`<tr><td>${new Date(e.t).toLocaleDateString()}</td><td><b>${esc(e.kind)}</b> ${esc(e.label||"")}</td><td>${e.pts>0?"+":""}${fmt(e.pts)}</td></tr>`).join("")}</table>`:'<p class="muted">Nothing logged yet. Completing quests and great deeds adds points here.</p>'}</div>`}
-  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,standing:renderStanding,bestiary:Bestiary.render,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
+  function render(){nav();Standing.render();({home:Home.render,jobs:Jobs.render,shop:Upgrades.render,members:Roster.render,npcs:Roster.render,council:Roster.render,worlds:Roster.render,bestiary:Bestiary.render,market:Shops.render,print:renderPrint,settings:renderSettings,maps:renderMaps}[UI.tab]||(pl=>UI.tab.startsWith("p-")&&renderPlayer()))();Standing.render()}
   function reloadAll(){Jobs.reloadTables();Upgrades.reloadTables();Shops.reloadTables();NPCs.reloadTables();NPCs.ensure();Jobs.initControls();render()}
 
   /* ---------- player view (read-only handouts) ---------- */
@@ -8462,7 +8458,7 @@ const App=(()=>{
     Bestiary.all().forEach(m=>R.push({k:"Monster",n:m.name,d:`CR ${m.cr||"?"} · ${m.type||""} · ${m.src||"Homebrew"}`,go:()=>{go("bestiary","main");Bestiary.open(m.id)}}));
     C.encounters.forEach(en=>R.push({k:"Encounter",n:en.name,d:en.groups.map(g=>`${g.n}× ${Bestiary.get(g.mid)?.name||"?"}`).join(", "),go:()=>go("bestiary",`[data-enc="${en.id}"]`)}));
     C.maps.forEach(m=>R.push({k:"Map",n:m.name||"Map",d:m.hidden?"hidden from players":"players can see",go:()=>{go("maps","main");openMap(m.img,m.name||"Map")}}));
-    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["standing","Guild · Standing"],["npcs","NPCs"],["council","NPCs · The Council"],["bestiary","NPCs · Bestiary"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
+    [["home","Home"],["jobs","Quests"],["shop","Guild · Hall (upgrades)"],["members","Guild · Members"],["npcs","NPCs"],["council","NPCs · The Council"],["bestiary","NPCs · Bestiary"],["market","Shops"],["maps","World · Maps"],["worlds","World · Worlds"],["print","Print handouts"],["settings","Settings"]].forEach(([t,n])=>R.push({k:"Tab",n,d:"",go:()=>go(t,"main")}));
     return R}
   let qsItems=[],qsSel=0;
   function qsOpen(){if(!Bestiary.loaded())Bestiary.load().catch(()=>{});$("#qs").hidden=false;$("#qsIn").value="";qsItems=index();qsDraw();$("#qsIn").focus()}
