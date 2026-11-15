@@ -64,7 +64,7 @@ const Sync=(()=>{
     else{const b=await fetch(`https://api.github.com/repos/${cfg().repo}/git/blobs/${j.sha}`,{headers:hdr(true)});if(!b.ok)throw new Error("GitHub error "+b.status+" downloading the save");text=await b.text()}
     let data;try{data=JSON.parse(text)}catch(e){throw new Error("The GitHub save didn't download completely")}
     if(!data||data.app!==APP_ID)throw new Error("Downloaded something that isn't the campaign");
-    return {sha:j.sha,data:resolveImgs(data)}}
+    return {sha:j.sha,data:await assemble(resolveImgs(data))}}
   function adopt(r,msg){const wasDM=isDM();replaceCampaign(r.data,"Before loading the GitHub save");sha=r.sha;lsSet("ygh.sha",sha);lsSet("ygh.shaAt",C.savedAt);dirty=false;lsSet("ygh.dirty",false);banner();
     if(wasDM&&!isDM())lsSet("ygh.dm",S.dmHash); // a password change elsewhere shouldn't lock out a DM mid-session
     if(msg)toast(msg)}
@@ -105,17 +105,27 @@ const Sync=(()=>{
   async function imgName(v){let n=names.get(v);if(n)return n;const ext=(v.slice(11,v.indexOf(";"))||"img").replace("jpeg","jpg").replace(/[^a-z0-9]/g,"");
     let h;try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));h=[...new Uint8Array(b)].slice(0,12).map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){h=qhash(v).replace(/\W/g,"")}
     n=h+"."+ext;names.set(v,n);return n}
-  function resolveImgs(d){const base=rawBase();return JSON.parse(JSON.stringify(d),(k,v)=>typeof v==="string"&&v.startsWith(REF)?base+v.slice(REF.length):v)}
+  /* big images upload as ~150 KB text pieces (<name>.p0, .p1 …): large single uploads stalled on some connections */
+  const CH=200000,PARTS="ghparts:";
+  function resolveImgs(d){const base=rawBase();return JSON.parse(JSON.stringify(d),(k,v)=>typeof v==="string"&&v.startsWith(REF)?(v.includes("#")?PARTS+v.slice(REF.length):base+v.slice(REF.length)):v)}
+  async function rawText(url){for(let a=0;a<5;a++){const r=await fetch(a?url+"?r="+Date.now():url).catch(()=>null);if(r&&r.ok)return r.text();await sleep([2e3,5e3,15e3,30e3][a]||30e3)}throw new Error("Couldn't download a map or picture from GitHub")}
+  async function assemble(d){const want=new Set();JSON.stringify(d,(k,v)=>{if(typeof v==="string"&&v.startsWith(PARTS))want.add(v);return v});if(!want.size)return d;const got=new Map(),base=rawBase();
+    await Promise.all([...want].map(async v=>{const [n,k]=v.slice(PARTS.length).split("#");let u=null;try{u=await IDB.get("img:"+n)}catch(e){}
+      if(!u){const parts=await Promise.all(Array.from({length:+k},(_,i)=>rawText(base+n+".p"+i)));const ext=n.split(".").pop();u=`data:image/${ext==="jpg"?"jpeg":ext};base64,`+parts.join("");try{await IDB.set("img:"+n,u)}catch(e){}}
+      names.set(u,n);got.set(v,u)}));
+    return JSON.parse(JSON.stringify(d),(k,v)=>got.has(v)?got.get(v):v)}
   async function pack(obj){const found=[];JSON.stringify(obj,(k,v)=>{if(isData(v))found.push(v);return v});const imgs=new Map();
     for(const v of found)imgs.set(await imgName(v),v);const base=rawBase();
-    const json=JSON.stringify(obj,(k,v)=>isData(v)?REF+names.get(v):typeof v==="string"&&v.startsWith(base)?REF+v.slice(base.length).split("?")[0]:v,1);
+    const ref=v=>{const n=names.get(v),L=v.length-v.indexOf(",")-1;return REF+n+(L>CH?"#"+Math.ceil(L/CH):"")};
+    const json=JSON.stringify(obj,(k,v)=>isData(v)?ref(v):typeof v==="string"&&v.startsWith(base)?REF+v.slice(base.length).split("?")[0]:v,1);
     return {json,imgs}}
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   async function gh(path,opt={},tries=4){let r,m="";
     for(let a=0;;a++){
-      try{r=await fetch(`https://api.github.com/repos/${cfg().repo}/${path}`,Object.assign({cache:"no-store"},opt,{headers:Object.assign(hdr(),opt.body?{"Content-Type":"application/json"}:{})}))}
-      catch(e){if(a<tries-1){await sleep([2e3,6e3,15e3][a]||15e3);continue}const err=new Error(`Lost the connection to GitHub (${e.message})`);err.net=true;throw err}
-      if(r.ok)return r.json();
+      const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60e3);
+      try{r=await fetch(`https://api.github.com/repos/${cfg().repo}/${path}`,Object.assign({cache:"no-store",signal:ac.signal},opt,{headers:Object.assign(hdr(),opt.body?{"Content-Type":"application/json"}:{})}))}
+      catch(e){clearTimeout(to);if(e.name==="AbortError")e=new Error("GitHub didn't answer within a minute");if(a<tries-1){await sleep([2e3,6e3,15e3][a]||15e3);continue}const err=new Error(`Lost the connection to GitHub (${e.message})`);err.net=true;throw err}
+      clearTimeout(to);if(r.ok)return r.json();
       m="";try{m=(await r.json()).message||""}catch(e){}
       const busy=r.status>=500||r.status===429||(r.status===403&&(r.headers.get("retry-after")||/secondary|abuse|rate limit/i.test(m)));
       if(busy&&a<tries-1){await sleep(Math.max((+r.headers.get("retry-after")||0)*1e3,[3e3,10e3,30e3][a]||30e3));continue}
@@ -132,11 +142,14 @@ const Sync=(()=>{
       if(i!==1)return false;sha=meta.sha}
     const {json,imgs}=await pack(C);
     let have=new Set();try{const L=await gh(`contents/${IMGDIR.slice(0,-1)}?ref=${encodeURIComponent(c.branch)}`);if(Array.isArray(L))have=new Set(L.map(x=>x.name))}catch(e){if(e.status!==404)throw e}
-    const todo=[...imgs].filter(([n])=>!have.has(n)),tree=[],sent=lsGet("ygh.blobs",{});let k=0;
-    for(const [n,v] of todo){k++;let bs=sent[n];
-      if(!bs){setStatus(`Saving to GitHub… image ${k} of ${todo.length}`);
-        try{bs=(await gh("git/blobs",{method:"POST",body:JSON.stringify({content:v.slice(v.indexOf(",")+1),encoding:"base64"})})).sha}
-        catch(e){e.message=`Image ${k} of ${todo.length} didn't upload: ${e.message}. Images already sent are remembered, so Save again to continue`;throw e}
+    const files=[];for(const [n,v] of imgs){const b=v.slice(v.indexOf(",")+1);
+      if(b.length<=CH){if(!have.has(n))files.push([n,b,"base64"])}
+      else{const k=Math.ceil(b.length/CH);for(let i=0;i<k;i++)if(!have.has(n+".p"+i))files.push([n+".p"+i,b.slice(i*CH,(i+1)*CH),"utf-8"])}}
+    const todo=files,tree=[],sent=lsGet("ygh.blobs",{});let k=0;
+    for(const [n,content,encoding] of todo){k++;let bs=sent[n];
+      if(!bs){setStatus(`Saving to GitHub… piece ${k} of ${todo.length}`);
+        try{bs=(await gh("git/blobs",{method:"POST",body:JSON.stringify({content,encoding})})).sha}
+        catch(e){e.message=`Piece ${k} of ${todo.length} didn't upload: ${e.message}. Pieces already sent are remembered, so Save again to continue`;throw e}
         sent[n]=bs;lsSet("ygh.blobs",sent)}
       tree.push({path:IMGDIR+n,mode:"100644",type:"blob",sha:bs})}
     setStatus("Saving to GitHub…");
