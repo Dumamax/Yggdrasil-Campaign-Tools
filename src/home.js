@@ -19,7 +19,7 @@ const Home=(()=>{
     prices:{g:"Reference",n:"Price reference",d:"What things cost",size:"m"},
     revival:{g:"Reference",n:"Revival fee",d:"The Root Chapel's price by level",size:"s"}};
   const H=()=>C.home,items=()=>H().items;
-  const gen={},timers={},rolls={},dcount={};const W0={s:300,m:500,l:780},GAP=14;
+  const gen={},timers={},rolls={},dcount={};const W0={s:300,m:500,l:780},GAP=14,AUTOH=new Set(["init"]); /* these always grow with their content */
   const byRef=(type,ref)=>items().find(i=>i.type===type&&i.ref===ref);
   const isPinned=(type,ref)=>type==="npc"?!!C.roster.find(m=>m.id===ref)?.pinned:!!byRef(type,ref);
   function add(type,ref,extra){const it=Object.assign({id:uid(),type,size:ref?(type==="map"?"m":type==="job"?"m":"m"):(WIDGETS[type]?.size||"m")},ref?{ref}:{},extra||{});items().push(it);return it}
@@ -51,7 +51,7 @@ const Home=(()=>{
     if(g&&!phone()){g.onpointerdown=startDrag;g.ondblclick=e=>{if(!e.target.closest(".tile-rs"))return;const it=items().find(i=>i.id===e.target.closest(".tile").dataset.id);if(it){it.h=null;commit();render()}}}}
   let rzT=null;addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(UI.tab==="home"&&isDM())render()},200)});
   const BW=g=>Math.max(320,g.clientWidth);
-  function place(g,it,d){const bw=BW(g),w=Math.min(it.w||W0[it.size||"m"],bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";
+  function place(g,it,d){const bw=BW(g),w=Math.min(it.w||W0[it.size||"m"],bw);d.style.width=w+"px";d.style.height=it.h&&!AUTOH.has(it.type)?it.h+"px":"";
     d.style.left=Math.max(0,Math.min(it.x||0,bw-w))+"px";d.style.top=Math.max(0,it.y||0)+"px";d.style.zIndex=it.z||0}
   function rects(g,skip){return [...g.children].filter(t=>!skip||!skip.has(t.dataset.id)).map(t=>({x:t.offsetLeft,y:t.offsetTop,w:t.offsetWidth,h:t.offsetHeight}))}
   /* drop placement: the spot where the tile can sit highest, leftmost on ties */
@@ -66,7 +66,7 @@ const Home=(()=>{
     L.forEach(it=>{if(!it.w){it.w=W0[it.size||"m"];ch=true}if(all||it.x==null||it.y==null){if(!it.auto)ch=true;it.auto=true}});
     L.filter(it=>!it.auto).forEach(it=>place(g,it,byId(it.id)));
     const flow=()=>{const R=L.filter(it=>!it.auto).map(it=>byId(it.id)).filter(Boolean).map(d=>({x:d.offsetLeft,y:d.offsetTop,w:d.offsetWidth,h:d.offsetHeight}));let c=false;
-      L.filter(it=>it.auto).forEach(it=>{const d=byId(it.id);if(!d)return;const w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h?it.h+"px":"";
+      L.filter(it=>it.auto).forEach(it=>{const d=byId(it.id);if(!d)return;const w=Math.min(it.w,bw);d.style.width=w+"px";d.style.height=it.h&&!AUTOH.has(it.type)?it.h+"px":"";
         const p=spot(R,w,bw);if(it.x!==p.x||it.y!==p.y){it.x=p.x;it.y=p.y;c=true}place(g,it,d);R.push({x:p.x,y:p.y,w,h:d.offsetHeight})});grow(g);return c};
     if(flow())ch=true;
     try{ro&&ro.disconnect()}catch(e){}
@@ -82,13 +82,13 @@ const Home=(()=>{
     it.z=topZ();t.style.zIndex=it.z;t.classList.add("moving");try{t.setPointerCapture(e.pointerId)}catch(_){}
     let scrollT=null,lastY=sy;
     const move=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy+(window.scrollY-sy0);lastY=ev.clientY;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;
-      if(rs){const w=Math.max(220,Math.min(bw-x0,w0+dx)),h=Math.max(110,h0+dy);t.style.width=w+"px";t.style.height=h+"px"}
+      if(rs){const w=Math.max(220,Math.min(bw-x0,w0+dx)),h=Math.max(110,h0+dy);t.style.width=w+"px";if(!AUTOH.has(it.type))t.style.height=h+"px"}
       else{t.style.left=Math.max(0,Math.min(bw-w0,x0+dx))+"px";t.style.top=Math.max(0,y0+dy)+"px"}
       if(t.offsetTop+t.offsetHeight+40>g.offsetHeight)g.style.height=(t.offsetTop+t.offsetHeight+40)+"px"};
     const sy0=window.scrollY;
     scrollT=setInterval(()=>{if(lastY>innerHeight-50)window.scrollBy(0,14);else if(lastY<90&&window.scrollY>0)window.scrollBy(0,-14)},30);
     const up=()=>{clearInterval(scrollT);t.removeEventListener("pointermove",move);t.removeEventListener("pointerup",up);t.removeEventListener("pointercancel",up);t.classList.remove("moving");
-      if(moved){items().forEach(i=>i.auto=false);it.x=t.offsetLeft;it.y=t.offsetTop;if(rs){it.w=t.offsetWidth;it.h=t.offsetHeight}Usage.event(rs?"home:resize":"home:move")}
+      if(moved){items().forEach(i=>i.auto=false);it.x=t.offsetLeft;it.y=t.offsetTop;if(rs){it.w=t.offsetWidth;it.h=AUTOH.has(it.type)?null:t.offsetHeight}Usage.event(rs?"home:resize":"home:move")}
       grow(g);commit()};
     t.addEventListener("pointermove",move);t.addEventListener("pointerup",up);t.addEventListener("pointercancel",up)}
   function title(it){if(!it.ref)return WIDGETS[it.type]?.n||it.type;
@@ -130,8 +130,8 @@ const Home=(()=>{
         return `<div class="timer-face" data-timer="${it.id}">${clock(t)}</div><div class="dice-row">${[1,5,10,30].map(n=>`<button class="btn small" data-w="tset" data-v="${n}">${n} min</button>`).join("")}</div>
           <div class="actions"><button class="btn small primary" data-w="tgo">${t.end?"Pause":"Start"}</button><button class="btn small" data-w="treset">Reset</button></div>`}
       case "init":{const st=it.state||(it.state={rows:[],turn:0,round:1});const R=st.rows;
-        return `<div class="init-top">${st.started?`<b>Round ${st.round}</b><button class="btn small primary" data-w="inext">Next turn ▶</button><button class="btn small ghost" data-w="iend" title="Stop tracking turns; keeps the list">End</button>`:`<b class="muted">Setting up</b><button class="btn small primary" data-w="istart"${R.length?"":" disabled"}>Start round 1 ▶</button>`}<button class="btn small ghost" data-w="iclear">Clear</button></div>
-          <table class="ref init">${R.map((r,i)=>`<tr class="${st.started&&i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><input class="init-in" type="number" data-w="iset" data-v="${i}" value="${r.i}"></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
+        return `<div class="init-top">${st.started?`<b>Round ${st.round}</b><button class="btn small primary" data-w="inext">Next turn ▶</button><button class="btn small ghost" data-w="iend" title="Stop tracking turns; keeps the list">End</button>`:`<b class="muted">Setting up</b><button class="btn small primary" data-w="istart"${R.length?"":" disabled"}>Start round 1 ▶</button>`}${PCs.list().some(m=>!R.some(r=>r.n===m.name))?'<button class="btn small" data-w="iparty" title="Add every party member; fill in their rolls after">＋ Whole party</button>':""}<button class="btn small ghost" data-w="iclear">Clear</button></div>
+          <table class="ref init">${R.map((r,i)=>`<tr class="${st.started&&i===st.turn?"on":""}"><td>${esc(r.n)}</td><td><input class="init-in${r.i==null?" need":""}" type="number" data-w="iset" data-v="${i}" value="${r.i??""}" placeholder="?"></td><td><button class="btn small ghost" data-w="irm" data-v="${i}">✕</button></td></tr>`).join("")}</table>
           <form class="dice-row" data-w="iadd">${whoSel(st)}<input name="n" placeholder="Name" hidden style="flex:1;min-width:90px"><input name="i" type="number" placeholder="Roll" title="Leave blank to roll d20 + their initiative bonus" style="width:64px"><button class="btn small">Add</button></form>`}
       case "party":return PCs.tableSection();
       case "quests":{const w=document.createElement("div");w.className="tile-stack";const L=C.jobs.filter(h=>(h.kept||h.final)&&!h.done);
@@ -152,7 +152,7 @@ const Home=(()=>{
       if(i.type==="enc"){const en=C.encounters.find(x=>x.id===i.ref);(en?.live?.cr||[]).filter(c=>c.hp>0).forEach(c=>{const m=Bestiary.get(c.mid);L.push({k:"cr:"+en.id+":"+c.k,n:c.label,b:m?Bestiary.initOf(m):0,g:"Monsters"})})}});return L}
   function whoSel(st){const have=new Set(st.rows.map(r=>r.n)),L=candidates().filter(c=>!have.has(c.n)),grp=g=>L.filter(c=>c.g===g);
     return `<select name="who" data-w="iwho" style="flex:1;min-width:130px"><option value="">Add to the order…</option>${["Party","Monsters"].map(g=>grp(g).length?`<optgroup label="${g}">${grp(g).map(c=>`<option value="${esc(c.k)}">${esc(c.n)} (${c.b>=0?"+":""}${c.b})</option>`).join("")}</optgroup>`:"").join("")}<option value="custom">Someone else (type a name)</option></select>`}
-  function isort(st,cur){st.rows.sort((a,b)=>b.i-a.i);const t=st.rows.findIndex(r=>r.n===cur);st.turn=t>=0?t:0}
+  function isort(st,cur){const v=r=>r.i==null?-1e9:r.i;st.rows.sort((a,b)=>v(b)-v(a));const t=st.rows.findIndex(r=>r.n===cur);st.turn=t>=0?t:0}
   function shopHTML(s){return `<div class="badges"><span class="badge gold">${esc(s.typeLabel||s.type)}</span><span class="badge">${esc(s.place||"")}</span><span class="badge">${esc(s.wealth||"")}</span></div>
     ${(s.staff||[]).map(p=>`<div class="row"><b>${esc(p.name)}</b>, ${esc(p.role)}${p.personality?` <span class="muted">· ${esc(p.personality)}</span>`:""}</div>`).join("")}
     <table class="ref stock">${(s.stock||[]).map(i=>`<tr><td>${esc(i.name)}${i.rarity?` <span class="badge leaf">${esc(i.rarity)}</span>`:""}</td><td>${Shops.coins(i.price)}</td></tr>`).join("")}</table>
@@ -200,7 +200,9 @@ const Home=(()=>{
     if(a==="tset"){it.text=v;timers[it.id]={left:+v*60e3,end:0};commit();return render()}
     if(a==="tgo"){const tm=timers[it.id];if(tm.end){tm.left=Math.max(0,tm.end-Date.now());tm.end=0}else{if(!tm.left)tm.left=(+it.text||5)*60e3;tm.end=Date.now()+tm.left}return render()}
     if(a==="treset"){timers[it.id]={left:(+it.text||5)*60e3,end:0};return render()}
-    if(a==="istart"){const st=it.state;if(!st.rows.length)return;st.started=true;st.turn=0;st.round=1;commit();Usage.event("init:start");return render()}
+    if(a==="iparty"){const st=it.state,cur=st.rows[st.turn]?.n,have=new Set(st.rows.map(r=>r.n));const add=PCs.list().filter(m=>!have.has(m.name));add.forEach(m=>st.rows.push({n:m.name,i:null}));isort(st,cur);commit();render();
+      toast(`${add.length} added. Type each roll in the ? boxes`);setTimeout(()=>$(`.tile[data-id="${it.id}"] .init-in.need`)?.focus(),60);return}
+    if(a==="istart"){const st=it.state;if(!st.rows.length)return;const miss=st.rows.filter(r=>r.i==null).length;if(miss&&!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent=`${miss} without a roll. Start anyway?`;return}st.started=true;st.turn=0;st.round=1;commit();Usage.event("init:start");return render()}
     if(a==="iend"){it.state.started=false;it.state.turn=0;it.state.round=1;commit();return render()}
     if(a==="inext"){const st=it.state;if(!st.rows.length||!st.started)return;st.turn++;if(st.turn>=st.rows.length){st.turn=0;st.round++}commit();return render()}
     if(a==="iclear"){it.state={rows:[],turn:0,round:1,started:false};commit();return render()}
@@ -210,7 +212,7 @@ const Home=(()=>{
     if(w==="notes"||w==="expr"){it.text=e.target.value;if(w==="notes"){clearTimeout(noteT);noteT=setTimeout(commit,700)}}}
   function onChange(e){const it=find(e);if(!it)return;
     if(e.target.dataset.w==="iwho"){const f=e.target.form;f.n.hidden=e.target.value!=="custom";if(!f.n.hidden)f.n.focus();else f.i.focus();return}
-    if(e.target.dataset.w==="iset"){const st=it.state,cur=st.rows[st.turn]?.n;st.rows[+e.target.dataset.v].i=+e.target.value||0;isort(st,cur);commit();return render()}
+    if(e.target.dataset.w==="iset"){const st=it.state,cur=st.rows[st.turn]?.n;const row=st.rows[+e.target.dataset.v];row.i=e.target.value===""?null:+e.target.value;isort(st,cur);commit();render();setTimeout(()=>$(`.tile[data-id="${it.id}"] .init-in.need`)?.focus(),30);return}
     if(e.target.dataset.w==="cond"&&it.type==="enc"){const en=C.encounters.find(x=>x.id===it.ref);if(en){Bestiary.encCond(en,e);render()}return}
     if(e.target.dataset.w==="rvl"){it.text=e.target.value;commit();return render()}}
   document.addEventListener("submit",e=>{if(e.target.dataset?.w!=="iadd")return;e.preventDefault();const it=find(e);if(!it)return;const f=new FormData(e.target),n=String(f.get("n")||"").trim();

@@ -678,3 +678,5 @@ body.mobile .enc-head{flex-wrap:wrap}
 .progbar.fail i{background:linear-gradient(90deg,#6a2a1f,var(--red))}
 .progbar span{position:relative;display:block;padding:0 22px;font:600 13px/22px "Crimson Pro",serif;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.mobile .progbar span{padding:0 12px;font-size:12px}
+.init-in.need{border-color:var(--gold);background:#3a2e18}
+.init-top{flex-wrap:wrap}.init-top b{white-space:nowrap}

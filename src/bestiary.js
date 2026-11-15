@@ -220,7 +220,7 @@ Return ONLY JSON in this shape: ${SHAPE}`,"Homebrew")}}
     if(a==="uncond"){c.cond=c.cond.filter(x=>x!==e.target.closest("[data-v]").dataset.v);commit();return true}
     if(a==="einit"){const L=en.live.cr.filter(x=>x.hp>0);L.forEach(x=>{const m=get(x.mid);x.init=1+rnd(20)+(m?initOf(m):0)});
       let t=C.home.items.find(i=>i.type==="init");if(!t){t={id:uid(),type:"init",size:"s"};C.home.items.push(t)}t.state=t.state||{rows:[],turn:0,round:1};
-      const cur=t.state.rows[t.state.turn]?.n,names=new Set(L.map(x=>x.label));t.state.rows=t.state.rows.filter(r=>!names.has(r.n)).concat(L.map(x=>({n:x.label,i:x.init})));t.state.rows.sort((a,b)=>b.i-a.i);const ti=t.state.rows.findIndex(r=>r.n===cur);t.state.turn=t.state.started&&ti>=0?ti:0;
+      const cur=t.state.rows[t.state.turn]?.n,names=new Set(L.map(x=>x.label));t.state.rows=t.state.rows.filter(r=>!names.has(r.n)).concat(L.map(x=>({n:x.label,i:x.init})));t.state.rows.sort((a,b)=>(b.i??-1e9)-(a.i??-1e9));const ti=t.state.rows.findIndex(r=>r.n===cur);t.state.turn=t.state.started&&ti>=0?ti:0;
       commit();toast("Initiative rolled and added to the tracker");return true}
     if(a==="erollhp"){en.live.cr.forEach(x=>{const m=get(x.mid),r=m&&m.hd&&rollExpr(m.hd);if(r){x.max=r;x.hp=r}});commit();return true}
     if(a==="ereset"){en.live=null;syncLive(en);commit();return true}
