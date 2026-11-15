@@ -1130,7 +1130,7 @@ async function printHTML(title,body,css){
    (hash kept in the campaign as S.dmHash; this browser remembers the hash it unlocked with in ygh.dm). Casual-snooping protection only.
    GitHub sync: the campaign file lives in the repo (data/campaign.json). Everyone pulls it automatically; a DM browser with a
    GitHub token (ygh.ghtoken, never in the campaign) saves by committing it. */
-const BUILD="Nov 15 01:06";
+const BUILD="Nov 15 01:14";
 const whenStr=s=>s?new Date(s).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"never";
 /* hosted copy only: phones keep old tabs/caches, so compare our BUILD with the live file and reload into the new one */
 const Updater=(()=>{const live=location.protocol==="https:"&&/github\.io$/.test(location.hostname)&&!FRAMED;let lastCheck=0;
@@ -7883,11 +7883,11 @@ Return ONLY JSON in this shape: ${SHAPE}`,"Homebrew")}}
       <div class="enc-live">${L.map((c,i)=>{const p=Math.max(0,Math.min(100,c.hp/c.max*100)),bl=c.hp>0&&c.hp<=c.max/2,dead=c.hp<=0;
         return `<div class="cr-row${dead?" dead":""}" data-ci="${i}"><div class="cr-top"><a href="#" data-mon="${esc(c.mid)}"><b>${esc(c.label)}</b></a><span class="muted">AC ${esc(c.ac)}${c.init!=null?` · Init ${c.init}`:""}</span></div>
           <div class="cr-hp"><div class="hpbar${bl?" bl":""}"><i style="width:${p}%"></i><span>${c.hp} / ${c.max}</span></div>
-          <input type="number" data-w="amt" placeholder="0" min="0"><button class="btn small" data-w="dmg" title="Damage">−</button><button class="btn small" data-w="heal" title="Heal">＋</button></div>
+          <button class="btn small" data-w="dmg" title="Damage: 1, or the amount typed in the box">−</button><input type="number" data-w="amt" placeholder="1" min="0" title="Type an amount, then − to damage or ＋ to heal. Blank = 1"><button class="btn small" data-w="heal" title="Heal: 1, or the amount typed in the box">＋</button></div>
           <div class="cr-cond">${bl?'<span class="badge red">Bloodied</span>':""}${c.cond.map(x=>`<span class="badge" data-w="uncond" data-v="${esc(x)}" title="Remove">${esc(x)} ✕</span>`).join("")}<select data-w="cond"><option value="">＋ condition</option>${CONDS.filter(x=>x!=="Bloodied"&&!c.cond.includes(x)).map(x=>`<option>${x}</option>`).join("")}</select></div></div>`}).join("")||'<p class="muted">No monsters yet. Add some in NPCs → Bestiary.</p>'}</div>
       <div class="actions"><button class="btn small primary" data-w="einit">Roll initiative → tracker</button><button class="btn small" data-w="erollhp">Roll HP</button><button class="btn small ghost" data-w="ereset">Reset fight</button></div>`}
   function encAct(en,a,e){const ci=+e.target.closest("[data-ci]")?.dataset.ci,c=en.live?.cr[ci];
-    if(a==="dmg"||a==="heal"){const box=e.target.closest(".cr-row").querySelector("[data-w=amt]"),v=Math.abs(+box.value||0);if(!v){box.focus();return false}
+    if(a==="dmg"||a==="heal"){const box=e.target.closest(".cr-row").querySelector("[data-w=amt]"),v=Math.abs(+box.value||0)||1;
       c.hp=a==="dmg"?Math.max(0,c.hp-v):Math.min(c.max,c.hp+v);commit();return true}
     if(a==="uncond"){c.cond=c.cond.filter(x=>x!==e.target.closest("[data-v]").dataset.v);commit();return true}
     if(a==="einit"){const L=en.live.cr.filter(x=>x.hp>0);L.forEach(x=>{const m=get(x.mid);x.init=1+rnd(20)+(m?initOf(m):0)});
