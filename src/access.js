@@ -133,6 +133,35 @@ const Sync=(()=>{
       break}
     {const err=new Error((r.status===401?"GitHub refused the token (mistyped or expired)":/secondary|abuse|rate limit/i.test(m)?"GitHub is limiting how fast saves can go; wait a minute and Save again":r.status===403||r.status===404?`The token can't write to ${cfg().repo}`:"GitHub error "+r.status)+(m?` (GitHub says: ${m})`:""));err.status=r.status;throw err}
     return r.json()}
+  /* ---- pictures upload in the background as soon as they're added (one picture per small commit), so Save only sends the text.
+     Self-healing: every run scans C for images GitHub doesn't have yet, so an interrupted upload simply continues next time. */
+  let known=null,imgJob=null,imgT=null;
+  async function listKnown(force){if(known&&!force)return known;let s=new Set();try{const L=await gh(`contents/${IMGDIR.slice(0,-1)}?ref=${encodeURIComponent(cfg().branch)}`);if(Array.isArray(L))s=new Set(L.map(x=>x.name))}catch(e){if(e.status!==404)throw e}return known=s}
+  function pieces(imgs,have){const files=[];for(const [n,v] of imgs){const b=v.slice(v.indexOf(",")+1);
+      if(b.length<=CH){if(!have.has(n))files.push([n,b,"base64"])}
+      else{const k=Math.ceil(b.length/CH);for(let i=0;i<k;i++)if(!have.has(n+".p"+i))files.push([n+".p"+i,b.slice(i*CH,(i+1)*CH),"utf-8"])}}return files}
+  async function uploadFiles(todo,label){const tree=[],sent=lsGet("ygh.blobs",{});let k=0;
+    for(const [n,content,encoding] of todo){k++;let bs=sent[n];
+      if(!bs){setStatus(label(k,todo.length));if(k>1)await sleep(400);await visible();
+        try{bs=(await gh("git/blobs",{method:"POST",body:JSON.stringify({content,encoding})})).sha}
+        catch(e){e.message=`Piece ${k} of ${todo.length} didn't upload: ${e.message}. Pieces already sent are remembered, so it continues where it stopped`;throw e}
+        sent[n]=bs;lsSet("ygh.blobs",sent)}
+      tree.push({path:IMGDIR+n,mode:"100644",type:"blob",sha:bs})}return tree}
+  async function commitFiles(tree,message,retry=0){const b=cfg().branch,head=await gh(`git/ref/heads/${encodeURIComponent(b)}`),base=await gh(`git/commits/${head.object.sha}`);
+    const t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})}),cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message,tree:t.sha,parents:[head.object.sha]})});
+    try{await gh(`git/refs/heads/${encodeURIComponent(b)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}catch(e){if(e.status===422&&retry<3)return commitFiles(tree,message,retry+1);throw e}}
+  function imagesSoon(){if(!isDM()||!canPush())return;clearTimeout(imgT);imgT=setTimeout(syncImages,2500)}
+  function syncImages(){if(!isDM()||!canPush())return Promise.resolve();if(imgJob)return imgJob;if(navigator.onLine===false){addEventListener("online",imagesSoon,{once:true});return Promise.resolve()}
+    imgJob=(async()=>{const {imgs}=await pack(C),have=await listKnown(),list=[...imgs].filter(([n,v])=>pieces([[n,v]],have).length);if(!list.length)return;
+      const keep=status;let i=0;
+      for(const [n,v] of list){i++;const files=pieces([[n,v]],have);if(!files.length)continue;
+        const tree=await uploadFiles(files,(k,N)=>`Uploading picture ${i} of ${list.length}${N>1?` (${Math.round(100*(k-1)/N)}%)`:""}…`);
+        setStatus(`Uploading picture ${i} of ${list.length}…`);await commitFiles(tree,`Add picture ${n.split(".")[0].slice(0,8)}`);
+        files.forEach(f=>have.add(f[0]));const s=lsGet("ygh.blobs",{});files.forEach(f=>delete s[f[0]]);lsSet("ygh.blobs",s)}
+      setStatus(keep&&!/^Uploading picture/.test(keep)?keep:dirty?"Unsaved changes":"Up to date");toast(list.length>1?`${list.length} pictures uploaded to GitHub`:"Picture uploaded to GitHub")})()
+      .catch(e=>{setStatus("Picture upload paused (retrying)");clearTimeout(imgT);imgT=setTimeout(syncImages,60e3)})
+      .finally(()=>{imgJob=null});
+    return imgJob}
   async function push(retry=0){const c=cfg();
     /* someone else saved since we loaded? */
     const mr=await fetch(api(true),{headers:hdr(),cache:"no-store"});const meta=mr.status===404?null:mr.ok?await mr.json():null;
@@ -142,23 +171,14 @@ const Sync=(()=>{
       if(i===0){toast("Couldn't download the GitHub copy; try again");return false}
       if(i!==1)return false;sha=meta.sha}
     const {json,imgs}=await pack(C);
-    let have=new Set();try{const L=await gh(`contents/${IMGDIR.slice(0,-1)}?ref=${encodeURIComponent(c.branch)}`);if(Array.isArray(L))have=new Set(L.map(x=>x.name))}catch(e){if(e.status!==404)throw e}
-    const files=[];for(const [n,v] of imgs){const b=v.slice(v.indexOf(",")+1);
-      if(b.length<=CH){if(!have.has(n))files.push([n,b,"base64"])}
-      else{const k=Math.ceil(b.length/CH);for(let i=0;i<k;i++)if(!have.has(n+".p"+i))files.push([n+".p"+i,b.slice(i*CH,(i+1)*CH),"utf-8"])}}
-    const todo=files,tree=[],sent=lsGet("ygh.blobs",{});let k=0;
-    for(const [n,content,encoding] of todo){k++;let bs=sent[n];
-      if(!bs){setStatus(`Saving to GitHub… piece ${k} of ${todo.length} (keep this screen open)`);if(k>1)await sleep(600);await visible();
-        try{bs=(await gh("git/blobs",{method:"POST",body:JSON.stringify({content,encoding})})).sha}
-        catch(e){e.message=`Piece ${k} of ${todo.length} didn't upload: ${e.message}. Pieces already sent are remembered, so Save again to continue`;throw e}
-        sent[n]=bs;lsSet("ygh.blobs",sent)}
-      tree.push({path:IMGDIR+n,mode:"100644",type:"blob",sha:bs})}
+    if(imgJob)await imgJob.catch(()=>{}); // a background picture upload is finishing: reuse its work
+    const have=await listKnown(true),todo=pieces(imgs,have),tree=await uploadFiles(todo,(k,n)=>`Saving to GitHub… picture piece ${k} of ${n} (keep this screen open)`);
     setStatus("Saving to GitHub…");
     const cb=await gh("git/blobs",{method:"POST",body:JSON.stringify({content:json,encoding:"utf-8"})});tree.push({path:c.path,mode:"100644",type:"blob",sha:cb.sha});
     const head=await gh(`git/ref/heads/${encodeURIComponent(c.branch)}`),base=await gh(`git/commits/${head.object.sha}`);
     let t;try{t=await gh("git/trees",{method:"POST",body:JSON.stringify({base_tree:base.tree.sha,tree})})}
     catch(e){if(e.status===422&&todo.length&&retry<2){lsSet("ygh.blobs",{});return push(retry+1)}throw e} // a remembered image blob expired on GitHub: send them again
-    lsSet("ygh.blobs",{});
+    lsSet("ygh.blobs",{});todo.forEach(f=>have.add(f[0]));
     const cm=await gh("git/commits",{method:"POST",body:JSON.stringify({message:`Save campaign · ${new Date().toLocaleString()}${todo.length?` (+${todo.length} image${todo.length>1?"s":""})`:""}`,tree:t.sha,parents:[head.object.sha]})});
     try{await gh(`git/refs/heads/${encodeURIComponent(c.branch)}`,{method:"PATCH",body:JSON.stringify({sha:cm.sha,force:false})})}
     catch(e){if(e.status===422&&retry<2)return push(retry+1);throw e} // the branch moved meanwhile: redo on top of it
@@ -185,7 +205,7 @@ const Sync=(()=>{
   let soonT=null;
   function soon(){if(!isDM()||!canPush())return false;clearTimeout(soonT);const go=()=>{if(saving)soonT=setTimeout(go,2e3);else saveCampaign()};soonT=setTimeout(go,1500);return true}
   let timer=null;
-  function start(){pull();live();clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:2*60e3);
+  function start(){pull();live();imagesSoon();addEventListener("online",imagesSoon);clearInterval(timer);timer=setInterval(()=>{if(document.hidden)return;if(!isDM()||!dirty)pull()},isDM()?5*60e3:2*60e3);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden&&last&&Date.now()-last>30e3&&(!isDM()||!dirty))pull()})}
   function settingsHTML(){const c=cfg();return `
     <p class="hint">Saves go to <b>${esc(c.repo)}</b> → <code>${esc(c.path)}</code>, and every copy of the app (players included) pulls the latest automatically. Saving needs a GitHub token on this browser; it's kept here only, never in the campaign.</p>
@@ -208,5 +228,5 @@ const Sync=(()=>{
     else if(id==="ghCheck")check();
     else if(id==="ghForce")force();
     else if(id==="ghForget"){lsSet("ygh.ghtoken","");toast("Token removed from this browser");App.render()}}}
-  return {force,check,pull,push,start,soon,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
+  return {imagesSoon,syncImages,force,check,pull,push,start,soon,canPush,settingsHTML,bindSettings,status:()=>status,setStatus};
 })();

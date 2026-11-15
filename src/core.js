@@ -65,7 +65,7 @@ const UNDO=[],BIGS=new Map(),BIGL=[];
 const snap=()=>JSON.stringify(C,(k,v)=>{if(typeof v!=="string"||v.length<20000)return v;let i=BIGS.get(v);if(i==null){i=BIGL.length;BIGL.push(v);BIGS.set(v,i)}return "\u0000big:"+i});
 const unsnap=s=>JSON.parse(s,(k,v)=>typeof v==="string"&&v.startsWith("\u0000big:")?BIGL[+v.slice(5)]:v);
 let lastSnap=snap();
-function commit(){if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
+function commit(){if(typeof Sync!=="undefined")Sync.imagesSoon();if(!commit.open){commit.open=true;UNDO.push(lastSnap);if(UNDO.length>40)UNDO.shift();setTimeout(()=>{commit.open=false;lastSnap=snap()},0)}persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn()}
 function undoBtn(){const b=$("#undoBtn");if(b)b.disabled=!UNDO.length}
 function undo(){if(!UNDO.length){toast("Nothing to undo");return}const s=UNDO.pop();C=normalize(unsnap(s));S=C.settings;lastSnap=s;persist();dirty=true;lsSet("ygh.dirty",true);banner();undoBtn();App.reloadAll();toast("Undone")}
 function replaceCampaign(c,reason){backup(reason||"Before loading a file");C=normalize(c);S=C.settings;persist();UNDO.length=0;BIGS.clear();BIGL.length=0;lastSnap=snap();undoBtn();App.reloadAll()}
